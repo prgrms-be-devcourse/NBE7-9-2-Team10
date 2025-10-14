@@ -1,0 +1,77 @@
+package com.unimate.domain.userProfile.entity;
+
+import com.unimate.domain.user.user.entity.User;
+
+import com.unimate.global.entity.BaseEntity;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+
+@Entity
+@Table(
+        name = "user_profile",
+        uniqueConstraints = @UniqueConstraint(name = "uk_user_profile_user_id", columnNames = "user_id")
+)
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class userProfile extends BaseEntity {
+
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_user_profile_user"))
+    private User user;
+
+    private LocalDate birthDate;
+    private Integer sleepTime;
+    private Boolean isPetAllowed;
+    private Boolean isSmoker;
+    private Integer cleaningFrequency;
+    private Integer preferredAgeGap;
+    private Integer hygieneLevel;
+    private Boolean isSnoring;
+    private Integer drinkingFrequency;
+    private Integer noiseSensitivity;
+    private Integer guestFrequency;
+    private String mbti;
+    private LocalDate startUseDate;
+    private LocalDate endUseDate;
+
+    @Builder
+    private userProfile(
+            User user,
+            LocalDate birthDate,
+            Integer sleepTime,
+            Boolean isPetAllowed,
+            Boolean isSmoker,
+            Integer cleaningFrequency,
+            Integer preferredAgeGap,
+            Integer hygieneLevel,
+            Boolean isSnoring,
+            Integer drinkingFrequency,
+            Integer noiseSensitivity,
+            Integer guestFrequency,
+            String mbti,
+            LocalDate startUseDate,
+            LocalDate endUseDate
+    ) {
+        this.user = user;
+        this.birthDate = birthDate;
+        this.sleepTime = sleepTime;
+        this.isPetAllowed = isPetAllowed;
+        this.isSmoker = isSmoker;
+        this.cleaningFrequency = cleaningFrequency;
+        this.preferredAgeGap = preferredAgeGap;
+        this.hygieneLevel = hygieneLevel;
+        this.isSnoring = isSnoring;
+        this.drinkingFrequency = drinkingFrequency;
+        this.noiseSensitivity = noiseSensitivity;
+        this.guestFrequency = guestFrequency;
+        this.mbti = mbti;
+        this.startUseDate = startUseDate;
+        this.endUseDate = endUseDate;
+    }
+}
