@@ -20,5 +20,10 @@ Spring Boot 기반의 **UniMate**는
 ## **💁‍♂️ 팀원 소개 / 역할**
 
 | 이위림 | 김채현 | 김홍래 | 백승범 | 안병선 |
+| --- | --- | --- | --- | --- |
+| <p align="center"><a href="https://github.com/weilim0513-tech"><img src="https://github.com/weilim0513-tech.png" width="100"></a></p> | <p align="center"><a href="https://github.com/Chehyeon-Kim23"><img src="https://github.com/Chehyeon-Kim23.png" width="100"></a></p> | <p align="center"><a href="https://github.com/HongRae-Kim"><img src="https://github.com/HongRae-Kim.png" width="100"></a></p> | <p align="center"><a href="https://github.com/BackSeungBeom"><img src="https://github.com/BackSeungBeom.png" width="100"></a></p> | <p align="center"><a href="https://github.com/rogrhrh"><img src="https://github.com/rogrhrh.png" width="100"></a></p> |
+| <p align="center"><b>팀장</b></p> | <p align="center"><b>팀원</b></p> | <p align="center"><b>팀원</b></p> | <p align="center"><b>팀원</b></p> | <p align="center"><b>팀원</b></p> |
+| <p align="center"> </p> | <p align="center"> </p> | <p align="center"> </p> | <p align="center"> </p> | <p align="center"> </p> |
+
 
 
