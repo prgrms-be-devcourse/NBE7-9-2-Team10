@@ -13,17 +13,17 @@ import java.time.LocalDate;
 @Builder
 public class ProfileCreateRequest {
     private LocalDate birthDate;
-    private Integer sleepTime;
-    private Boolean isPetAllowed;
-    private Boolean isSmoker;
-    private Integer cleaningFrequency;
-    private Integer preferredAgeGap;
-    private Integer hygieneLevel;
-    private Boolean isSnoring;
-    private Integer drinkingFrequency;
-    private Integer noiseSensitivity;
-    private Integer guestFrequency;
-    private String mbti;
+    private Integer   sleepTime;
+    private Boolean   isPetAllowed;
+    private Boolean   isSmoker;
+    private Integer   cleaningFrequency;
+    private Integer   preferredAgeGap;
+    private Integer   hygieneLevel;
+    private Boolean   isSnoring;
+    private Integer   drinkingFrequency;
+    private Integer   noiseSensitivity;
+    private Integer   guestFrequency;
+    private String    mbti;
     private LocalDate startUseDate;
     private LocalDate endUseDate;
 }

@@ -40,10 +40,10 @@ public class UserProfileService {
         return toResponse(saved);
     }
 
-
     public ProfileResponse getByEmail(String email) {
         userProfile profile = userProfileRepository.findByUserEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "profile not found"));
+
         return toResponse(profile);
     }
 
