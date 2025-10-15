@@ -30,6 +30,7 @@ public class ProfileResponse {
     private String    mbti;
     private LocalDate startUseDate;
     private LocalDate endUseDate;
+    private Boolean   matchingEnabled;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
