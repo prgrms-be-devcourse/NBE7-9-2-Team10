@@ -35,9 +35,9 @@ public class UserMatchPreferenceService {
                     return userMatchPreferenceRepository.save(newPref);
                 });
 
-        // 더티 체킹 이용한 정보 업데이트
-        preference.update(requestDto);
+        /* matchingEnabled 필드 true로 켜는 메서드가 들어갈 자리 */
 
+        // upodatedAt 동기화
         UserMatchPreference  updatedPreference = userMatchPreferenceRepository.saveAndFlush(preference);
 
         // responseDto로 변환하여 반환
