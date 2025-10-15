@@ -33,6 +33,7 @@ public class UserProfileService {
                 .mbti(req.getMbti())
                 .startUseDate(req.getStartUseDate())
                 .endUseDate(req.getEndUseDate())
+                .matchingEnabled(req.getMatchingEnabled())
                 .build();
 
         UserProfile saved = userProfileRepository.save(profile);
@@ -74,6 +75,7 @@ public class UserProfileService {
                 .mbti(p.getMbti())
                 .startUseDate(p.getStartUseDate())
                 .endUseDate(p.getEndUseDate())
+                .matchingEnabled(p.getMatchingEnabled())
                 .createdAt(p.getCreatedAt())
                 .updatedAt(p.getUpdatedAt())
                 .build();

@@ -37,6 +37,7 @@ public class UserProfile extends BaseEntity {
     private String    mbti;
     private LocalDate startUseDate;
     private LocalDate endUseDate;
+    private Boolean   matchingEnabled;
 
     @Builder
     private UserProfile(
@@ -54,7 +55,8 @@ public class UserProfile extends BaseEntity {
             Integer   guestFrequency,
             String    mbti,
             LocalDate startUseDate,
-            LocalDate endUseDate
+            LocalDate endUseDate,
+            Boolean   matchingEnabled
     ) {
         this.user              = user;
         this.birthDate         = birthDate;
@@ -71,6 +73,7 @@ public class UserProfile extends BaseEntity {
         this.mbti              = mbti;
         this.startUseDate      = startUseDate;
         this.endUseDate        = endUseDate;
+        this.matchingEnabled   = matchingEnabled;
     }
 
     public void update(ProfileCreateRequest req) {
@@ -88,5 +91,10 @@ public class UserProfile extends BaseEntity {
         this.mbti              = req.getMbti();
         this.startUseDate      = req.getStartUseDate();
         this.endUseDate        = req.getEndUseDate();
+        this.matchingEnabled   = req.getMatchingEnabled();
+    }
+
+    public void updateMatchingStatus(boolean matchingEnabled) {
+        this.matchingEnabled = matchingEnabled;
     }
 }
