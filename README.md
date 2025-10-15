@@ -1,2 +1,29 @@
-# NBE7-9-2-Team10
-프로그래머스 데브코스 7기 9회차 10팀 2차 프로젝트
+# 🏡 **'UniMate'** – 대학생 룸메이트 매칭 플랫폼
+
+대학생들을 위한 **안전하고 간편한 룸메이트 매칭 서비스**
+
+---
+
+## **📜 프로젝트 개요**
+
+Spring Boot 기반의 **UniMate**는  
+대학교 재학생을 대상으로 **룸메이트를 매칭**해주는 플랫폼으로,  
+학생 인증을 통한 사용자 관리, 프로필 기반 매칭, 실시간 채팅, 리뷰 기능 등을 제공합니다.  
+
+- 🧭 생활 패턴 기반 룸메이트 추천  
+- 💬 실시간 채팅 기능 제공  
+- 📝 리뷰 및 신고 기능을 통한 신뢰도 관리  
+- 🧑‍🤝‍🧑 안전한 학생 인증 기반 매칭 환경 조성
+
+---
+
+## **💁‍♂️ 팀원 소개 / 역할**
+
+| 이위림 | 김채현 | 김홍래 | 백승범 | 안병선 |
+| --- | --- | --- | --- | --- |
+| <p align="center"><a href="https://github.com/weilim0513-tech"><img src="https://github.com/weilim0513-tech.png" width="100"></a></p> | <p align="center"><a href="https://github.com/Chehyeon-Kim23"><img src="https://github.com/Chehyeon-Kim23.png" width="100"></a></p> | <p align="center"><a href="https://github.com/HongRae-Kim"><img src="https://github.com/HongRae-Kim.png" width="100"></a></p> | <p align="center"><a href="https://github.com/BackSeungBeom"><img src="https://github.com/BackSeungBeom.png" width="100"></a></p> | <p align="center"><a href="https://github.com/rogrhrh"><img src="https://github.com/rogrhrh.png" width="100"></a></p> |
+| <p align="center"><b>팀장</b></p> | <p align="center"><b>팀원</b></p> | <p align="center"><b>팀원</b></p> | <p align="center"><b>팀원</b></p> | <p align="center"><b>팀원</b></p> |
+| <p align="center"> </p> | <p align="center"> </p> | <p align="center"> </p> | <p align="center"> </p> | <p align="center"> </p> |
+
+
+
