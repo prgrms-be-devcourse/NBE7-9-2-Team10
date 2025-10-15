@@ -6,6 +6,8 @@ import com.unimate.domain.userMatchPreference.dto.MatchPreferenceRequest;
 import com.unimate.domain.userMatchPreference.dto.MatchPreferenceResponse;
 import com.unimate.domain.userMatchPreference.entity.UserMatchPreference;
 import com.unimate.domain.userMatchPreference.repository.UserMatchPreferenceRepository;
+import com.unimate.domain.userProfile.entity.UserProfile;
+import com.unimate.domain.userProfile.repository.UserProfileRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,7 @@ public class UserMatchPreferenceService {
 
     private final UserMatchPreferenceRepository userMatchPreferenceRepository;
     private final UserRepository userRepository;
+    private final UserProfileRepository userProfileRepository;
 
     @Transactional
     public MatchPreferenceResponse updateMyMatchPreferences(Long userId, MatchPreferenceRequest requestDto) {
@@ -36,6 +39,11 @@ public class UserMatchPreferenceService {
                 });
 
         /* matchingEnabled 필드 true로 켜는 메서드가 들어갈 자리 */
+        UserProfile userProfile = userProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException("UserProfile not found for user id: " + userId));
+
+        userProfile.updateMatchingStatus(true);
+
 
         // upodatedAt 동기화
         UserMatchPreference  updatedPreference = userMatchPreferenceRepository.saveAndFlush(preference);

@@ -37,13 +37,14 @@ public class SecurityConfig {
 
                 // HTTP 요청 인가 규칙 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/auth/**",
-                                "/error",
-                                "/favicon.ico",
-                                "/h2-console/**"
-                        ).permitAll() // 특정 경로들은 모두 허용
-                        .anyRequest().authenticated() // 그 외의 모든 요청은 인증 필요
+//                        .requestMatchers(
+//                                "/auth/**",
+//                                "/error",
+//                                "/favicon.ico",
+//                                "/h2-console/**"
+//                        ).permitAll() // 특정 경로들은 모두 허용
+//                        .anyRequest().authenticated() // 그 외의 모든 요청은 인증 필요
+                        .anyRequest().permitAll() // 모든 요청을 임시로 허용
                 )
 
                 // JwtAuthFilter를 UsernamePasswordAuthenticationFilter 앞에 추가
