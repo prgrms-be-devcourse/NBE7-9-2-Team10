@@ -1,7 +1,7 @@
 package com.unimate.domain.userProfile.entity;
 
 import com.unimate.domain.user.user.entity.User;
-
+import com.unimate.domain.userProfile.dto.ProfileCreateRequest;
 import com.unimate.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -73,5 +73,22 @@ public class userProfile extends BaseEntity {
         this.mbti = mbti;
         this.startUseDate = startUseDate;
         this.endUseDate = endUseDate;
+    }
+
+    public void update(ProfileCreateRequest req) {
+        this.birthDate = req.getBirthDate();
+        this.sleepTime = req.getSleepTime();
+        this.isPetAllowed = req.getIsPetAllowed();
+        this.isSmoker = req.getIsSmoker();
+        this.cleaningFrequency = req.getCleaningFrequency();
+        this.preferredAgeGap = req.getPreferredAgeGap();
+        this.hygieneLevel = req.getHygieneLevel();
+        this.isSnoring = req.getIsSnoring();
+        this.drinkingFrequency = req.getDrinkingFrequency();
+        this.noiseSensitivity = req.getNoiseSensitivity();
+        this.guestFrequency = req.getGuestFrequency();
+        this.mbti = req.getMbti();
+        this.startUseDate = req.getStartUseDate();
+        this.endUseDate = req.getEndUseDate();
     }
 }

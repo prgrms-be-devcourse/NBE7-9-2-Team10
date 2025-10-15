@@ -5,8 +5,10 @@ import com.unimate.domain.userProfile.dto.ProfileResponse;
 import com.unimate.domain.userProfile.entity.userProfile;
 import com.unimate.domain.userProfile.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -35,25 +37,45 @@ public class UserProfileService {
 
         userProfile saved = userProfileRepository.save(profile);
 
-        return ProfileResponse.builder()
-                .id(saved.getId())
-                .birthDate(saved.getBirthDate())
-                .sleepTime(saved.getSleepTime())
-                .isPetAllowed(saved.getIsPetAllowed())
-                .isSmoker(saved.getIsSmoker())
-                .cleaningFrequency(saved.getCleaningFrequency())
-                .preferredAgeGap(saved.getPreferredAgeGap())
-                .hygieneLevel(saved.getHygieneLevel())
-                .isSnoring(saved.getIsSnoring())
-                .drinkingFrequency(saved.getDrinkingFrequency())
-                .noiseSensitivity(saved.getNoiseSensitivity())
-                .guestFrequency(saved.getGuestFrequency())
-                .mbti(saved.getMbti())
-                .startUseDate(saved.getStartUseDate())
-                .endUseDate(saved.getEndUseDate())
-                .createdAt(saved.getCreatedAt())
-                .updatedAt(saved.getUpdatedAt())
-                .build();
+        return toResponse(saved);
     }
 
+
+    public ProfileResponse getByEmail(String email) {
+        userProfile profile = userProfileRepository.findByUserEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "profile not found"));
+        return toResponse(profile);
+    }
+
+    @Transactional
+    public ProfileResponse update(String email, ProfileCreateRequest req) {
+        userProfile profile = userProfileRepository.findByUserEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "profile not found"));
+
+        profile.update(req);
+
+        return toResponse(profile);
+    }
+
+
+    private ProfileResponse toResponse(userProfile p) {
+        return ProfileResponse.builder()
+                .birthDate(p.getBirthDate())
+                .sleepTime(p.getSleepTime())
+                .isPetAllowed(p.getIsPetAllowed())
+                .isSmoker(p.getIsSmoker())
+                .cleaningFrequency(p.getCleaningFrequency())
+                .preferredAgeGap(p.getPreferredAgeGap())
+                .hygieneLevel(p.getHygieneLevel())
+                .isSnoring(p.getIsSnoring())
+                .drinkingFrequency(p.getDrinkingFrequency())
+                .noiseSensitivity(p.getNoiseSensitivity())
+                .guestFrequency(p.getGuestFrequency())
+                .mbti(p.getMbti())
+                .startUseDate(p.getStartUseDate())
+                .endUseDate(p.getEndUseDate())
+                .createdAt(p.getCreatedAt())
+                .updatedAt(p.getUpdatedAt())
+                .build();
+    }
 }
