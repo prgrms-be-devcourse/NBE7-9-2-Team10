@@ -20,14 +20,14 @@ public class UserMatchPreferenceController {
     // @PutMapping("/me/preferences")
     @PutMapping("/{userId}/preferences")
     public ResponseEntity<MatchPreferenceResponse> updateMyMatchPreference(
-            // 이게 원래 들어갈 것
-            // @AuthenticationPrincipal UserDetailsImpl userDetails,
-            // @RequestBody MatchPreferenceRequest requestDto
-            // 밑에는 postman 테스트 용으로 임시
-            @PathVariable("userId") Long userId,
-            @Valid @RequestBody MatchPreferenceRequest requestDto) {
+             @AuthenticationPrincipal UserDetailsImpl userDetails,
+             @RequestBody MatchPreferenceRequest requestDto
+            // 이하 postman 테스트 용 파라미터
+            // @PathVariable("userId") Long userId,
+            // @Valid @RequestBody MatchPreferenceRequest requestDto
+              ) {
 
-        // Long userId = userDetails.getUserId();
+         Long userId = userDetails.getUserId();
 
         MatchPreferenceResponse responseDto = userMatchPreferenceService.updateMyMatchPreferences(userId, requestDto);
         return ResponseEntity.ok(responseDto);
