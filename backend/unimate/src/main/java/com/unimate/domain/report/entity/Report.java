@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "report")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class report extends BaseEntity {
+public class Report extends BaseEntity {
 
     private Integer reporterId;
     private Integer reportedId;
@@ -22,7 +22,7 @@ public class report extends BaseEntity {
     private ReportStatus reportStatus;
 
     @Builder
-    private report(Integer reporterId,
+    private Report(Integer reporterId,
                    Integer reportedId,
                    String category,
                    String content,
