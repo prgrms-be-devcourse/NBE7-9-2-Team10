@@ -1,0 +1,14 @@
+// com/unimate/domain/user/user/dto/LoginRequest.java
+package com.unimate.domain.user.user.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+public class LoginRequest {
+    private String email;
+    private String password;
+}
