@@ -26,4 +26,5 @@ public class ProfileCreateRequest {
     private String    mbti;
     private LocalDate startUseDate;
     private LocalDate endUseDate;
+    private Boolean   matchingEnabled;
 }
