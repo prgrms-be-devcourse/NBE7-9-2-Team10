@@ -27,22 +27,21 @@ public class Report extends BaseEntity {
                    String category,
                    String content,
                    ReportStatus reportStatus) {
-
-        this.reporterId = reporterId;
-        this.reportedId = reportedId;
-        this.category = category;
-        this.content = content;
+        this.reporterId   = reporterId;
+        this.reportedId   = reportedId;
+        this.category     = category;
+        this.content      = content;
         this.reportStatus = (reportStatus != null)
                 ? reportStatus
-                : ReportStatus.RECEIVED; // 기본값
+                : ReportStatus.RECEIVED;
     }
 
-    public void updateStatus(ReportStatus status) {
-        this.reportStatus = status;
-    }
-
-    public void update(String category, String content) {
-        this.category = category;
-        this.content = content;
-    }
+//    public void updateStatus(ReportStatus status) {
+//        this.reportStatus = status;
+//    }
+//
+//    public void update(String category, String content) {
+//        this.category = category;
+//        this.content  = content;
+//    }
 }
