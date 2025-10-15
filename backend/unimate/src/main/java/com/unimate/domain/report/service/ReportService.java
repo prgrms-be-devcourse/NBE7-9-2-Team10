@@ -1,4 +1,56 @@
 package com.unimate.domain.report.service;
 
+import com.unimate.domain.report.dto.ReportCreateRequest;
+import com.unimate.domain.report.dto.ReportResponse;
+import com.unimate.domain.report.entity.ReportStatus;
+import com.unimate.domain.report.entity.Report;
+import com.unimate.domain.report.repository.ReportRepository;
+import com.unimate.domain.user.user.entity.user;
+import com.unimate.domain.user.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ReportService {
+
+    private final ReportRepository reportRepository;
+    private final UserRepository   userRepository;
+
+    @Transactional
+    public ReportResponse create(String reporterEmail, ReportCreateRequest rq)
+    {
+        user reporter = userRepository.findByEmail(reporterEmail)
+                .orElseThrow(()-> new IllegalArgumentException("신고자 이메일 없음"));
+        user reported = userRepository.findByEmail(rq.getReportedEmail())
+                .orElseThrow(()-> new IllegalArgumentException("피신고자 이메일 없음"));
+
+        //테스트용 자신 신고 불가
+        if(reporter.getId().equals(reported.getId()))
+            throw new IllegalArgumentException("자신은 신고 불가");
+
+        Report saved = reportRepository.save(
+                Report.builder()
+                        .reportedId(reporter.getId().intValue())
+                        .reportedId(reported.getId().intValue())
+                        .category(rq.getCategory())
+                        .content(rq.getContent())
+                        .reportStatus(ReportStatus.RECEIVED)
+                        .build()
+        );
+
+        return ReportResponse.builder()
+                .reportId(saved.getId())
+                .reporterEmail(reporterEmail)
+                .reportedEmail(rq.getReportedEmail())
+                .category(saved.getCategory())
+                .content(saved.getContent())
+                .reportStatus(saved.getReportStatus())
+                .createdAt(saved.getCreatedAt())
+                .updatedAt(saved.getUpdatedAt())
+                .build();
+    }
+
 }
