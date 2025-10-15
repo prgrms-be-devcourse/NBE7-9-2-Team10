@@ -1,18 +1,29 @@
 package com.unimate.domain.user.user.service;
 
-import com.unimate.domain.user.user.entity.User;
+import com.unimate.domain.user.user.dto.UserSignupRequest;
+import com.unimate.domain.user.user.dto.UserSignupResponse;
+import com.unimate.domain.user.user.entity.user;
 import com.unimate.domain.user.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
 
-    public User join(String name, String email, String password,  String gender, String university) {
-        User user = new User(name, email, password, gender, university);
-        userRepository.save(user);
-        return user;
+    public UserSignupResponse signup(UserSignupRequest request) {
+        if(userRepository.existsByEmail(request.getEmail())){
+            throw new IllegalArgumentException("이미 존재하는 이메일 입니다.");
+        }
+
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+
+        user newUser = new user(request.getName(), request.getEmail(), encodedPassword, request.getGender(), request.getUniversity());
+        userRepository.save(newUser);
+
+        return new UserSignupResponse(newUser.getId(), newUser.getEmail(), newUser.getName());
     }
 }
