@@ -2,7 +2,7 @@ package com.unimate.domain.userProfile.service;
 
 import com.unimate.domain.userProfile.dto.ProfileCreateRequest;
 import com.unimate.domain.userProfile.dto.ProfileResponse;
-import com.unimate.domain.userProfile.entity.userProfile;
+import com.unimate.domain.userProfile.entity.UserProfile;
 import com.unimate.domain.userProfile.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,7 +18,7 @@ public class UserProfileService {
 
     @Transactional
     public ProfileResponse create(String email, ProfileCreateRequest req){
-        userProfile profile = userProfile.builder()
+        UserProfile profile = UserProfile.builder()
                 .birthDate(req.getBirthDate())
                 .sleepTime(req.getSleepTime())
                 .isPetAllowed(req.getIsPetAllowed())
@@ -35,13 +35,13 @@ public class UserProfileService {
                 .endUseDate(req.getEndUseDate())
                 .build();
 
-        userProfile saved = userProfileRepository.save(profile);
+        UserProfile saved = userProfileRepository.save(profile);
 
         return toResponse(saved);
     }
 
     public ProfileResponse getByEmail(String email) {
-        userProfile profile = userProfileRepository.findByUserEmail(email)
+        UserProfile profile = userProfileRepository.findByUserEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "profile not found"));
 
         return toResponse(profile);
@@ -49,7 +49,7 @@ public class UserProfileService {
 
     @Transactional
     public ProfileResponse update(String email, ProfileCreateRequest req) {
-        userProfile profile = userProfileRepository.findByUserEmail(email)
+        UserProfile profile = userProfileRepository.findByUserEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "profile not found"));
 
         profile.update(req);
@@ -58,7 +58,7 @@ public class UserProfileService {
     }
 
 
-    private ProfileResponse toResponse(userProfile p) {
+    private ProfileResponse toResponse(UserProfile p) {
         return ProfileResponse.builder()
                 .birthDate(p.getBirthDate())
                 .sleepTime(p.getSleepTime())

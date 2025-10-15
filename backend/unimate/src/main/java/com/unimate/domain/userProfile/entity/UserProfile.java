@@ -18,7 +18,7 @@ import java.time.LocalDate;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class userProfile extends BaseEntity {
+public class UserProfile extends BaseEntity {
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_user_profile_user")) //제약조건 이름 정하기 없으면 해시값으로 생성되어 관리하기 힘들다고함
@@ -39,7 +39,7 @@ public class userProfile extends BaseEntity {
     private LocalDate endUseDate;
 
     @Builder
-    private userProfile(
+    private UserProfile(
             User user,
             LocalDate birthDate,
             Integer   sleepTime,
