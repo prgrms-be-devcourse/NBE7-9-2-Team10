@@ -2,7 +2,7 @@ package com.unimate.domain.user.user.service;
 
 import com.unimate.domain.user.user.dto.UserSignupRequest;
 import com.unimate.domain.user.user.dto.UserSignupResponse;
-import com.unimate.domain.user.user.entity.user;
+import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -21,9 +21,11 @@ public class UserService {
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
-        user newUser = new user(request.getName(), request.getEmail(), encodedPassword, request.getGender(), request.getUniversity());
+        User newUser = new User(request.getName(), request.getEmail(), encodedPassword, request.getGender(), request.getUniversity());
         userRepository.save(newUser);
 
         return new UserSignupResponse(newUser.getId(), newUser.getEmail(), newUser.getName());
     }
+
+
 }

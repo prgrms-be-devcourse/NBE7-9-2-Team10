@@ -1,6 +1,6 @@
 package com.unimate.domain.userProfile.entity;
 
-import com.unimate.domain.user.user.entity.user;
+import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.userProfile.dto.ProfileCreateRequest;
 import com.unimate.global.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -22,7 +22,7 @@ public class userProfile extends BaseEntity {
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_user_profile_user")) //제약조건 이름 정하기 없으면 해시값으로 생성되어 관리하기 힘들다고함
-    private user user;
+    private User user;
     private LocalDate birthDate;
     private Integer   sleepTime;
     private Boolean   isPetAllowed;
@@ -40,7 +40,7 @@ public class userProfile extends BaseEntity {
 
     @Builder
     private userProfile(
-            user user,
+            User user,
             LocalDate birthDate,
             Integer   sleepTime,
             Boolean   isPetAllowed,
