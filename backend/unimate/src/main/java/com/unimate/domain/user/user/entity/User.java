@@ -19,7 +19,7 @@ public class User extends BaseEntity {
     private String password;
     private String gender;
     private LocalDate birthDate;
-    private Boolean student_verified;
+    private Boolean studentVerified;
     private String university;
 
     public User(String name, String email, String password, String gender, LocalDate birthDate, String university) {
@@ -28,6 +28,7 @@ public class User extends BaseEntity {
         this.password = password;
         this.gender = gender;
         this.birthDate = birthDate;
+        this.studentVerified = false;
         this.university = university;
     }
 }
