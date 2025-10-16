@@ -21,7 +21,7 @@ public class UserService {
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
-        User newUser = new User(request.getName(), request.getEmail(), encodedPassword, request.getGender(), request.getUniversity());
+        User newUser = new User(request.getName(), request.getEmail(), encodedPassword, request.getGender(), request.getBirthDate(), request.getUniversity());
         userRepository.save(newUser);
 
         return new UserSignupResponse(newUser.getId(), newUser.getEmail(), newUser.getName());
