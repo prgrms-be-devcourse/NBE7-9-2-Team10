@@ -63,4 +63,13 @@ public class AuthService {
 
         return newToken.getAccessToken();
     }
+
+    @Transactional
+    public void logout(String refreshToken) {
+        RefreshToken tokenEntity = refreshTokenRepository.findByRefreshToken(refreshToken)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 리프레시 토큰입니다."));
+
+        refreshTokenRepository.delete(tokenEntity);
+    }
+
 }
