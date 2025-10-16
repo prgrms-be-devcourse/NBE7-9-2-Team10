@@ -7,6 +7,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Entity
 @Getter
 @Table(name = "users")
@@ -16,14 +18,16 @@ public class User extends BaseEntity {
     private String email;
     private String password;
     private String gender;
+    private LocalDate birthDate;
     private Boolean student_verified;
     private String university;
 
-    public User(String name, String email, String password, String gender, String university) {
+    public User(String name, String email, String password, String gender, LocalDate birthDate, String university) {
         this.name = name;
         this.email = email;
         this.password = password;
         this.gender = gender;
+        this.birthDate = birthDate;
         this.university = university;
     }
 }

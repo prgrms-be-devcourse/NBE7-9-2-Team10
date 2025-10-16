@@ -24,7 +24,10 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
 
         if (userRepository.count() == 0) {
-            User testUser = new User("testuser", "test@example.com", "password", "MALE", "Test University");
+            /* issue #20 에서 수정
+            생일이 user 테이블로 옮겨가기 때문에 생일 추가 했습니다.
+            */
+            User testUser = new User("testuser", "test@example.com", "password", "MALE", LocalDate.of(2000, 1, 1), "Test University");
             userRepository.save(testUser);
 
             /* issue #22 에서 수정
