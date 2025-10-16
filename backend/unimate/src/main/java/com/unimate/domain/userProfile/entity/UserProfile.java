@@ -23,7 +23,6 @@ public class UserProfile extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_user_profile_user")) //제약조건 이름 정하기 없으면 해시값으로 생성되어 관리하기 힘들다고함
     private User user;
-    private LocalDate birthDate;
     private Integer   sleepTime;
     private Boolean   isPetAllowed;
     private Boolean   isSmoker;
@@ -42,7 +41,6 @@ public class UserProfile extends BaseEntity {
     @Builder
     private UserProfile(
             User user,
-            LocalDate birthDate,
             Integer   sleepTime,
             Boolean   isPetAllowed,
             Boolean   isSmoker,
@@ -59,7 +57,6 @@ public class UserProfile extends BaseEntity {
             Boolean   matchingEnabled
     ) {
         this.user              = user;
-        this.birthDate         = birthDate;
         this.sleepTime         = sleepTime;
         this.isPetAllowed      = isPetAllowed;
         this.isSmoker          = isSmoker;
@@ -77,7 +74,6 @@ public class UserProfile extends BaseEntity {
     }
 
     public void update(ProfileCreateRequest req) {
-        this.birthDate         = req.getBirthDate();
         this.sleepTime         = req.getSleepTime();
         this.isPetAllowed      = req.getIsPetAllowed();
         this.isSmoker          = req.getIsSmoker();
