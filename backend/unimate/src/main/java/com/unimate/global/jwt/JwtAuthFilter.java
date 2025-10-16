@@ -35,7 +35,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         if (!jwtProvider.validateToken(token)) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "토큰 만료");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "인증 실패");
             return;
         }
 

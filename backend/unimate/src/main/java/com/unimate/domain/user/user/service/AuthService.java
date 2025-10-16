@@ -1,7 +1,6 @@
 package com.unimate.domain.user.user.service;
 
 import com.unimate.domain.user.user.dto.LoginRequest;
-import com.unimate.domain.user.user.dto.LoginResponse;
 import com.unimate.domain.user.user.entity.RefreshToken;
 import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.RefreshTokenRepository;
@@ -22,8 +21,31 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
 
+    public record AuthTokens(
+            Long userId,
+            String email,
+            String accessToken,
+            String refreshToken
+    ) {
+        public String getRefreshToken() {
+            return this.refreshToken;
+        }
+
+        public Long getUserId() {
+            return this.userId;
+        }
+
+        public String getEmail() {
+            return this.email;
+        }
+
+        public String getAccessToken() {
+            return this.accessToken;
+        }
+    }
+
     @Transactional
-    public LoginResponse login(LoginRequest request) {
+    public AuthTokens login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("이메일을 찾을 수 없습니다.")); //custom 예외 클래스 사용 예정
 
@@ -39,10 +61,11 @@ public class AuthService {
                         () -> refreshTokenRepository.save(new RefreshToken(user.getId(), token.getRefreshToken()))
                 );
 
-        return new LoginResponse(
+        return new AuthTokens(
                 user.getId(),
                 user.getEmail(),
-                token.getAccessToken()
+                token.getAccessToken(),
+                token.getRefreshToken()
         );
     }
 
