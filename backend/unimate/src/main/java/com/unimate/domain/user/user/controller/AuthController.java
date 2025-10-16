@@ -39,4 +39,11 @@ public class AuthController {
 
         return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestBody Map<String, String> request) {
+        String refreshToken = request.get("refreshToken");
+        authService.logout(refreshToken);
+        return ResponseEntity.ok(Map.of("message", "로그아웃이 완료되었습니다."));
+    }
 }
