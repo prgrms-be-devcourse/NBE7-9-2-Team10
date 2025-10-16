@@ -1,4 +1,3 @@
-// com/unimate/domain/user/user/dto/LoginRequest.java
 package com.unimate.domain.user.user.dto;
 
 import lombok.AllArgsConstructor;

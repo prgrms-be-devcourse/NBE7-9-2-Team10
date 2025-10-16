@@ -31,4 +31,12 @@ public class AuthController {
                 "email", user.getEmail()
         ));
     }
+
+    @PostMapping("/token/refresh")
+    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> request) {
+        String refreshToken = request.get("refreshToken");
+        String newAccessToken = authService.reissueAccessToken(refreshToken);
+
+        return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
+    }
 }
