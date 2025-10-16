@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
 public class ProfileResponse {
     @NotNull private Long id;
 
-    private LocalDate birthDate;
     private Integer   sleepTime;
     private Boolean   isPetAllowed;
     private Boolean   isSmoker;

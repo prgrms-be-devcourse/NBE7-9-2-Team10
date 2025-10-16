@@ -27,9 +27,11 @@ public class DataInitializer implements CommandLineRunner {
             User testUser = new User("testuser", "test@example.com", "password", "MALE", "Test University");
             userRepository.save(testUser);
 
+            /* issue #22 에서 수정
+            userProfile의 생일이 user 테이블로 옮겨가기 때문에 제거했습니다.
+            */
             UserProfile testUserProfile = UserProfile.builder()
                     .user(testUser)
-                    .birthDate(LocalDate.of(2000, 1, 1))
                     .sleepTime(3)
                     .isPetAllowed(true)
                     .isSmoker(false)

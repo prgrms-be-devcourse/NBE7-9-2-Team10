@@ -25,7 +25,6 @@ public class UserProfileService {
         User userRef = userRepository.findByEmail(email).get();
         UserProfile profile = UserProfile.builder()
                 .user(userRef)
-                .birthDate(req.getBirthDate())
                 .sleepTime(req.getSleepTime())
                 .isPetAllowed(req.getIsPetAllowed())
                 .isSmoker(req.getIsSmoker())
@@ -67,7 +66,7 @@ public class UserProfileService {
 
     private ProfileResponse toResponse(UserProfile p) {
         return ProfileResponse.builder()
-                .birthDate(p.getBirthDate())
+                .id(p.getId())
                 .sleepTime(p.getSleepTime())
                 .isPetAllowed(p.getIsPetAllowed())
                 .isSmoker(p.getIsSmoker())

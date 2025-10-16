@@ -12,7 +12,6 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class ProfileCreateRequest {
-    private LocalDate birthDate;
     private Integer   sleepTime;
     private Boolean   isPetAllowed;
     private Boolean   isSmoker;
