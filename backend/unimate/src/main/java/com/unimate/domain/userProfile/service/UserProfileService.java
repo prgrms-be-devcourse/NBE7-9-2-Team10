@@ -1,5 +1,7 @@
 package com.unimate.domain.userProfile.service;
 
+import com.unimate.domain.user.user.entity.User;
+import com.unimate.domain.user.user.repository.UserRepository;
 import com.unimate.domain.userProfile.dto.ProfileCreateRequest;
 import com.unimate.domain.userProfile.dto.ProfileResponse;
 import com.unimate.domain.userProfile.entity.UserProfile;
@@ -14,11 +16,15 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserProfileService {
+
     private final UserProfileRepository userProfileRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public ProfileResponse create(String email, ProfileCreateRequest req){
+        User userRef = userRepository.findByEmail(email).get();
         UserProfile profile = UserProfile.builder()
+                .user(userRef)
                 .birthDate(req.getBirthDate())
                 .sleepTime(req.getSleepTime())
                 .isPetAllowed(req.getIsPetAllowed())
