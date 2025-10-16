@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class LikeResponseDto {
+public class LikeResponse {
     private Long matchId;
     private boolean isMatched;
 }

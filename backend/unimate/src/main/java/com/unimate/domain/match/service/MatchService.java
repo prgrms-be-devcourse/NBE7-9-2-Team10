@@ -1,7 +1,7 @@
 package com.unimate.domain.match.service;
 
-import com.unimate.domain.match.dto.LikeRequestDto;
-import com.unimate.domain.match.dto.LikeResponseDto;
+import com.unimate.domain.match.dto.LikeRequest;
+import com.unimate.domain.match.dto.LikeResponse;
 import com.unimate.domain.match.entity.Match;
 import com.unimate.domain.match.entity.MatchStatus;
 import com.unimate.domain.match.entity.MatchType;
@@ -23,7 +23,7 @@ public class MatchService {
     private final MatchRepository matchRepository;
     private final UserRepository userRepository;
 
-    public LikeResponseDto sendLike(LikeRequestDto requestDto, CustomUserPrincipal user) {
+    public LikeResponse sendLike(LikeRequest requestDto, CustomUserPrincipal user) {
         Long senderId = user.getUserId();
         Long receiverId = requestDto.getReceiverId();
 
@@ -55,6 +55,6 @@ public class MatchService {
 
         boolean isMatched = reciprocalLikeOpt.isPresent();
 
-        return new LikeResponseDto(newLike.getId(), isMatched);
+        return new LikeResponse(newLike.getId(), isMatched);
     }
 }
