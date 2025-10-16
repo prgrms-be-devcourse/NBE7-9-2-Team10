@@ -54,6 +54,7 @@ public class UserProfileControllerTest {
                 email,
                 passwordEncoder.encode(rawPassword),
                 "male",
+                LocalDate.of(1991,1,1),
                 "서울대");
         userRepository.save(u);
 
