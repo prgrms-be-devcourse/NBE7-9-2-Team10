@@ -22,11 +22,11 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-        AuthService.AuthTokens response = authService.login(request);
+        AuthService.AuthTokens authTokens = authService.login(request);
 
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", response.getRefreshToken())
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", authTokens.getRefreshToken())
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
                 .sameSite("Strict")
                 .maxAge(7 * 24 * 60 * 60)
@@ -34,7 +34,7 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(new LoginResponse(response.getUserId(), response.getEmail(), response.getAccessToken()));
+                .body(new LoginResponse(authTokens.getUserId(), authTokens.getEmail(), authTokens.getAccessToken()));
     }
 
 
