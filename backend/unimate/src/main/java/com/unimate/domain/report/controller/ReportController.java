@@ -3,6 +3,7 @@ package com.unimate.domain.report.controller;
 import com.unimate.domain.report.dto.ReportCreateRequest;
 import com.unimate.domain.report.dto.ReportResponse;
 import com.unimate.domain.report.service.ReportService;
+import com.unimate.global.jwt.CustomUserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,9 +24,9 @@ public class ReportController {
     @PostMapping
     public ResponseEntity<ReportResponse> create(
             @Valid @RequestBody ReportCreateRequest rq,
-            @AuthenticationPrincipal(expression = "claims['email']") String email
+            @AuthenticationPrincipal CustomUserPrincipal user
     ){
-        ReportResponse res = reportService.create(email, rq);
+        ReportResponse res = reportService.create(user.getEmail(), rq);
         return ResponseEntity.status(HttpStatus.CREATED).body(res);
     }
 
