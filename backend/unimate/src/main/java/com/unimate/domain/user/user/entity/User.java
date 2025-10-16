@@ -28,6 +28,7 @@ public class User extends BaseEntity {
         this.password = password;
         this.gender = gender;
         this.birthDate = birthDate;
+        this.student_verified = false;
         this.university = university;
     }
 }
