@@ -5,7 +5,7 @@ import com.unimate.domain.report.dto.ReportResponse;
 import com.unimate.domain.report.entity.ReportStatus;
 import com.unimate.domain.report.entity.Report;
 import com.unimate.domain.report.repository.ReportRepository;
-import com.unimate.domain.user.user.entity.user;
+import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,9 +22,9 @@ public class ReportService {
     @Transactional
     public ReportResponse create(String reporterEmail, ReportCreateRequest rq)
     {
-        user reporter = userRepository.findByEmail(reporterEmail)
+        User reporter = userRepository.findByEmail(reporterEmail)
                 .orElseThrow(()-> new IllegalArgumentException("신고자 이메일 없음"));
-        user reported = userRepository.findByEmail(rq.getReportedEmail())
+        User reported = userRepository.findByEmail(rq.getReportedEmail())
                 .orElseThrow(()-> new IllegalArgumentException("피신고자 이메일 없음"));
 
         //테스트용 자신 신고 불가
