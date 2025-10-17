@@ -2,6 +2,7 @@ package com.unimate.domain.user.user.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unimate.domain.user.user.dto.UserSignupRequest;
+import com.unimate.domain.user.user.entity.Gender;
 import com.unimate.domain.user.user.repository.UserRepository;
 import com.unimate.domain.verification.entity.Verification;
 import com.unimate.domain.verification.repository.VerificationRepository;
@@ -66,7 +67,7 @@ class UserControllerTest {
                 testEmail,
                 "password123!",
                 "홍길동",
-                "MALE",
+                Gender.MALE,
                 LocalDate.of(2000, 5, 5),
                 "Test University"
         );
@@ -89,7 +90,7 @@ class UserControllerTest {
                 "unverified@university.ac.kr",
                 "password123!",
                 "미인증유저",
-                "FEMALE",
+                Gender.FEMALE,
                 LocalDate.of(1999, 3, 3),
                 "Test University"
         );
@@ -120,7 +121,7 @@ class UserControllerTest {
                 "dup@university.ac.kr",
                 "password123!",
                 "홍길동",
-                "MALE",
+                Gender.MALE,
                 LocalDate.of(2000, 5, 5),
                 "Test University"
         );

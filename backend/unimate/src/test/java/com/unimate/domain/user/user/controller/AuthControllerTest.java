@@ -3,6 +3,7 @@ package com.unimate.domain.user.user.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unimate.domain.user.user.dto.LoginRequest;
 import com.unimate.domain.user.user.dto.UserSignupRequest;
+import com.unimate.domain.user.user.entity.Gender;
 import com.unimate.domain.user.user.repository.UserRepository;
 import com.unimate.domain.verification.entity.Verification;
 import com.unimate.domain.verification.repository.VerificationRepository;
@@ -67,7 +68,7 @@ class AuthControllerTest {
                 testEmail,
                 testPassword,
                 "테스트유저",
-                "MALE",
+                Gender.MALE,
                 LocalDate.of(2000, 1, 1),
                 "Test University"
         );
