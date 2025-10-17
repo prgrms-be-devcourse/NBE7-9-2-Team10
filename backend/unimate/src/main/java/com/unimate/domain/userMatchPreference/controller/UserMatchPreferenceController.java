@@ -31,4 +31,10 @@ public class UserMatchPreferenceController {
         return ResponseEntity.ok(responseDto);
     }
 
+    @DeleteMapping("/me/matching-status")
+    public ResponseEntity<Void> cancelMatchingStatus(@AuthenticationPrincipal CustomUserPrincipal user) {
+        userMatchPreferenceService.cancelMatching(user.getUserId());
+        return ResponseEntity.noContent().build();
+    }
+
 }
