@@ -1,11 +1,15 @@
 package com.unimate.domain.userProfile.service;
 
+import com.unimate.domain.match.entity.MatchStatus;
+import com.unimate.domain.match.entity.MatchType;
+import com.unimate.domain.match.repository.MatchRepository;
 import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.UserRepository;
 import com.unimate.domain.userProfile.dto.ProfileCreateRequest;
 import com.unimate.domain.userProfile.dto.ProfileResponse;
 import com.unimate.domain.userProfile.entity.UserProfile;
 import com.unimate.domain.userProfile.repository.UserProfileRepository;
+import com.unimate.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,6 +23,7 @@ public class UserProfileService {
 
     private final UserProfileRepository userProfileRepository;
     private final UserRepository userRepository;
+    private final MatchRepository matchRepository;
 
     @Transactional
     public ProfileResponse create(String email, ProfileCreateRequest req){
@@ -84,5 +89,16 @@ public class UserProfileService {
                 .createdAt(p.getCreatedAt())
                 .updatedAt(p.getUpdatedAt())
                 .build();
+    }
+
+    // 룸메이트 매칭 비활성화
+    @Transactional
+    public void cancelMatching(Long userId) {
+
+        UserProfile userProfile = userProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> ServiceException.notFound("사용자 프로필을 찾을 수 없습니다."));
+        userProfile.updateMatchingStatus(false);
+
+        matchRepository.deleteUnconfirmedMatchesByUserId(userId, MatchType.REQUEST, MatchStatus.ACCEPTED);
     }
 }

@@ -24,7 +24,6 @@ public class UserMatchPreferenceService {
     private final UserMatchPreferenceRepository userMatchPreferenceRepository;
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
-    private final MatchRepository matchRepository;
 
     @Transactional
     public MatchPreferenceResponse updateMyMatchPreferences(Long userId, MatchPreferenceRequest requestDto) {
@@ -55,17 +54,5 @@ public class UserMatchPreferenceService {
 
         // responseDto로 변환하여 반환
         return MatchPreferenceResponse.fromEntity(updatedPreference);
-    }
-
-
-    // 룸메이트 매칭 비활성화
-    @Transactional
-    public void cancelMatching(Long userId) {
-
-        UserProfile userProfile = userProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> ServiceException.notFound("사용자 프로필을 찾을 수 없습니다."));
-        userProfile.updateMatchingStatus(false);
-
-        matchRepository.deleteUnconfirmedMatchesByUserId(userId, MatchType.REQUEST, MatchStatus.ACCEPTED);
     }
 }
