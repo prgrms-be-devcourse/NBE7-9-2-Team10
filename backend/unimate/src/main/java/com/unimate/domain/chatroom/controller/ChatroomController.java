@@ -61,7 +61,7 @@ public class ChatroomController {
             @RequestParam(defaultValue = "30") @Min(1) @Max(100) int limit,
             @RequestParam(required = false) Long beforeMessageId
     ) {
-        // 서비스 시그니처와 순서 일치
+        // 서비스 시그니처와 순서 일치: (me, chatroomId, beforeMessageId, limit)
         ChatHistoryResponse res = chatroomService.getHistory(
                 me.getUserId(), chatroomId, beforeMessageId, limit
         );
@@ -92,12 +92,12 @@ public class ChatroomController {
     }
 
     /** 차단 (응답 바디 없음) */
-    @PostMapping("/{chatroomId}/block")
-    public ResponseEntity<Void> block(
-            @AuthenticationPrincipal CustomUserPrincipal me,
-            @PathVariable Long chatroomId
-    ) {
-        chatroomService.block(me.getUserId(), chatroomId);
-        return ResponseEntity.noContent().build();
-    }
+    //@PostMapping("/{chatroomId}/block")
+    //public ResponseEntity<Void> block(
+    //        @AuthenticationPrincipal CustomUserPrincipal me,
+    //        @PathVariable Long chatroomId
+    //) {
+    //    chatroomService.block(me.getUserId(), chatroomId);
+    //    return ResponseEntity.noContent().build();
+    //}
 }

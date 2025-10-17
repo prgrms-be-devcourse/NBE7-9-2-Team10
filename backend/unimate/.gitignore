@@ -39,3 +39,24 @@ out/
 ### custom ###
 db_dev.mv.db
 db_dev.trace.db
+
+### Node / Front ###
+node_modules/
+npm-debug.log*
+yarn.lock
+pnpm-lock.yaml
+package-lock.json
+
+### Local DB / Data ###
+data/
+*.mv.db
+*.trace.db
+
+### Secrets / Temp / Local ###
+*.env
+cookies.txt
+login.json
+
+### Test assets (원하면 유지) ###
+# 임시 테스트 파일은 공유 원치 않으면 아래처럼 무시
+# backend/unimate/src/main/resources/static/ws-test.html

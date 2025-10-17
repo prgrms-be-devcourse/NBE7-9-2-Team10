@@ -215,13 +215,16 @@ public class ChatroomService {
         );
     }
 
-    //차단 (응답 바디 없음)
+    //차단 (응답 바디 없음) -> 채팅창에서 신고시 차단도 같이 처리되도록할 예정, 아직 사용 안함
+    /*
     @Transactional
     public void block(Long me, Long chatroomId) {
         Chatroom room = getRoomOrThrow(chatroomId);
         assertMember(me, room);
         room.block(me);
     }
+     */
+
     // WS 전송 전 검증
     public Chatroom validateWritable(Long senderId, Long chatroomId) {
         Chatroom room = getRoomOrThrow(chatroomId); // 404 매핑
