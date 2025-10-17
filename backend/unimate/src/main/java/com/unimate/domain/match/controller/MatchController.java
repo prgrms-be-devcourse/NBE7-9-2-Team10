@@ -25,7 +25,7 @@ public class MatchController {
             @Valid @RequestBody LikeRequest requestDto,
             @AuthenticationPrincipal CustomUserPrincipal user) {
 
-        LikeResponse response = matchService.sendLike(requestDto, user);
+        LikeResponse response = matchService.sendLike(requestDto, user.getUserId());
         return ResponseEntity.ok(response);
     }
 }

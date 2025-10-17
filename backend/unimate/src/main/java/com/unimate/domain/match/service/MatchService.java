@@ -23,8 +23,7 @@ public class MatchService {
     private final MatchRepository matchRepository;
     private final UserRepository userRepository;
 
-    public LikeResponse sendLike(LikeRequest requestDto, CustomUserPrincipal user) {
-        Long senderId = user.getUserId();
+    public LikeResponse sendLike(LikeRequest requestDto, Long senderId) {
         Long receiverId = requestDto.getReceiverId();
 
         if (senderId.equals(receiverId)) {
