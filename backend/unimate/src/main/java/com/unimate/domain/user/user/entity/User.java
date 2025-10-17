@@ -33,4 +33,8 @@ public class User extends BaseEntity {
         this.studentVerified = false;
         this.university = university;
     }
+
+    public void setStudentVerified(boolean verified) {
+        this.studentVerified = verified;
+    }
 }
