@@ -1,5 +1,8 @@
 package com.unimate.domain.userMatchPreference.service;
 
+import com.unimate.domain.match.entity.MatchStatus;
+import com.unimate.domain.match.entity.MatchType;
+import com.unimate.domain.match.repository.MatchRepository;
 import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.UserRepository;
 import com.unimate.domain.userMatchPreference.dto.MatchPreferenceRequest;
@@ -8,6 +11,7 @@ import com.unimate.domain.userMatchPreference.entity.UserMatchPreference;
 import com.unimate.domain.userMatchPreference.repository.UserMatchPreferenceRepository;
 import com.unimate.domain.userProfile.entity.UserProfile;
 import com.unimate.domain.userProfile.repository.UserProfileRepository;
+import com.unimate.global.exception.ServiceException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
