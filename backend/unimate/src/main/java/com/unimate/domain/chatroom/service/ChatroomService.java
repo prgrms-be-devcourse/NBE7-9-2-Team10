@@ -31,12 +31,12 @@ public class ChatroomService {
     //내부유틸
     private Chatroom getRoomOrThrow(Long chatroomId) {
         return chatroomRepository.findById(chatroomId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "chatroom not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."));
     }
 
     private void assertMember(Long me, Chatroom room) {
         if (me == null || (!me.equals(room.getUser1Id()) && !me.equals(room.getUser2Id()))) {
-            throw new AccessDeniedException("not a member of chatroom");
+            throw new AccessDeniedException("채팅방에 참여 중인 사용자가 아닙니다.");
         }
     }
 
@@ -52,10 +52,10 @@ public class ChatroomService {
     @Transactional
     public ChatRoomCreateResponse createIfNotExists(Long me, Long partnerId) {
         if (me == null || partnerId == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid userId");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "유효하지 않은 사용자 ID입니다.");
         }
         if (me.equals(partnerId)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Self chat is not allowed.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "자기 자신과의 채팅은 불가능합니다.");
         }
 
         long a = Math.min(me, partnerId);
@@ -193,7 +193,7 @@ public class ChatroomService {
         // lastReadMessageId가 해당 방의 메시지인지 체크
         if (lastReadMessageId != null &&
                 !messageRepository.existsByIdAndChatroom_Id(lastReadMessageId, chatroomId)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid lastReadMessageId");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 메시지 ID입니다.");
         }
 
         room.updateLastRead(me, lastReadMessageId);
@@ -232,11 +232,11 @@ public class ChatroomService {
 
 
         if (room.getStatus() == ChatroomStatus.CLOSED) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "chatroom is closed");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "닫힌 채팅방입니다.");
         }
 
         if (room.getBlockedBy() != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "chatroom is blocked");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "차단된 채팅방입니다.");
         }
         return room;
     }

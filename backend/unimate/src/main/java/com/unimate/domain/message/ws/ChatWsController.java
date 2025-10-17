@@ -52,7 +52,7 @@ public class ChatWsController {
         }
 
         if (user == null) {
-            throw new org.springframework.security.access.AccessDeniedException("UNAUTHORIZED_WS_SEND");
+            throw new org.springframework.security.access.AccessDeniedException("인증되지 않은 사용자입니다.");
         }
 
         final Long userId = user.getUserId();
@@ -62,7 +62,7 @@ public class ChatWsController {
             // 권한/방 상태 검증
             Chatroom room = chatroomService.validateWritable(userId, req.getChatroomId());
             if (room.getStatus() == ChatroomStatus.CLOSED) {
-                throw new IllegalStateException("chatroom is closed");
+                throw new IllegalStateException("대화가 종료된 채팅방입니다.");
             }
 
             // 멱등 처리

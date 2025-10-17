@@ -1,7 +1,6 @@
 package com.unimate.global.ws;
 
 import com.unimate.domain.message.dto.WsError;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
@@ -10,16 +9,12 @@ import org.springframework.security.access.AccessDeniedException;
 
 import java.security.Principal;
 
-@Slf4j
 @Controller // 또는 @ControllerAdvice
 public class StompExceptionAdvice {
 
     @MessageExceptionHandler(ResponseStatusException.class)
     @SendToUser("/queue/chat.errors")
     public WsError handleRse(ResponseStatusException ex, Principal p) {
-        log.warn("[WS][ERR][RSE] user={} status={} reason={}",
-                p != null ? p.getName() : "null",
-                ex.getStatusCode(), ex.getReason(), ex);
         return WsError.builder()
                 .code(ex.getStatusCode().toString())
                 .message(ex.getReason() != null ? ex.getReason() : "요청 처리 중 오류가 발생했습니다.")
@@ -30,7 +25,6 @@ public class StompExceptionAdvice {
     @MessageExceptionHandler(AccessDeniedException.class)
     @SendToUser("/queue/chat.errors")
     public WsError handleDenied(AccessDeniedException ex, Principal p) {
-        log.warn("[WS][ERR][DENIED] user={} {}", p != null ? p.getName() : "null", ex.getMessage());
         return WsError.builder()
                 .code("FORBIDDEN")
                 .message("권한이 없습니다.")
@@ -41,7 +35,6 @@ public class StompExceptionAdvice {
     @MessageExceptionHandler(Exception.class)
     @SendToUser("/queue/chat.errors")
     public WsError handleAny(Exception ex, Principal p) {
-        log.error("[WS][ERR][ANY] user={} {}", p != null ? p.getName() : "null", ex.getMessage(), ex);
         return WsError.builder()
                 .code("INTERNAL_ERROR")
                 .message("알 수 없는 오류가 발생했습니다.")

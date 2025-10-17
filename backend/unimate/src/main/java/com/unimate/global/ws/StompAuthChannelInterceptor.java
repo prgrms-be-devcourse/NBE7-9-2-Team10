@@ -3,7 +3,6 @@ package com.unimate.global.ws;
 import com.unimate.global.jwt.CustomUserPrincipal;
 import com.unimate.global.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -20,13 +19,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
 
     private static final String SESSION_PRINCIPAL_KEY = "WS_PRINCIPAL";
-
     private final JwtProvider jwtProvider;
 
     @Override
@@ -35,56 +32,35 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         StompCommand cmd = acc.getCommand();
         if (cmd == null) return message;
 
-        if (cmd == StompCommand.CONNECT) {
-            log.info("[WS][CONNECT-0] sid={} hasUser?={} nativeHeaders={}",
-                    acc.getSessionId(), acc.getUser() != null, acc.toNativeHeaderMap());
-        }
-
         // 이미 user가 있으면 그대로 통과
         if (acc.getUser() != null) {
             return message;
         }
 
         if (cmd == StompCommand.CONNECT) {
-            String authRaw = acc.getFirstNativeHeader("Authorization");
-            log.info("[WS][CONNECT-1] sid={} AuthorizationRaw={}", acc.getSessionId(), authRaw);
-
             String token = resolveTokenCaseInsensitive(acc);
             if (token != null) token = token.replaceAll("\\s+", "");
-            log.info("[WS][CONNECT-2] sid={} tokenPresent?={} tokenLen={}",
-                    acc.getSessionId(), token != null, token == null ? 0 : token.length());
 
             if (token == null || !jwtProvider.validateToken(token)) {
-                log.warn("[WS][CONNECT-FAIL] sid={} reason=invalid_or_missing_token → deny", acc.getSessionId());
-                throw new AccessDeniedException("UNAUTHORIZED_WS_CONNECT");
+                throw new AccessDeniedException("인증되지 않은 WebSocket 연결입니다.");
             }
 
             Long userId = jwtProvider.getUserIdFromToken(token);
-            String email  = jwtProvider.getEmailFromToken(token);
+            String email = jwtProvider.getEmailFromToken(token);
 
             CustomUserPrincipal principal = new CustomUserPrincipal(userId, email);
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
 
-            log.info("[WS][CONNECT-3] sid={} willSetUser name={} userId={} email={}",
-                    acc.getSessionId(), auth.getName(), userId, email);
-
-            // setUser + 세션 저장
             acc.setUser(auth);
             if (acc.getSessionAttributes() != null) {
                 acc.getSessionAttributes().put(SESSION_PRINCIPAL_KEY, auth);
             }
 
-            log.info("[WS][CONNECT-OK] sid={} name={} principalClass={}",
-                    acc.getSessionId(),
-                    acc.getUser() != null ? acc.getUser().getName() : "null",
-                    acc.getUser() != null ? acc.getUser().getClass().getSimpleName() : "null");
-
-            // 🔴 중요: 변경된 헤더로 새 메시지 리턴
+            // 변경된 헤더로 새 메시지 리턴
             return MessageBuilder.createMessage(message.getPayload(), acc.getMessageHeaders());
-
         } else {
-            // 비-CONNECT 프레임에서 복구
+            // 비-CONNECT 프레임에서 세션 복구
             Principal saved = null;
             if (acc.getSessionAttributes() != null) {
                 Object obj = acc.getSessionAttributes().get(SESSION_PRINCIPAL_KEY);
@@ -92,11 +68,9 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             }
             if (saved != null) {
                 acc.setUser(saved);
-                log.debug("[WS][RESTORE] sid={} cmd={} restoredName={}", acc.getSessionId(), cmd, saved.getName());
-                // 🔴 중요: 변경된 헤더로 새 메시지 리턴
+                // 변경된 헤더로 새 메시지 리턴
                 return MessageBuilder.createMessage(message.getPayload(), acc.getMessageHeaders());
             } else {
-                log.debug("[WS][NO-USER] sid={} cmd={} user missing (no saved principal)", acc.getSessionId(), cmd);
                 return message;
             }
         }
