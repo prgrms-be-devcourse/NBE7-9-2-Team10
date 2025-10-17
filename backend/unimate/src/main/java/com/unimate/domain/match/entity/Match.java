@@ -72,4 +72,13 @@ public class Match extends BaseEntity {
         this.matchType = matchType;
         this.matchStatus = matchStatus;
     }
+
+
+    public void upgradeToRequest(User requestSender, User requestReceiver) {
+        this.sender = requestSender;
+        this.receiver = requestReceiver;
+        this.matchType = MatchType.REQUEST;
+        // status는 PENDING으로 유지
+    }
+
 }

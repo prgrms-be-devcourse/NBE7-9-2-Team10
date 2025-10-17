@@ -183,26 +183,38 @@ public class MatchService {
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> ServiceException.notFound("상대방 사용자를 찾을 수 없습니다."));
 
-        // 중복 요청 방지
-        matchRepository.findBySenderIdAndReceiverIdAndMatchType(senderId, receiverId, MatchType.LIKE)
-                .ifPresent(match -> {
-                    throw ServiceException.conflict("이미 해당 사용자에게 '좋아요'를 보냈습니다.");
-                });
+        // 양방향으로 기존 '좋아요' 기록이 있는지 확인
+        Optional<Match> existingMatchOpt = matchRepository.findLikeBetweenUsers(senderId, receiverId);
 
-        Match newLike = Match.builder()
-                .sender(sender)
-                .receiver(receiver)
-                .matchType(MatchType.LIKE)
-                .matchStatus(MatchStatus.PENDING)
-                .build();
-        matchRepository.save(newLike);
+        if (existingMatchOpt.isPresent()) {
+            // 기존 기록이 있는 경우
+            Match existingMatch = existingMatchOpt.get();
 
-        // 상대방이 보낸 좋아요가 있는지 확인
-        Optional<Match> reciprocalLikeOpt = matchRepository.findBySenderIdAndReceiverIdAndMatchType(receiverId, senderId, MatchType.LIKE);
+            // 이미 요청(REQUEST) 단계이거나, 내가 이미 보낸 '좋아요'인 경우 중복 처리
+            if (existingMatch.getMatchType() == MatchType.REQUEST) {
+                throw ServiceException.conflict("이미 룸메이트 요청이 진행 중입니다.");
+            }
+            if (existingMatch.getSender().getId().equals(senderId)) {
+                throw ServiceException.conflict("이미 해당 사용자에게 '좋아요'를 보냈습니다.");
+            }
 
-        boolean isMatched = reciprocalLikeOpt.isPresent();
+            // 상호 '좋아요' 성립: 기존 Match의 타입을 REQUEST로 변경하고 sender/receiver를 교체
+            // 요청의 주체는 상호 '좋아요'를 완성시킨 현재 사용자(sender)가 됨
+            existingMatch.upgradeToRequest(sender, receiver);
+            return new LikeResponse(existingMatch.getId(), true); // isMatched=true는 '요청' 단계로 넘어갔음을 의미
 
-        return new LikeResponse(newLike.getId(), isMatched);
+        } else {
+            // 기존 기록이 없는 경우 (처음 '좋아요')
+            Match newLike = Match.builder()
+                    .sender(sender)
+                    .receiver(receiver)
+                    .matchType(MatchType.LIKE)
+                    .matchStatus(MatchStatus.PENDING)
+                    .build();
+            matchRepository.save(newLike);
+
+            return new LikeResponse(newLike.getId(), false); // 아직 상호 매칭(요청)은 아님
+        }
     }
 
     public void cancelLike(Long senderId, Long receiverId) {
@@ -211,5 +223,4 @@ public class MatchService {
 
         matchRepository.delete(like);
     }
-
 }

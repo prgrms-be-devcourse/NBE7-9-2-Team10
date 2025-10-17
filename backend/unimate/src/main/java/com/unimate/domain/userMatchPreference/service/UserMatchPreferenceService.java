@@ -1,5 +1,8 @@
 package com.unimate.domain.userMatchPreference.service;
 
+import com.unimate.domain.match.entity.MatchStatus;
+import com.unimate.domain.match.entity.MatchType;
+import com.unimate.domain.match.repository.MatchRepository;
 import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.UserRepository;
 import com.unimate.domain.userMatchPreference.dto.MatchPreferenceRequest;
@@ -8,6 +11,7 @@ import com.unimate.domain.userMatchPreference.entity.UserMatchPreference;
 import com.unimate.domain.userMatchPreference.repository.UserMatchPreferenceRepository;
 import com.unimate.domain.userProfile.entity.UserProfile;
 import com.unimate.domain.userProfile.repository.UserProfileRepository;
+import com.unimate.global.exception.ServiceException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +24,7 @@ public class UserMatchPreferenceService {
     private final UserMatchPreferenceRepository userMatchPreferenceRepository;
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
+    private final MatchRepository matchRepository;
 
     @Transactional
     public MatchPreferenceResponse updateMyMatchPreferences(Long userId, MatchPreferenceRequest requestDto) {
@@ -50,5 +55,17 @@ public class UserMatchPreferenceService {
 
         // responseDto로 변환하여 반환
         return MatchPreferenceResponse.fromEntity(updatedPreference);
+    }
+
+
+    // 룸메이트 매칭 비활성화
+    @Transactional
+    public void cancelMatching(Long userId) {
+
+        UserProfile userProfile = userProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> ServiceException.notFound("사용자 프로필을 찾을 수 없습니다."));
+        userProfile.updateMatchingStatus(false);
+
+        matchRepository.deleteUnconfirmedMatchesByUserId(userId, MatchType.REQUEST, MatchStatus.ACCEPTED);
     }
 }
