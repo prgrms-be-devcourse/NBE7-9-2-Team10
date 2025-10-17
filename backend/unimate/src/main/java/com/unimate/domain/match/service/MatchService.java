@@ -28,18 +28,18 @@ public class MatchService {
         Long receiverId = requestDto.getReceiverId();
 
         if (senderId.equals(receiverId)) {
-            throw ServiceException.badRequest("You cannot send a 'like' to yourself.");
+            throw ServiceException.badRequest("자기 자신에게 '좋아요'를 보낼 수 없습니다.");
         }
 
         User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> ServiceException.notFound("Sender not found."));
+                .orElseThrow(() -> ServiceException.notFound("전송하는 사용자를 찾을 수 없습니다."));
         User receiver = userRepository.findById(receiverId)
-                .orElseThrow(() -> ServiceException.notFound("Receiver not found."));
+                .orElseThrow(() -> ServiceException.notFound("상대방 사용자를 찾을 수 없습니다."));
 
         // 중복 요청 방지
         matchRepository.findBySenderIdAndReceiverIdAndMatchType(senderId, receiverId, MatchType.LIKE)
                 .ifPresent(match -> {
-                    throw ServiceException.conflict("You have already sent a 'like' to this user.");
+                    throw ServiceException.conflict("이미 해당 사용자에게 '좋아요'를 보냈습니다.");
                 });
 
         Match newLike = Match.builder()
@@ -60,7 +60,7 @@ public class MatchService {
 
     public void cancelLike(Long senderId, Long receiverId) {
         Match like = matchRepository.findBySenderIdAndReceiverIdAndMatchType(senderId, receiverId, MatchType.LIKE)
-                .orElseThrow(() -> ServiceException.notFound("The 'like' to be canceled does not exist."));
+                .orElseThrow(() -> ServiceException.notFound("취소할 '좋아요' 기록이 존재하지 않습니다."));
 
         matchRepository.delete(like);
     }
