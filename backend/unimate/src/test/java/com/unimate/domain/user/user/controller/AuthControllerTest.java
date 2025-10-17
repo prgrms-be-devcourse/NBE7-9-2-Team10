@@ -68,7 +68,7 @@ class AuthControllerTest {
                 testEmail,
                 testPassword,
                 "테스트유저",
-                Gender.MALE, // enum으로 변경
+                Gender.MALE,
                 LocalDate.of(2000, 1, 1),
                 "Test University"
         );

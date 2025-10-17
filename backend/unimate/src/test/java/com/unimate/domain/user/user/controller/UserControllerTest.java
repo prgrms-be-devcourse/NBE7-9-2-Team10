@@ -67,7 +67,7 @@ class UserControllerTest {
                 testEmail,
                 "password123!",
                 "홍길동",
-                Gender.MALE, // enum으로 변경
+                Gender.MALE,
                 LocalDate.of(2000, 5, 5),
                 "Test University"
         );
@@ -90,7 +90,7 @@ class UserControllerTest {
                 "unverified@university.ac.kr",
                 "password123!",
                 "미인증유저",
-                "FEMALE",
+                Gender.FEMALE,
                 LocalDate.of(1999, 3, 3),
                 "Test University"
         );
@@ -121,7 +121,7 @@ class UserControllerTest {
                 "dup@university.ac.kr",
                 "password123!",
                 "홍길동",
-                Gender.MALE, // enum으로 변경
+                Gender.MALE,
                 LocalDate.of(2000, 5, 5),
                 "Test University"
         );
