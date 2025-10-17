@@ -3,6 +3,8 @@ package com.unimate.domain.user.user.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unimate.domain.user.user.dto.UserSignupRequest;
 import com.unimate.domain.user.user.repository.UserRepository;
+import com.unimate.domain.verification.entity.Verification;
+import com.unimate.domain.verification.repository.VerificationRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,16 +31,39 @@ class UserControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private VerificationRepository verificationRepository;
+
+    private final String testEmail = "student@university.ac.kr";
+    private final String baseUrl = "/api/v1";
 
     @Test
-    @DisplayName("회원가입 성공 - 모든 필드가 정상적으로 저장된다")
-    void signup_success() throws Exception {
+    @DisplayName("회원가입 성공 - 이메일 인증 후 회원가입이 정상적으로 수행된다")
+    void signup_success_afterEmailVerification() throws Exception {
+        mockMvc.perform(post(baseUrl + "/email/request")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + testEmail + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("인증코드가 발송되었습니다."));
+
+        Verification verification = verificationRepository.findByEmail(testEmail)
+                .orElseThrow(() -> new IllegalStateException("인증 요청이 DB에 저장되지 않았습니다."));
+
+        mockMvc.perform(post(baseUrl + "/email/verify")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + testEmail + "\", \"code\":\"" + verification.getCode() + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("이메일 인증이 완료되었습니다."));
+
+        assertThat(verification.isVerified()).isTrue();
+
         UserSignupRequest request = new UserSignupRequest(
-                "newuser@example.com",
+                testEmail,
                 "password123!",
                 "홍길동",
                 "MALE",
@@ -46,21 +71,53 @@ class UserControllerTest {
                 "Test University"
         );
 
-        mockMvc.perform(post("/auth/signup")
+        mockMvc.perform(post(baseUrl + "/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("newuser@example.com"))
+                .andExpect(jsonPath("$.email").value(testEmail))
                 .andExpect(jsonPath("$.name").value("홍길동"));
 
-        assertThat(userRepository.findByEmail("newuser@example.com")).isPresent();
+        assertThat(userRepository.findByEmail(testEmail)).isPresent();
+        assertThat(userRepository.findByEmail(testEmail).get().getStudentVerified()).isTrue();
     }
 
     @Test
-    @DisplayName("회원가입 실패 - 중복 이메일 시 400 반환")
-    void signup_fail_duplicateEmail() throws Exception {
+    @DisplayName("회원가입 실패 - 이메일 인증 없이 시도 시 400 반환")
+    void signup_fail_withoutVerification() throws Exception {
         UserSignupRequest request = new UserSignupRequest(
-                "dup@example.com",
+                "unverified@university.ac.kr",
+                "password123!",
+                "미인증유저",
+                "FEMALE",
+                LocalDate.of(1999, 3, 3),
+                "Test University"
+        );
+
+        mockMvc.perform(post(baseUrl + "/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("이메일 인증이 필요합니다."));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패 - 이미 가입된 이메일일 경우 400 반환")
+    void signup_fail_duplicateEmail() throws Exception {
+        mockMvc.perform(post(baseUrl + "/email/request")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"dup@university.ac.kr\"}"))
+                .andExpect(status().isOk());
+
+        Verification verification = verificationRepository.findByEmail("dup@university.ac.kr")
+                .orElseThrow();
+        mockMvc.perform(post(baseUrl + "/email/verify")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"dup@university.ac.kr\", \"code\":\"" + verification.getCode() + "\"}"))
+                .andExpect(status().isOk());
+
+        UserSignupRequest request = new UserSignupRequest(
+                "dup@university.ac.kr",
                 "password123!",
                 "홍길동",
                 "MALE",
@@ -68,15 +125,15 @@ class UserControllerTest {
                 "Test University"
         );
 
-        mockMvc.perform(post("/auth/signup")
+        mockMvc.perform(post(baseUrl + "/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(post("/auth/signup")
+        mockMvc.perform(post(baseUrl + "/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("이미 가입된 이메일입니다."));
     }
 }
-

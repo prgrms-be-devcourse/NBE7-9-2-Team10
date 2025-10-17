@@ -29,7 +29,10 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/auth/**",
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/signup",
+                                "/api/v1/email/**",
+                                "/api/v1/auth/token/refresh",
                                 "/error",
                                 "/favicon.ico",
                                 "/h2-console/**",

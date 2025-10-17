@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unimate.domain.user.user.dto.LoginRequest;
 import com.unimate.domain.user.user.dto.UserSignupRequest;
 import com.unimate.domain.user.user.repository.UserRepository;
+import com.unimate.domain.verification.entity.Verification;
+import com.unimate.domain.verification.repository.VerificationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -31,51 +34,73 @@ class AuthControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private ObjectMapper objectMapper;
 
-    private final String baseUrl = "/auth";
+    @Autowired
+    private VerificationRepository verificationRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    private final String baseUrl = "/api/v1";
+    private final String testEmail = "test@university.ac.kr";
+    private final String testPassword = "password123!";
 
     @BeforeEach
     void setup() throws Exception {
+        mockMvc.perform(post(baseUrl + "/email/request")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + testEmail + "\"}"))
+                .andExpect(status().isOk());
+
+        Verification v = verificationRepository.findByEmail(testEmail)
+                .orElseThrow(() -> new IllegalStateException("인증 요청이 저장되지 않았습니다."));
+
+        mockMvc.perform(post(baseUrl + "/email/verify")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + testEmail + "\", \"code\":\"" + v.getCode() + "\"}"))
+                .andExpect(status().isOk());
+
+        assertThat(v.isVerified()).isTrue();
+
         UserSignupRequest signupRequest = new UserSignupRequest(
-                "test@example.com",
-                "password123!",
+                testEmail,
+                testPassword,
                 "테스트유저",
                 "MALE",
                 LocalDate.of(2000, 1, 1),
                 "Test University"
         );
 
-        mockMvc.perform(post(baseUrl + "/signup")
+        mockMvc.perform(post(baseUrl + "/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(signupRequest)))
                 .andExpect(status().isOk());
+
+        assertThat(userRepository.findByEmail(testEmail)).isPresent();
     }
 
     @Test
     @DisplayName("로그인 성공 시 AccessToken과 RefreshToken이 정상 발급된다")
     void login_success() throws Exception {
-        LoginRequest loginRequest = new LoginRequest("test@example.com", "password123!");
+        LoginRequest loginRequest = new LoginRequest(testEmail, testPassword);
 
-        mockMvc.perform(post(baseUrl + "/login")
+        mockMvc.perform(post(baseUrl + "/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
                 .andExpect(cookie().exists("refreshToken"))
                 .andExpect(jsonPath("$.accessToken").exists())
                 .andExpect(jsonPath("$.userId").exists())
-                .andExpect(jsonPath("$.email").value("test@example.com"));
+                .andExpect(jsonPath("$.email").value(testEmail));
     }
 
     @Test
     @DisplayName("로그인 실패 - 비밀번호 불일치 시 401 반환")
     void login_fail_wrongPassword() throws Exception {
-        LoginRequest loginRequest = new LoginRequest("test@example.com", "wrongPassword");
+        LoginRequest loginRequest = new LoginRequest(testEmail, "wrongPassword");
 
-        mockMvc.perform(post(baseUrl + "/login")
+        mockMvc.perform(post(baseUrl + "/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isUnauthorized());
@@ -84,9 +109,9 @@ class AuthControllerTest {
     @Test
     @DisplayName("RefreshToken으로 AccessToken 재발급 성공")
     void refreshToken_success() throws Exception {
-        LoginRequest loginRequest = new LoginRequest("test@example.com", "password123!");
+        LoginRequest loginRequest = new LoginRequest(testEmail, testPassword);
 
-        String refreshToken = mockMvc.perform(post(baseUrl + "/login")
+        String refreshToken = mockMvc.perform(post(baseUrl + "/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
@@ -95,7 +120,7 @@ class AuthControllerTest {
                 .getCookie("refreshToken")
                 .getValue();
 
-        mockMvc.perform(post(baseUrl + "/token/refresh")
+        mockMvc.perform(post(baseUrl + "/auth/token/refresh")
                         .cookie(new MockCookie("refreshToken", refreshToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").exists());
@@ -104,21 +129,24 @@ class AuthControllerTest {
     @Test
     @DisplayName("로그아웃 성공 시 RefreshToken 쿠키가 제거된다")
     void logout_success() throws Exception {
-        LoginRequest loginRequest = new LoginRequest("test@example.com", "password123!");
+        LoginRequest loginRequest = new LoginRequest(testEmail, testPassword);
 
-        String refreshToken = mockMvc.perform(post(baseUrl + "/login")
+        var loginResult = mockMvc.perform(post(baseUrl + "/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andReturn()
-                .getResponse()
-                .getCookie("refreshToken")
-                .getValue();
+                .andExpect(status().isOk())
+                .andReturn();
 
-        mockMvc.perform(post(baseUrl + "/logout")
+        String accessToken = objectMapper.readTree(loginResult.getResponse().getContentAsString())
+                .get("accessToken").asText();
+
+        String refreshToken = loginResult.getResponse().getCookie("refreshToken").getValue();
+
+        mockMvc.perform(post(baseUrl + "/auth/logout")
+                        .header("Authorization", "Bearer " + accessToken)
                         .cookie(new MockCookie("refreshToken", refreshToken)))
                 .andExpect(status().isOk())
                 .andExpect(cookie().maxAge("refreshToken", 0))
                 .andExpect(jsonPath("$.message").value("로그아웃이 완료되었습니다."));
     }
 }
-
