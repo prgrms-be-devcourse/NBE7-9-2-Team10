@@ -5,6 +5,7 @@ import com.unimate.domain.user.user.dto.UserSignupResponse;
 import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.UserRepository;
 import com.unimate.domain.verification.service.VerificationService;
+import com.unimate.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,10 @@ public class UserService {
 
     @Transactional
     public UserSignupResponse signup(UserSignupRequest req) {
+
+        if (userRepository.findByEmail(req.getEmail()).isPresent()) {
+            throw ServiceException.badRequest("이미 가입된 이메일입니다.");
+        }
 
         verificationService.assertVerifiedEmailOrThrow(req.getEmail());
 
