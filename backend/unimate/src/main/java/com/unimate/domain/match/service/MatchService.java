@@ -58,8 +58,8 @@ public class MatchService {
         return new LikeResponse(newLike.getId(), isMatched);
     }
 
-    public void cancelLike(Long receiverId, Long senderId) {
-        Match like = matchRepository.findBySenderIdAndReceiverIdAndMatchType(receiverId, senderId, MatchType.LIKE)
+    public void cancelLike(Long senderId, Long receiverId) {
+        Match like = matchRepository.findBySenderIdAndReceiverIdAndMatchType(senderId, receiverId, MatchType.LIKE)
                 .orElseThrow(() -> ServiceException.notFound("The 'like' to be canceled does not exist."));
 
         matchRepository.delete(like);

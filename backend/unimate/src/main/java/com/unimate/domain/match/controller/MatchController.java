@@ -31,7 +31,7 @@ public class MatchController {
             @PathVariable Long receiverId,
             @AuthenticationPrincipal CustomUserPrincipal user) {
 
-        matchService.cancelLike(receiverId, user.getUserId());
+        matchService.cancelLike(user.getUserId(), receiverId);
         return ResponseEntity.noContent().build();
     }
 }
