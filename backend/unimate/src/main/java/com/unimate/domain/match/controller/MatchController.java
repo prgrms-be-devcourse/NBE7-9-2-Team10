@@ -1,20 +1,23 @@
 package com.unimate.domain.match.controller;
 
+import com.unimate.domain.match.dto.LikeRequest;
+import com.unimate.domain.match.dto.LikeResponse;
 import com.unimate.domain.match.dto.MatchRecommendationDetailResponse;
 import com.unimate.domain.match.dto.MatchRecommendationResponse;
+import com.unimate.domain.match.dto.LikeRequest;
+import com.unimate.domain.match.dto.LikeResponse;
 import com.unimate.domain.match.service.MatchService;
 import com.unimate.global.jwt.CustomUserPrincipal;
+import jakarta.validation.Valid;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/matches")
@@ -57,5 +60,23 @@ public class MatchController {
         MatchRecommendationDetailResponse response =
                 matchService.getMatchRecommendationDetail(user.getEmail(), receiverId);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping
+    public ResponseEntity<LikeResponse> sendLike(
+            @Valid @RequestBody LikeRequest requestDto,
+            @AuthenticationPrincipal CustomUserPrincipal user) {
+
+        LikeResponse response = matchService.sendLike(requestDto, user.getUserId());
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{receiverId}")
+    public ResponseEntity<Void> cancelLike(
+            @PathVariable Long receiverId,
+            @AuthenticationPrincipal CustomUserPrincipal user) {
+
+        matchService.cancelLike(user.getUserId(), receiverId);
+        return ResponseEntity.noContent().build();
     }
 }
