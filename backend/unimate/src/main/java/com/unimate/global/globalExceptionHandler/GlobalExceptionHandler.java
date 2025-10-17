@@ -13,7 +13,7 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    //비지닌스 예외 (ServiceException)
+    //비지니스 예외 (ServiceException)
     @ExceptionHandler(ServiceException.class)
     public ResponseEntity<Map<String, Object>> handleServiceException(ServiceException ex) {
         log.warn("[ServiceException] {} - {}", ex.getErrorCode(), ex.getMessage());
