@@ -44,14 +44,14 @@ public class MatchService {
             LocalDate startDate,
             LocalDate endDate
     ) {
-        // 1️⃣ 현재 사용자 및 프로필 조회
+        // 현재 사용자 및 프로필 조회
         User sender = userRepository.findByEmail(senderEmail)
                 .orElseThrow(() -> ServiceException.notFound("사용자를 찾을 수 없습니다: " + senderEmail));
 
         UserProfile senderProfile = userProfileRepository.findByUserEmail(senderEmail)
                 .orElseThrow(() -> ServiceException.notFound("프로필을 찾을 수 없습니다: " + senderEmail));
 
-        // 2️⃣ 후보자 필터링 (쿼리 없이 Stream으로 처리)
+        // 후보자 필터링
         List<UserProfile> candidates = userProfileRepository.findAll().stream()
                 .filter(p -> p.getUser() != null)
                 .filter(p -> !Objects.equals(p.getUser().getEmail(), senderEmail)) // 본인 제외
@@ -63,7 +63,7 @@ public class MatchService {
                 .limit(10)
                 .collect(Collectors.toList());
 
-        // 3️⃣ 후보별 유사도 계산 및 DTO 변환
+        // 후보별 유사도 계산 및 DTO 변환
         List<MatchRecommendationResponse.MatchRecommendationItem> items = candidates.stream()
                 .map(p -> {
                     BigDecimal score = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderProfile, p));
@@ -136,7 +136,7 @@ public class MatchService {
                 matchStatus
         );
     }
-x
+
     private Integer calculateAge(LocalDate birthDate) {
         if (birthDate == null) return null;
         LocalDate today = LocalDate.now();
