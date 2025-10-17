@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <title>UniMate STOMP Test (Header Auth, Manual Reconnect)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- SockJS + STOMP -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+
+    <style>
+        body { font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 16px; background:#fafafa; }
+        label { display:inline-block; width: 120px; }
+        input { padding: 6px 8px; margin: 4px 0; width: min(800px, 70vw); }
+        button { padding: 6px 10px; margin-right: 6px; cursor: pointer; }
+        .row { display:flex; align-items:center; gap:8px; flex-wrap: wrap; }
+        #log { white-space: pre-wrap; border: 1px solid #ddd; padding: 8px; min-height: 240px; margin-top: 8px; background: #fff; overflow-y: auto; }
+        .badge { padding:2px 6px; border-radius: 6px; background:#eee; }
+        .ok { color:#0a0; }
+        .warn { color:#b80; }
+        .err { color:#c00; }
+        .muted { color:#666; }
+    </style>
+</head>
+
+<body>
+<h3>🧪 UniMate STOMP WebSocket Test (Header Auth / Manual)</h3>
+
+<div class="row">
+    <label for="token">Access Token</label>
+    <input id="token" placeholder="로그인 accessToken 붙여넣기" />
+    <span id="expLeft" class="badge">exp: -</span>
+    <button id="btnApplyToken">Apply Token</button>
+</div>
+
+<div class="row">
+    <label for="roomId">Chatroom ID</label>
+    <input id="roomId" value="1" inputmode="numeric" />
+</div>
+
+<div class="row" role="group" aria-label="연결/전송 버튼">
+    <button id="btnConnect" title="서버에 연결">Connect</button>
+    <button id="btnManualReconnect" title="(새 토큰 적용 후) 수동 재연결" disabled>Manual Reconnect</button>
+    <button id="btnSubscribe" disabled title="구독 시작">Subscribe</button>
+    <button id="btnSend" disabled title="메시지 전송">Send</button>
+    <button id="btnDisconnect" disabled title="연결 해제">Disconnect</button>
+</div>
+
+<!-- (선택) 리프레시 엔드포인트가 JSON으로 accessToken을 내려줄 때만 사용 -->
+<div class="row">
+    <button id="btnRefresh" title="POST /auth/token/refresh → accessToken 수신 후 적용" disabled>Refresh (optional)</button>
+    <span class="muted">* 리프레시가 쿠키만 갱신한다면 이 버튼은 쓰지 말고, 새 토큰을 붙여넣고 Manual Reconnect만 누르세요.</span>
+</div>
+
+<div id="log" aria-live="polite"></div>
+
+<script>
+    const $ = id => document.getElementById(id);
+    const log = (m, cls='') => {
+        const el = $("log");
+        el.innerHTML += (cls ? `<span class="${cls}">` : '') + m + (cls?'</span>':'') + "\n";
+        el.scrollTop = el.scrollHeight;
+    };
+
+    if (!window.SockJS) log("❌ SockJS not loaded", 'err');
+    if (!window.StompJs) log("❌ STOMP not loaded (StompJs undefined)", 'err');
+
+    // ===== Utilities: JWT exp 표시 =====
+    function b64urlDecode(s){
+        s = s.replace(/-/g,'+').replace(/_/g,'/');
+        const pad = s.length % 4 ? 4 - (s.length % 4) : 0;
+        return atob(s + '='.repeat(pad));
+    }
+    function getJwtExp(token){
+        try {
+            const parts = token.split('.');
+            if (parts.length !== 3) return null;
+            const payload = JSON.parse(b64urlDecode(parts[1]));
+            return payload.exp ?? null;
+        } catch { return null; }
+    }
+    function formatLeft(sec){
+        if (sec == null) return '-';
+        if (sec <= 0) return '만료됨';
+        const m = Math.floor(sec/60), s = sec%60;
+        return `${m}분 ${s}초 남음`;
+    }
+    const tryParseJson = (s) => { try { return JSON.parse(s); } catch { return null; } };
+
+    // ===== Global state =====
+    let client = null;
+    let subs = {};
+    let currentAuthHeader = '';      // "Bearer xxx"
+    let lastSubscribedRoomId = null; // 재연결 시 재구독용
+    let expTicker = null;
+
+    function setButtonsByState(connected){
+        $("btnSubscribe").disabled = !connected;
+        $("btnSend").disabled = !connected || isExpired();
+        $("btnDisconnect").disabled = !connected;
+        $("btnManualReconnect").disabled = false; // 새 토큰 적용 후 눌러 재연결
+        $("btnRefresh").disabled = false;         // 선택 기능
+    }
+
+    function isExpired(){
+        if (!currentAuthHeader?.startsWith('Bearer ')) return false; // 못판별 → 가드 해제
+        const token = currentAuthHeader.slice(7);
+        const exp = getJwtExp(token);
+        if (!exp) return false; // exp 없으면 판별 불가
+        const now = Math.floor(Date.now()/1000);
+        return exp <= now;
+    }
+
+    function startExpTicker(){
+        if (expTicker) clearInterval(expTicker);
+        const badge = $("expLeft");
+        expTicker = setInterval(()=>{
+            if (!currentAuthHeader?.startsWith('Bearer ')) {
+                badge.textContent = 'exp: -';
+                return;
+            }
+            const token = currentAuthHeader.slice(7);
+            const exp = getJwtExp(token);
+            if (!exp) { badge.textContent = 'exp: n/a'; return; }
+            const left = exp - Math.floor(Date.now()/1000);
+            badge.textContent = 'exp: ' + formatLeft(left);
+            $("btnSend").disabled = isExpired() || !client?.connected;
+        }, 1000);
+    }
+
+    // ===== STOMP client =====
+    function createClient(){
+        const sock = new SockJS("/ws-stomp"); // 서버 엔드포인트
+        const cfg = {
+            webSocketFactory: () => sock,
+            connectHeaders: currentAuthHeader ? { Authorization: currentAuthHeader } : {},
+            debug: (s) => log("[STOMP] " + s),
+            reconnectDelay: 0, // 자동 재연결 X (완전 수동)
+            onConnect: () => {
+                log("✅ STOMP connected", 'ok');
+                setButtonsByState(true);
+                // 재구독
+                if (lastSubscribedRoomId) {
+                    try { doSubscribe(lastSubscribedRoomId); } catch(e) {}
+                }
+            },
+            onStompError: (f) => {
+                log("❌ STOMP error: " + (f.headers?.message || ""), 'err');
+                if (f.body) log(f.body, 'err');
+                setButtonsByState(false);
+            },
+            onWebSocketClose: (evt) => {
+                log(`⚠️ WS CLOSE: code=${evt.code} reason=${evt.reason||''}`, 'warn');
+                setButtonsByState(false);
+            }
+        };
+        return new StompJs.Client(cfg);
+    }
+
+    async function activate(){
+        if (client?.active) return;
+        client = createClient();
+        client.activate();
+        log("Connecting via SockJS /ws-stomp ...");
+    }
+
+    async function deactivate(){
+        try {
+            subs.room?.unsubscribe();
+            subs.ack?.unsubscribe();
+            subs.errors?.unsubscribe();
+        } catch(e){}
+        subs = {};
+        try {
+            await client?.deactivate();
+        } catch(e){}
+        setButtonsByState(false);
+        log("🔌 Disconnected");
+    }
+
+    function pretty(msgBody){
+        const obj = tryParseJson(msgBody);
+        return obj ? JSON.stringify(obj, null, 2) : msgBody;
+    }
+
+    function doSubscribe(roomId){
+        if (!client || !client.connected) {
+            log("⚠️ 아직 연결 전입니다. 먼저 Connect.", 'warn');
+            return;
+        }
+        // 기존 구독 해제
+        try { subs.room?.unsubscribe(); } catch(e){}
+        try { subs.ack?.unsubscribe(); } catch(e){}
+        try { subs.errors?.unsubscribe(); } catch(e){}
+
+        // 1) 방 메시지
+        const topicRoom = `/sub/chatroom.${roomId}`;
+        subs.room = client.subscribe(topicRoom, (msg) => log("📩 ROOM\n" + pretty(msg.body)));
+        log("✅ Subscribed " + topicRoom + " (id=" + subs.room.id + ")", 'ok');
+
+        // 2) ACK
+        subs.ack = client.subscribe("/user/queue/chat.ack", (msg) => log("✅ ACK\n" + pretty(msg.body), 'ok'));
+        log("✅ Subscribed /user/queue/chat.ack (id=" + subs.ack.id + ")", 'ok');
+
+        // 3) ERROR (추가)
+        subs.errors = client.subscribe("/user/queue/chat.errors", (msg) => log("⛔ WS ERROR\n" + pretty(msg.body), 'err'));
+        log("✅ Subscribed /user/queue/chat.errors (id=" + subs.errors.id + ")", 'ok');
+
+        lastSubscribedRoomId = roomId;
+    }
+
+    function doSend(roomId){
+        if (!client || !client.connected) {
+            log("⚠️ 아직 연결 전입니다. 먼저 Connect.", 'warn');
+            return;
+        }
+        if (isExpired()) {
+            log("⛔ 토큰 만료됨. 새 토큰 적용 후 Manual Reconnect를 눌러주세요.", 'err');
+            return;
+        }
+        const payload = {
+            chatroomId: Number(roomId),
+            clientMessageId: "cmid-" + Date.now(),
+            content: "hello via websocket"
+        };
+        client.publish({ destination: "/pub/chat.send", body: JSON.stringify(payload) });
+        log("📤 Sent " + JSON.stringify(payload));
+    }
+
+    // ===== UI bindings =====
+    $("btnApplyToken").onclick = () => {
+        let raw = $("token").value || '';
+        raw = raw.replace(/\s+/g, ''); // 모든 공백 제거
+        const parts = raw.split('.');
+        if (parts.length !== 3) {
+            log("⛔ 잘못된 토큰 형식(JWT 아님). 점(.) 2개가 포함되어야 합니다.", 'err');
+            return;
+        }
+        $("token").value = raw; // 정제값 반영
+        currentAuthHeader = 'Bearer ' + raw;
+        startExpTicker();
+        log("🔑 Token applied (header mode, whitespace stripped)");
+        $("btnManualReconnect").disabled = false;
+        $("btnRefresh").disabled = false;
+    };
+
+    $("btnConnect").onclick = async () => {
+        await activate();
+    };
+
+    $("btnManualReconnect").onclick = async () => {
+        // 필요 시, 먼저 /auth/token/refresh 에서 새 accessToken 받아 적용 후 재연결할 수도 있음.
+        await deactivate();     // deactivate()
+        await activate();       // activate()
+    };
+
+    $("btnSubscribe").onclick = () => {
+        const roomId = $("roomId").value.trim();
+        doSubscribe(roomId);
+    };
+
+    $("btnSend").onclick = () => {
+        const roomId = $("roomId").value.trim();
+        doSend(roomId);
+    };
+
+    $("btnDisconnect").onclick = async () => {
+        await deactivate();
+    };
+
+    // (선택) Refresh 버튼: 서버가 JSON {accessToken}을 리턴할 때만 사용하세요.
+    $("btnRefresh").onclick = async () => {
+        try {
+            const res = await fetch('/auth/token/refresh', { method:'POST', credentials:'include' });
+            if (!res.ok) {
+                log(`⛔ Refresh 실패: HTTP ${res.status}`, 'err');
+                return;
+            }
+            const data = await res.json();
+            if (!data?.accessToken) {
+                log("⛔ Refresh 응답에 accessToken 없음", 'err');
+                return;
+            }
+            $("token").value = (data.accessToken + '').replace(/\s+/g,'');
+            $("btnApplyToken").click();
+            log("🔄 새 accessToken 적용 완료. Manual Reconnect를 눌러 재연결하세요.", 'ok');
+        } catch (e) {
+            log("⛔ Refresh 요청 중 오류: " + e.message, 'err');
+        }
+    };
+
+    // 초기 상태
+    setButtonsByState(false);
+    log("페이지 로드 완료. 절차: [Access Token 붙여넣기 → Apply Token] → [Connect] → [Subscribe] → (만료 후) [Manual Reconnect] → [Send]");
+</script>
+</body>
+</html>

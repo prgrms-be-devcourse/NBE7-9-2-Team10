@@ -1,0 +1,24 @@
+{
+  "name": "nbe7-9-2-team10",
+  "version": "1.0.0",
+  "description": "대학생들을 위한 **안전하고 간편한 룸메이트 매칭 서비스**",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prgrms-be-devcourse/NBE7-9-2-Team10.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/prgrms-be-devcourse/NBE7-9-2-Team10/issues"
+  },
+  "homepage": "https://github.com/prgrms-be-devcourse/NBE7-9-2-Team10#readme",
+  "dependencies": {
+    "@stomp/stompjs": "^7.2.1",
+    "ws": "^8.18.3"
+  }
+}
