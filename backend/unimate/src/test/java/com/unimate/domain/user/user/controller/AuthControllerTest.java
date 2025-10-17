@@ -42,7 +42,7 @@ class AuthControllerTest {
     @Autowired
     private UserRepository userRepository;
 
-    private final String baseUrl = "/auth";
+    private final String baseUrl = "/api/v1";
     private final String testEmail = "test@university.ac.kr";
     private final String testPassword = "password123!";
 
@@ -72,7 +72,7 @@ class AuthControllerTest {
                 "Test University"
         );
 
-        mockMvc.perform(post(baseUrl + "/signup")
+        mockMvc.perform(post(baseUrl + "/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(signupRequest)))
                 .andExpect(status().isOk());
@@ -85,7 +85,7 @@ class AuthControllerTest {
     void login_success() throws Exception {
         LoginRequest loginRequest = new LoginRequest(testEmail, testPassword);
 
-        mockMvc.perform(post(baseUrl + "/login")
+        mockMvc.perform(post(baseUrl + "/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
@@ -100,7 +100,7 @@ class AuthControllerTest {
     void login_fail_wrongPassword() throws Exception {
         LoginRequest loginRequest = new LoginRequest(testEmail, "wrongPassword");
 
-        mockMvc.perform(post(baseUrl + "/login")
+        mockMvc.perform(post(baseUrl + "/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isUnauthorized());
@@ -111,7 +111,7 @@ class AuthControllerTest {
     void refreshToken_success() throws Exception {
         LoginRequest loginRequest = new LoginRequest(testEmail, testPassword);
 
-        String refreshToken = mockMvc.perform(post(baseUrl + "/login")
+        String refreshToken = mockMvc.perform(post(baseUrl + "/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
@@ -120,7 +120,7 @@ class AuthControllerTest {
                 .getCookie("refreshToken")
                 .getValue();
 
-        mockMvc.perform(post(baseUrl + "/token/refresh")
+        mockMvc.perform(post(baseUrl + "/auth/token/refresh")
                         .cookie(new MockCookie("refreshToken", refreshToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").exists());
@@ -131,15 +131,19 @@ class AuthControllerTest {
     void logout_success() throws Exception {
         LoginRequest loginRequest = new LoginRequest(testEmail, testPassword);
 
-        String refreshToken = mockMvc.perform(post(baseUrl + "/login")
+        var loginResult = mockMvc.perform(post(baseUrl + "/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andReturn()
-                .getResponse()
-                .getCookie("refreshToken")
-                .getValue();
+                .andExpect(status().isOk())
+                .andReturn();
 
-        mockMvc.perform(post(baseUrl + "/logout")
+        String accessToken = objectMapper.readTree(loginResult.getResponse().getContentAsString())
+                .get("accessToken").asText();
+
+        String refreshToken = loginResult.getResponse().getCookie("refreshToken").getValue();
+
+        mockMvc.perform(post(baseUrl + "/auth/logout")
+                        .header("Authorization", "Bearer " + accessToken)
                         .cookie(new MockCookie("refreshToken", refreshToken)))
                 .andExpect(status().isOk())
                 .andExpect(cookie().maxAge("refreshToken", 0))

@@ -38,7 +38,10 @@ public class SecurityConfig {
                 // HTTP 요청 인가 규칙 설정
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/auth/**",
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/signup",
+                                "/api/v1/email/**",
+                                "/api/v1/auth/token/refresh",
                                 "/error",
                                 "/favicon.ico",
                                 "/h2-console/**"
