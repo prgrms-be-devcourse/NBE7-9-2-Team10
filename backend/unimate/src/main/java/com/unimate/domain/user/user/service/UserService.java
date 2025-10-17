@@ -4,29 +4,38 @@ import com.unimate.domain.user.user.dto.UserSignupRequest;
 import com.unimate.domain.user.user.dto.UserSignupResponse;
 import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.UserRepository;
-import com.unimate.global.exception.ServiceException;
+import com.unimate.domain.verification.service.VerificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final VerificationService verificationService;
 
-    public UserSignupResponse signup(UserSignupRequest request) {
-        if(userRepository.existsByEmail(request.getEmail())){
-            throw ServiceException.badRequest("이미 존재하는 이메일 입니다.");
-        }
+    @Transactional
+    public UserSignupResponse signup(UserSignupRequest req) {
 
-        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        verificationService.assertVerifiedEmailOrThrow(req.getEmail());
 
-        User newUser = new User(request.getName(), request.getEmail(), encodedPassword, request.getGender(), request.getBirthDate(), request.getUniversity());
-        userRepository.save(newUser);
+        User user = new User(
+                req.getName(),
+                req.getEmail(),
+                passwordEncoder.encode(req.getPassword()),
+                req.getGender(),
+                req.getBirthDate(),
+                req.getUniversity()
+        );
+        user.setStudentVerified(true);
 
-        return new UserSignupResponse(newUser.getId(), newUser.getEmail(), newUser.getName());
+        userRepository.save(user);
+
+        verificationService.consumeVerification(req.getEmail());
+
+        return new UserSignupResponse(user.getId(), user.getEmail(), user.getName());
     }
-
-
 }
