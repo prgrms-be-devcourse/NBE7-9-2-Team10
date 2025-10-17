@@ -8,6 +8,7 @@ import com.unimate.domain.match.entity.MatchType;
 import com.unimate.domain.match.repository.MatchRepository;
 import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.UserRepository;
+import com.unimate.global.exception.ServiceException;
 import com.unimate.global.jwt.CustomUserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,18 +28,18 @@ public class MatchService {
         Long receiverId = requestDto.getReceiverId();
 
         if (senderId.equals(receiverId)) {
-            throw new IllegalArgumentException("You cannot send a 'like' to yourself.");
+            throw ServiceException.badRequest("You cannot send a 'like' to yourself.");
         }
 
         User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new IllegalArgumentException("Sender not found."));
+                .orElseThrow(() -> ServiceException.notFound("Sender not found."));
         User receiver = userRepository.findById(receiverId)
-                .orElseThrow(() -> new IllegalArgumentException("Receiver not found."));
+                .orElseThrow(() -> ServiceException.notFound("Receiver not found."));
 
         // 중복 요청 방지
         matchRepository.findBySenderIdAndReceiverIdAndMatchType(senderId, receiverId, MatchType.LIKE)
                 .ifPresent(match -> {
-                    throw new IllegalStateException("You have already sent a 'like' to this user.");
+                    throw ServiceException.conflict("You have already sent a 'like' to this user.");
                 });
 
         Match newLike = Match.builder()
@@ -55,5 +56,12 @@ public class MatchService {
         boolean isMatched = reciprocalLikeOpt.isPresent();
 
         return new LikeResponse(newLike.getId(), isMatched);
+    }
+
+    public void cancelLike(Long receiverId, Long senderId) {
+        Match like = matchRepository.findBySenderIdAndReceiverIdAndMatchType(receiverId, senderId, MatchType.LIKE)
+                .orElseThrow(() -> ServiceException.notFound("The 'like' to be canceled does not exist."));
+
+        matchRepository.delete(like);
     }
 }
