@@ -2,6 +2,7 @@ package com.unimate.domain.userProfile.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.unimate.domain.user.user.entity.Gender;
 import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.UserRepository;
 import com.unimate.domain.userProfile.dto.ProfileCreateRequest;
@@ -53,7 +54,7 @@ public class UserProfileControllerTest {
                 "테스트유저",
                 email,
                 passwordEncoder.encode(rawPassword),
-                "male",
+                Gender.MALE, // enum으로 변경
                 LocalDate.of(1991,1,1),
                 "서울대");
         userRepository.save(u);

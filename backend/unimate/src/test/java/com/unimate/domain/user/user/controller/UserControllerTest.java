@@ -2,6 +2,7 @@ package com.unimate.domain.user.user.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unimate.domain.user.user.dto.UserSignupRequest;
+import com.unimate.domain.user.user.entity.Gender;
 import com.unimate.domain.user.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,7 +42,7 @@ class UserControllerTest {
                 "newuser@example.com",
                 "password123!",
                 "홍길동",
-                "MALE",
+                Gender.MALE, // enum으로 변경
                 LocalDate.of(2000, 5, 5),
                 "Test University"
         );
@@ -63,7 +64,7 @@ class UserControllerTest {
                 "dup@example.com",
                 "password123!",
                 "홍길동",
-                "MALE",
+                Gender.MALE, // enum으로 변경
                 LocalDate.of(2000, 5, 5),
                 "Test University"
         );

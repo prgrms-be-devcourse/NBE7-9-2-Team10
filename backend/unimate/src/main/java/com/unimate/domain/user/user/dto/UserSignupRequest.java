@@ -1,5 +1,6 @@
 package com.unimate.domain.user.user.dto;
 
+import com.unimate.domain.user.user.entity.Gender;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,7 +14,7 @@ public class UserSignupRequest {
     private String email;
     private String password;
     private String name;
-    private String gender;
+    private Gender gender; // 변경
     private LocalDate birthDate;
     private String university;
 }
