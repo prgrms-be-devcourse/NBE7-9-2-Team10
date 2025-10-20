@@ -9,12 +9,17 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface MatchRepository extends JpaRepository<Match, Long> {
-
+    // 보낸 사람과 받는 사람 기준으로 매칭 기록 찾기
     Optional<Match> findBySenderIdAndReceiverId(Long senderId, Long receiverId);
+
+    // 사용자 기준으로 모든 매칭 기록 찾기
+    @Query("SELECT m FROM Match m WHERE m.sender.id = :userId OR m.receiver.id = :userId")
+    List<Match> findBySenderIdOrReceiverId(@Param("userId") Long userId);
 
     // 보낸 사람과 받는 사람 기준으로 좋아요 기록 찾기
     Optional<Match> findBySenderIdAndReceiverIdAndMatchType(Long senderId, Long receiverId, MatchType matchType);

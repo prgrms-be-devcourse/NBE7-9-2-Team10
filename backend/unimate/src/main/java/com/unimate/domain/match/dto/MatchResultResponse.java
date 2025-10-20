@@ -1,14 +1,15 @@
 package com.unimate.domain.match.dto;
 
-import com.unimate.domain.match.entity.MatchStatus;
-import com.unimate.domain.match.entity.MatchType;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import com.unimate.domain.match.entity.MatchStatus;
+import com.unimate.domain.match.entity.MatchType;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
@@ -22,7 +23,9 @@ public class MatchResultResponse {
     public static class MatchResultItem {
         private Long id;
         private Long senderId;
+        private String senderName;
         private Long receiverId;
+        private String receiverName;
         private MatchType matchType;
         private MatchStatus matchStatus;
         private BigDecimal preferenceScore;
