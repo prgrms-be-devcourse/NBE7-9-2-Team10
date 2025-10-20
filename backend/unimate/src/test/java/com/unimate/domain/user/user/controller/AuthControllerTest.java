@@ -22,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -150,25 +149,6 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(cookie().maxAge("refreshToken", 0))
                 .andExpect(jsonPath("$.message").value("로그아웃이 완료되었습니다."));
-    }
-
-    @Test
-    @DisplayName("AccessToken으로 현재 사용자 정보 조회 성공")
-    void me_success() throws Exception {
-        LoginRequest loginRequest = new LoginRequest(testEmail, testPassword);
-
-        var loginResult = mockMvc.perform(post(baseUrl + "/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginRequest)))
-                .andReturn();
-
-        String accessToken = objectMapper.readTree(loginResult.getResponse().getContentAsString())
-                .get("accessToken").asText();
-
-        mockMvc.perform(get(baseUrl + "/auth/me")
-                        .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value(testEmail));
     }
 
     @Test

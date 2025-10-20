@@ -37,7 +37,11 @@ public class VerificationService {
                         () -> verificationRepository.save(new Verification(email, code, expiresAt))
                 );
 
-        emailService.sendVerificationEmail(email, code);
+        // emailService.sendVerificationEmail(email, code);
+        /*
+        이메일 실제로 보내는 부분 임시 비활성화
+        실제로 이메일이 가지 않지만 모든 기능 동일하게 작동합니다
+        */
         log.info("[인증코드 발송 완료] email={}, code={}", email, code);
     }
 

@@ -1,25 +1,29 @@
 package com.unimate.domain.user.user.controller;
 
-import com.unimate.domain.user.user.dto.*;
+import com.unimate.domain.user.user.dto.LoginRequest;
+import com.unimate.domain.user.user.dto.LoginResponse;
+import com.unimate.domain.user.user.dto.UserSignupRequest;
+import com.unimate.domain.user.user.dto.UserSignupResponse;
 import com.unimate.domain.user.user.service.AuthService;
-import com.unimate.global.jwt.CustomUserPrincipal;
+import com.unimate.domain.user.user.service.UserService;
+import com.unimate.global.auth.dto.AccessTokenResponse;
+import com.unimate.global.auth.dto.MessageResponse;
 import com.unimate.global.util.CookieUtils;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.validation.Valid;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-@Validated
 public class AuthController {
 
     private final AuthService authService;
+    private final UserService userService;
 
     @Value("${auth.cookie.secure:false}")
     private boolean cookieSecure;
@@ -27,9 +31,14 @@ public class AuthController {
     @Value("${auth.cookie.same-site:Lax}")
     private String cookieSameSite;
 
+    @PostMapping("/signup")
+    public ResponseEntity<UserSignupResponse> signup(@Valid @RequestBody UserSignupRequest request) {
+        return ResponseEntity.ok(userService.signup(request));
+    }
+
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        AuthService.AuthTokens tokens = authService.login(request);
+        var tokens = authService.login(request);
 
         ResponseCookie cookie = CookieUtils.httpOnlyCookie(
                 "refreshToken",
@@ -41,12 +50,7 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(new LoginResponse(tokens.getUserId(), tokens.getEmail(), tokens.getAccessToken()));
-    }
-
-    @GetMapping("/me")
-    public ResponseEntity<UserMeResponse> getUserInfo(@AuthenticationPrincipal CustomUserPrincipal user) {
-        return ResponseEntity.ok(new UserMeResponse(user.getUserId(), user.getEmail()));
+                .body(new LoginResponse(tokens.getSubjectId(), tokens.getEmail(), tokens.getAccessToken()));
     }
 
     @PostMapping("/token/refresh")
@@ -62,7 +66,6 @@ public class AuthController {
             @CookieValue(name = "refreshToken", required = false) String refreshToken
     ) {
         authService.logout(refreshToken);
-
         ResponseCookie expired = CookieUtils.expireCookie("refreshToken", cookieSecure, cookieSameSite);
 
         return ResponseEntity.ok()

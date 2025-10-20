@@ -2,7 +2,6 @@ package com.unimate.domain.user.user.entity;
 
 import com.unimate.global.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -10,31 +9,43 @@ import java.time.LocalDate;
 
 @Entity
 @Getter
+@NoArgsConstructor
 @Table(name = "users")
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseEntity {
-    private String name;
+
+    @Column(nullable = false, unique = true, length = 100)
     private String email;
+
+    @Column(nullable = false, length = 100)
     private String password;
 
+    @Column(nullable = false, length = 50)
+    private String name;
+
     @Enumerated(EnumType.STRING)
-    @Column(name = "gender", length = 20)
-    private Gender gender; // 기존 String에서 enum Gender로 변경
+    @Column(nullable = false, length = 10)
+    private Gender gender;
+
+    @Column(nullable = false)
     private LocalDate birthDate;
-    private Boolean studentVerified;
+
+    @Column(nullable = false, length = 100)
     private String university;
 
-    public User(String name, String email, String password, Gender gender, LocalDate birthDate, String university) {
+    @Column(nullable = false)
+    private Boolean studentVerified = false;
+
+    public User(String name, String email, String password,
+                Gender gender, LocalDate birthDate, String university) {
         this.name = name;
         this.email = email;
         this.password = password;
         this.gender = gender;
         this.birthDate = birthDate;
-        this.studentVerified = false;
         this.university = university;
     }
 
-    public void setStudentVerified(boolean verified) {
-        this.studentVerified = verified;
+    public void verifyStudent() {
+        this.studentVerified = true;
     }
 }
