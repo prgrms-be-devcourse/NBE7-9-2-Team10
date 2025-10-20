@@ -49,21 +49,26 @@ class UserAuthControllerTest {
 
     @BeforeEach
     void setup() throws Exception {
+        // 이메일 인증 요청
         mockMvc.perform(post(baseUrl + "/email/request")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"" + testEmail + "\"}"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("인증코드가 발송되었습니다."));
 
+        // 인증 코드 확인
         Verification v = verificationRepository.findByEmail(testEmail)
                 .orElseThrow(() -> new IllegalStateException("인증 요청이 저장되지 않았습니다."));
 
         mockMvc.perform(post(baseUrl + "/email/verify")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"" + testEmail + "\", \"code\":\"" + v.getCode() + "\"}"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("이메일 인증이 완료되었습니다."));
 
         assertThat(v.isVerified()).isTrue();
 
+        // 회원가입
         UserSignupRequest signupRequest = new UserSignupRequest(
                 testEmail,
                 testPassword,
@@ -76,9 +81,48 @@ class UserAuthControllerTest {
         mockMvc.perform(post(baseUrl + "/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(signupRequest)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(testEmail));
 
         assertThat(userRepository.findByEmail(testEmail)).isPresent();
+    }
+
+    @Test
+    @DisplayName("회원가입 실패 - 이메일 인증 없이 시도 시 400 반환")
+    void signup_fail_withoutVerification() throws Exception {
+        UserSignupRequest request = new UserSignupRequest(
+                "unverified@university.ac.kr",
+                "password123!",
+                "미인증유저",
+                Gender.FEMALE,
+                LocalDate.of(1999, 3, 3),
+                "Test University"
+        );
+
+        mockMvc.perform(post(baseUrl + "/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("이메일 인증이 필요합니다."));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패 - 이미 가입된 이메일일 경우 400 반환")
+    void signup_fail_duplicateEmail() throws Exception {
+        UserSignupRequest request = new UserSignupRequest(
+                testEmail,
+                testPassword,
+                "홍길동",
+                Gender.MALE,
+                LocalDate.of(2000, 5, 5),
+                "Test University"
+        );
+
+        mockMvc.perform(post(baseUrl + "/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("이미 가입된 이메일입니다."));
     }
 
     @Test
@@ -128,6 +172,15 @@ class UserAuthControllerTest {
     }
 
     @Test
+    @DisplayName("RefreshToken이 유효하지 않으면 재발급 실패")
+    void refresh_fail_invalidToken() throws Exception {
+        mockMvc.perform(post(baseUrl + "/auth/token/refresh")
+                        .cookie(new MockCookie("refreshToken", "invalid-token")))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("유효하지 않은 리프레시 토큰입니다."));
+    }
+
+    @Test
     @DisplayName("로그아웃 성공 시 RefreshToken 쿠키가 제거된다")
     void logout_success() throws Exception {
         UserLoginRequest loginRequest = new UserLoginRequest(testEmail, testPassword);
@@ -150,14 +203,4 @@ class UserAuthControllerTest {
                 .andExpect(cookie().maxAge("refreshToken", 0))
                 .andExpect(jsonPath("$.message").value("로그아웃이 완료되었습니다."));
     }
-
-    @Test
-    @DisplayName("RefreshToken이 유효하지 않으면 재발급 실패")
-    void refresh_fail_invalidToken() throws Exception {
-        mockMvc.perform(post(baseUrl + "/auth/token/refresh")
-                        .cookie(new MockCookie("refreshToken", "invalid-token")))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("유효하지 않은 리프레시 토큰입니다."));
-    }
-
 }
