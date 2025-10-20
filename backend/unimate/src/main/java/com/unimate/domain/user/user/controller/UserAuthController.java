@@ -5,7 +5,6 @@ import com.unimate.domain.user.user.dto.UserLoginResponse;
 import com.unimate.domain.user.user.dto.UserSignupRequest;
 import com.unimate.domain.user.user.dto.UserSignupResponse;
 import com.unimate.domain.user.user.service.UserAuthService;
-import com.unimate.domain.user.user.service.UserService;
 import com.unimate.global.auth.dto.AccessTokenResponse;
 import com.unimate.global.auth.dto.MessageResponse;
 import com.unimate.global.util.CookieUtils;
@@ -22,8 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/auth")
 public class UserAuthController {
 
-    private final UserAuthService authService;
-    private final UserService userService;
+    private final UserAuthService userAuthService;
 
     @Value("${auth.cookie.secure:false}")
     private boolean cookieSecure;
@@ -33,12 +31,12 @@ public class UserAuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<UserSignupResponse> signup(@Valid @RequestBody UserSignupRequest request) {
-        return ResponseEntity.ok(userService.signup(request));
+        return ResponseEntity.ok(userAuthService.signup(request));
     }
 
     @PostMapping("/login")
     public ResponseEntity<UserLoginResponse> login(@Valid @RequestBody UserLoginRequest request) {
-        var tokens = authService.login(request);
+        var tokens = userAuthService.login(request);
 
         ResponseCookie cookie = CookieUtils.httpOnlyCookie(
                 "refreshToken",
@@ -57,7 +55,7 @@ public class UserAuthController {
     public ResponseEntity<AccessTokenResponse> refreshToken(
             @CookieValue(name = "refreshToken", required = false) String refreshToken
     ) {
-        String newAccessToken = authService.reissueAccessToken(refreshToken);
+        String newAccessToken = userAuthService.reissueAccessToken(refreshToken);
         return ResponseEntity.ok(new AccessTokenResponse(newAccessToken));
     }
 
@@ -65,7 +63,7 @@ public class UserAuthController {
     public ResponseEntity<MessageResponse> logout(
             @CookieValue(name = "refreshToken", required = false) String refreshToken
     ) {
-        authService.logout(refreshToken);
+        userAuthService.logout(refreshToken);
         ResponseCookie expired = CookieUtils.expireCookie("refreshToken", cookieSecure, cookieSameSite);
 
         return ResponseEntity.ok()
