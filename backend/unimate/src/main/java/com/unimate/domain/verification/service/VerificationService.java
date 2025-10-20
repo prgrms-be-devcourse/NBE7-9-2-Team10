@@ -4,13 +4,14 @@ import com.unimate.domain.verification.entity.Verification;
 import com.unimate.domain.verification.repository.VerificationRepository;
 import com.unimate.global.exception.ServiceException;
 import com.unimate.global.mail.EmailService;
+import com.unimate.global.util.EmailValidator;
+import com.unimate.global.util.VerificationCodeGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Service
@@ -19,11 +20,15 @@ public class VerificationService {
 
     private final VerificationRepository verificationRepository;
     private final EmailService emailService;
+    private final VerificationCodeGenerator codeGenerator;
 
     @Transactional
     public void sendVerificationCode(String email) {
-        validateSchoolEmail(email);
-        String code = String.format("%06d", ThreadLocalRandom.current().nextInt(0, 1_000_000));
+        if (!EmailValidator.isSchoolEmail(email)) {
+            throw ServiceException.badRequest("학교 이메일만 인증 가능합니다.");
+        }
+
+        String code = codeGenerator.generate6Digits();
         LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(10);
 
         verificationRepository.findByEmail(email)
@@ -33,6 +38,7 @@ public class VerificationService {
                 );
 
         emailService.sendVerificationEmail(email, code);
+        log.info("[인증코드 발송 완료] email={}, code={}", email, code);
     }
 
     @Transactional

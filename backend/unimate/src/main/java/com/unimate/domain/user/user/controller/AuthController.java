@@ -1,71 +1,72 @@
 package com.unimate.domain.user.user.controller;
 
-import com.unimate.domain.user.user.dto.LoginRequest;
-import com.unimate.domain.user.user.dto.LoginResponse;
+import com.unimate.domain.user.user.dto.*;
 import com.unimate.domain.user.user.service.AuthService;
 import com.unimate.global.jwt.CustomUserPrincipal;
+import com.unimate.global.util.CookieUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import jakarta.validation.Valid;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
+@Validated
 public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-        AuthService.AuthTokens authTokens = authService.login(request);
+    @Value("${auth.cookie.secure:false}")
+    private boolean cookieSecure;
 
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", authTokens.getRefreshToken())
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .sameSite("Strict")
-                .maxAge(7 * 24 * 60 * 60)
-                .build();
+    @Value("${auth.cookie.same-site:Lax}")
+    private String cookieSameSite;
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        AuthService.AuthTokens tokens = authService.login(request);
+
+        ResponseCookie cookie = CookieUtils.httpOnlyCookie(
+                "refreshToken",
+                tokens.getRefreshToken(),
+                7L * 24 * 60 * 60,
+                cookieSecure,
+                cookieSameSite
+        );
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(new LoginResponse(authTokens.getUserId(), authTokens.getEmail(), authTokens.getAccessToken()));
+                .body(new LoginResponse(tokens.getUserId(), tokens.getEmail(), tokens.getAccessToken()));
     }
 
-
-    //인증 테스트용 api
     @GetMapping("/me")
-    public ResponseEntity<?> getUserInfo(@AuthenticationPrincipal CustomUserPrincipal user) {
-        return ResponseEntity.ok(Map.of(
-                "userId", user.getUserId(),
-                "email", user.getEmail()
-        ));
+    public ResponseEntity<UserMeResponse> getUserInfo(@AuthenticationPrincipal CustomUserPrincipal user) {
+        return ResponseEntity.ok(new UserMeResponse(user.getUserId(), user.getEmail()));
     }
 
     @PostMapping("/token/refresh")
-    public ResponseEntity<?> refreshToken(@CookieValue(name = "refreshToken", required = false) String refreshToken) {
+    public ResponseEntity<AccessTokenResponse> refreshToken(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken
+    ) {
         String newAccessToken = authService.reissueAccessToken(refreshToken);
-        return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
+        return ResponseEntity.ok(new AccessTokenResponse(newAccessToken));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@CookieValue(name = "refreshToken", required = false) String refreshToken) {
+    public ResponseEntity<MessageResponse> logout(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken
+    ) {
         authService.logout(refreshToken);
 
-        ResponseCookie expiredCookie = ResponseCookie.from("refreshToken", "")
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .maxAge(0)
-                .build();
+        ResponseCookie expired = CookieUtils.expireCookie("refreshToken", cookieSecure, cookieSameSite);
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, expiredCookie.toString())
-                .body(Map.of("message", "로그아웃이 완료되었습니다."));
+                .header(HttpHeaders.SET_COOKIE, expired.toString())
+                .body(new MessageResponse("로그아웃이 완료되었습니다."));
     }
 }
