@@ -42,4 +42,9 @@ public class UserService {
 
         return new UserSignupResponse(user.getId(), user.getEmail(), user.getName());
     }
+
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> ServiceException.notFound("사용자를 찾을 수 없습니다."));
+    }
 }
