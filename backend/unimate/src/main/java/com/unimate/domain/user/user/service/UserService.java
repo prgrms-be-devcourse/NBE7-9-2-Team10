@@ -21,7 +21,7 @@ public class UserService {
     @Transactional
     public UserSignupResponse signup(UserSignupRequest req) {
 
-        if (userRepository.findByEmail(req.getEmail()).isPresent()) {
+        if (userRepository.existsByEmail(req.getEmail())) {
             throw ServiceException.badRequest("이미 가입된 이메일입니다.");
         }
 

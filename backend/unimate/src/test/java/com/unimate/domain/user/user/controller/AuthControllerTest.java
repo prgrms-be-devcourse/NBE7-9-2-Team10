@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -150,4 +151,33 @@ class AuthControllerTest {
                 .andExpect(cookie().maxAge("refreshToken", 0))
                 .andExpect(jsonPath("$.message").value("로그아웃이 완료되었습니다."));
     }
+
+    @Test
+    @DisplayName("AccessToken으로 현재 사용자 정보 조회 성공")
+    void me_success() throws Exception {
+        LoginRequest loginRequest = new LoginRequest(testEmail, testPassword);
+
+        var loginResult = mockMvc.perform(post(baseUrl + "/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andReturn();
+
+        String accessToken = objectMapper.readTree(loginResult.getResponse().getContentAsString())
+                .get("accessToken").asText();
+
+        mockMvc.perform(get(baseUrl + "/auth/me")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(testEmail));
+    }
+
+    @Test
+    @DisplayName("RefreshToken이 유효하지 않으면 재발급 실패")
+    void refresh_fail_invalidToken() throws Exception {
+        mockMvc.perform(post(baseUrl + "/auth/token/refresh")
+                        .cookie(new MockCookie("refreshToken", "invalid-token")))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("유효하지 않은 리프레시 토큰입니다."));
+    }
+
 }

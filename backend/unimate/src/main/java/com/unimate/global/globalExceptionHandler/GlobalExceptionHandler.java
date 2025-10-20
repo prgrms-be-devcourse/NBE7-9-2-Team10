@@ -31,7 +31,7 @@ public class GlobalExceptionHandler {
     //예상치 못한 시스템 예외 (NullPointerException, SQL 오류 등)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleUnexpected(Exception ex) {
-        log.error("[Unexpected Error]", ex);
+        log.error("Unexpected error: {}", ex.getMessage(), ex);
 
         Map<String, Object> body = Map.of(
                 "timestamp", LocalDateTime.now().toString(),

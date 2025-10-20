@@ -33,6 +33,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/signup",
                                 "/api/v1/email/**",
                                 "/api/v1/auth/token/refresh",
+                                "/api/v1/admin/auth/login",
                                 "/error",
                                 "/favicon.ico",
                                 "/h2-console/**",

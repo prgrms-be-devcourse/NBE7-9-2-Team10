@@ -64,10 +64,4 @@ public class VerificationService {
     public void consumeVerification(String email) {
         verificationRepository.deleteByEmail(email);
     }
-
-    private void validateSchoolEmail(String email) {
-        if (email == null || !email.endsWith(".ac.kr")) {
-            throw ServiceException.badRequest("학교 이메일만 인증 가능합니다.");
-        }
-    }
 }
