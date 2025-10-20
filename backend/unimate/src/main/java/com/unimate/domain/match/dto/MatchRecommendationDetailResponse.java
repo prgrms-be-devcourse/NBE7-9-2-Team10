@@ -2,7 +2,9 @@ package com.unimate.domain.match.dto;
 
 import com.unimate.domain.match.entity.MatchStatus;
 import com.unimate.domain.match.entity.MatchType;
+import com.unimate.domain.user.user.entity.Gender;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -12,13 +14,14 @@ import java.time.LocalDate;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class MatchRecommendationDetailResponse {
     private Long receiverId;
     private String name;
     private String university;
     private Boolean studentVerified;
     private String mbti;
-    private String gender;
+    private Gender gender;
     private Integer age;
 
     private Boolean isSmoker;
