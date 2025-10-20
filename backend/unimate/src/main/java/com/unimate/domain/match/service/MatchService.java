@@ -4,8 +4,6 @@ import com.unimate.domain.match.dto.LikeRequest;
 import com.unimate.domain.match.dto.LikeResponse;
 import com.unimate.domain.match.dto.MatchRecommendationDetailResponse;
 import com.unimate.domain.match.dto.MatchRecommendationResponse;
-import com.unimate.domain.match.dto.LikeRequest;
-import com.unimate.domain.match.dto.LikeResponse;
 import com.unimate.domain.match.entity.Match;
 import com.unimate.domain.match.entity.MatchStatus;
 import com.unimate.domain.match.entity.MatchType;
@@ -15,7 +13,6 @@ import com.unimate.domain.user.user.repository.UserRepository;
 import com.unimate.domain.userProfile.entity.UserProfile;
 import com.unimate.domain.userProfile.repository.UserProfileRepository;
 import com.unimate.global.exception.ServiceException;
-import com.unimate.global.jwt.CustomUserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +25,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
