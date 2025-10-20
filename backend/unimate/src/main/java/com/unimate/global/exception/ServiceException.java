@@ -33,5 +33,9 @@ public class ServiceException extends RuntimeException {
     public static ServiceException conflict(String message) {
         return new ServiceException(HttpStatus.CONFLICT, "CONFLICT", message);
     }
+
+    public static ServiceException forbidden(String message) {
+        return new ServiceException(HttpStatus.FORBIDDEN, "FORBIDDEN", message);
+    }
 }
 
