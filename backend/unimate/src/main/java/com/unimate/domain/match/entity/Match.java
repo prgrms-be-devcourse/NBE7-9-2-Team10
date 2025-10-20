@@ -6,6 +6,10 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import lombok.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -60,5 +64,21 @@ public class Match extends BaseEntity {
     @Column(name = "rematch_round", nullable = false)
     @Builder.Default
     private Integer rematchRound = 1;
+
+    @Builder
+    public Match(User sender, User receiver, MatchType matchType, MatchStatus matchStatus) {
+        this.sender = sender;
+        this.receiver = receiver;
+        this.matchType = matchType;
+        this.matchStatus = matchStatus;
+    }
+
+
+    public void upgradeToRequest(User requestSender, User requestReceiver) {
+        this.sender = requestSender;
+        this.receiver = requestReceiver;
+        this.matchType = MatchType.REQUEST;
+        // status는 PENDING으로 유지
+    }
 
 }
