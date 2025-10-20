@@ -1,9 +1,9 @@
 package com.unimate.domain.verification.controller;
 
-import com.unimate.domain.user.user.dto.MessageResponse;
 import com.unimate.domain.verification.dto.EmailCodeVerifyRequest;
 import com.unimate.domain.verification.dto.EmailVerificationRequest;
 import com.unimate.domain.verification.service.VerificationService;
+import com.unimate.global.auth.dto.MessageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

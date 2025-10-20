@@ -14,14 +14,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class UserService {
+
     private final UserRepository userRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
     private final VerificationService verificationService;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     @Transactional
     public UserSignupResponse signup(UserSignupRequest req) {
-
-        if (userRepository.findByEmail(req.getEmail()).isPresent()) {
+        if (userRepository.existsByEmail(req.getEmail())) {
             throw ServiceException.badRequest("이미 가입된 이메일입니다.");
         }
 
@@ -35,10 +35,9 @@ public class UserService {
                 req.getBirthDate(),
                 req.getUniversity()
         );
-        user.setStudentVerified(true);
+        user.verifyStudent();
 
         userRepository.save(user);
-
         verificationService.consumeVerification(req.getEmail());
 
         return new UserSignupResponse(user.getId(), user.getEmail(), user.getName());
