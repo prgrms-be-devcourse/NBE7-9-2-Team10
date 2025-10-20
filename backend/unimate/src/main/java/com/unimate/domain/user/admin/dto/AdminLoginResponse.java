@@ -1,4 +1,4 @@
-package com.unimate.domain.user.adminUser.dto;
+package com.unimate.domain.user.admin.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

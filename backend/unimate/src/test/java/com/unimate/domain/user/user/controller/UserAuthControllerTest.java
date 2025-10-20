@@ -1,7 +1,7 @@
 package com.unimate.domain.user.user.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.unimate.domain.user.user.dto.LoginRequest;
+import com.unimate.domain.user.user.dto.UserLoginRequest;
 import com.unimate.domain.user.user.dto.UserSignupRequest;
 import com.unimate.domain.user.user.entity.Gender;
 import com.unimate.domain.user.user.repository.UserRepository;
@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @Transactional
-class AuthControllerTest {
+class UserAuthControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -84,7 +84,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("로그인 성공 시 AccessToken과 RefreshToken이 정상 발급된다")
     void login_success() throws Exception {
-        LoginRequest loginRequest = new LoginRequest(testEmail, testPassword);
+        UserLoginRequest loginRequest = new UserLoginRequest(testEmail, testPassword);
 
         mockMvc.perform(post(baseUrl + "/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -99,7 +99,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("로그인 실패 - 비밀번호 불일치 시 401 반환")
     void login_fail_wrongPassword() throws Exception {
-        LoginRequest loginRequest = new LoginRequest(testEmail, "wrongPassword");
+        UserLoginRequest loginRequest = new UserLoginRequest(testEmail, "wrongPassword");
 
         mockMvc.perform(post(baseUrl + "/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -110,7 +110,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("RefreshToken으로 AccessToken 재발급 성공")
     void refreshToken_success() throws Exception {
-        LoginRequest loginRequest = new LoginRequest(testEmail, testPassword);
+        UserLoginRequest loginRequest = new UserLoginRequest(testEmail, testPassword);
 
         String refreshToken = mockMvc.perform(post(baseUrl + "/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -130,7 +130,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("로그아웃 성공 시 RefreshToken 쿠키가 제거된다")
     void logout_success() throws Exception {
-        LoginRequest loginRequest = new LoginRequest(testEmail, testPassword);
+        UserLoginRequest loginRequest = new UserLoginRequest(testEmail, testPassword);
 
         var loginResult = mockMvc.perform(post(baseUrl + "/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

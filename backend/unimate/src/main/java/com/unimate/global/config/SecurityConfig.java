@@ -31,9 +31,11 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/signup",
-                                "/api/v1/email/**",
                                 "/api/v1/auth/token/refresh",
+                                "/api/v1/email/**",
                                 "/api/v1/admin/auth/login",
+                                "/api/v1/admin/auth/signup",
+                                "/api/v1/admin/auth/token/refresh",
                                 "/error",
                                 "/favicon.ico",
                                 "/h2-console/**",

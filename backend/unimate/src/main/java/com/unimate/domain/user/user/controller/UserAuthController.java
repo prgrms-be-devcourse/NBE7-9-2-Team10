@@ -1,10 +1,10 @@
 package com.unimate.domain.user.user.controller;
 
-import com.unimate.domain.user.user.dto.LoginRequest;
-import com.unimate.domain.user.user.dto.LoginResponse;
+import com.unimate.domain.user.user.dto.UserLoginRequest;
+import com.unimate.domain.user.user.dto.UserLoginResponse;
 import com.unimate.domain.user.user.dto.UserSignupRequest;
 import com.unimate.domain.user.user.dto.UserSignupResponse;
-import com.unimate.domain.user.user.service.AuthService;
+import com.unimate.domain.user.user.service.UserAuthService;
 import com.unimate.domain.user.user.service.UserService;
 import com.unimate.global.auth.dto.AccessTokenResponse;
 import com.unimate.global.auth.dto.MessageResponse;
@@ -20,9 +20,9 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-public class AuthController {
+public class UserAuthController {
 
-    private final AuthService authService;
+    private final UserAuthService authService;
     private final UserService userService;
 
     @Value("${auth.cookie.secure:false}")
@@ -37,7 +37,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<UserLoginResponse> login(@Valid @RequestBody UserLoginRequest request) {
         var tokens = authService.login(request);
 
         ResponseCookie cookie = CookieUtils.httpOnlyCookie(
@@ -50,7 +50,7 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(new LoginResponse(tokens.getSubjectId(), tokens.getEmail(), tokens.getAccessToken()));
+                .body(new UserLoginResponse(tokens.getSubjectId(), tokens.getEmail(), tokens.getAccessToken()));
     }
 
     @PostMapping("/token/refresh")
