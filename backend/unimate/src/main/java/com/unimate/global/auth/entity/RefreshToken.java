@@ -1,4 +1,3 @@
-// entity/RefreshToken.java (email 컬럼 추가 버전)
 package com.unimate.global.auth.entity;
 
 import com.unimate.global.auth.model.SubjectType;
