@@ -1,9 +1,6 @@
 package com.unimate.domain.match.service;
 
-import com.unimate.domain.match.dto.LikeRequest;
-import com.unimate.domain.match.dto.LikeResponse;
-import com.unimate.domain.match.dto.MatchRecommendationDetailResponse;
-import com.unimate.domain.match.dto.MatchRecommendationResponse;
+import com.unimate.domain.match.dto.*;
 import com.unimate.domain.match.entity.Match;
 import com.unimate.domain.match.entity.MatchStatus;
 import com.unimate.domain.match.entity.MatchType;
@@ -19,75 +16,108 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.Period;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
-@Transactional
 public class MatchService {
 
     private final MatchRepository matchRepository;
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final SimilarityCalculator similarityCalculator;
+    private final MatchFilterService matchFilterService;
+    private final MatchUtilityService matchUtilityService;
 
     /**
      * 룸메이트 추천 목록 조회 (필터 반영)
      */
     public MatchRecommendationResponse getMatchRecommendations(
             String senderEmail,
-            String genderFilter,
-            String universityFilter,
             String sleepPatternFilter,
+            String ageRangeFilter,
+            String cleaningFrequencyFilter,
             LocalDate startDate,
             LocalDate endDate
     ) {
-        // 현재 사용자 및 프로필 조회
-        User sender = userRepository.findByEmail(senderEmail)
-                .orElseThrow(() -> ServiceException.notFound("사용자를 찾을 수 없습니다: " + senderEmail));
+        User sender = getUserByEmail(senderEmail);
+        UserProfile senderProfile = getUserProfile(sender.getId());
+        
+        List<UserProfile> candidates = filterCandidates(sender, sleepPatternFilter, ageRangeFilter, cleaningFrequencyFilter, startDate, endDate);
+        List<MatchRecommendationResponse.MatchRecommendationItem> recommendations = buildRecommendations(candidates, senderProfile);
+        
+        return new MatchRecommendationResponse(recommendations);
+    }
 
-        UserProfile senderProfile = userProfileRepository.findByUserEmail(senderEmail)
-                .orElseThrow(() -> ServiceException.notFound("프로필을 찾을 수 없습니다: " + senderEmail));
+    /**
+     * 이메일로 사용자 조회
+     */
+    private User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> ServiceException.notFound("사용자를 찾을 수 없습니다."));
+    }
 
-        // 후보자 필터링
-        List<UserProfile> candidates = userProfileRepository.findAll().stream()
-                .filter(p -> p.getUser() != null)
-                .filter(p -> !Objects.equals(p.getUser().getEmail(), senderEmail)) // 본인 제외
-                .filter(p -> Boolean.TRUE.equals(p.getMatchingEnabled()))          // 매칭 활성화
-                .filter(p -> p.getUser().getGender() == sender.getGender())        // 같은 성별
-                .filter(p -> Objects.equals(p.getUser().getUniversity(), sender.getUniversity())) // 같은 학교
-                .filter(p -> hasOverlappingPeriodByRange(p, startDate, endDate))
-                .filter(this::isWithinMatchingPeriod)
-                .limit(10)
-                .collect(Collectors.toList());
+    /**
+     * 사용자 프로필 조회
+     */
+    private UserProfile getUserProfile(Long userId) {
+        return userProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> ServiceException.notFound("사용자 프로필을 찾을 수 없습니다."));
+    }
 
-        // 후보별 유사도 계산 및 DTO 변환
-        List<MatchRecommendationResponse.MatchRecommendationItem> items = candidates.stream()
-                .map(p -> {
-                    BigDecimal score = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderProfile, p));
-                    return new MatchRecommendationResponse.MatchRecommendationItem(
-                            p.getUser().getId(),
-                            p.getUser().getName(),
-                            p.getUser().getUniversity(),
-                            p.getUser().getStudentVerified(),
-                            p.getUser().getGender().toString(),
-                            calculateAge(p.getUser().getBirthDate()),
-                            p.getMbti(),
-                            score,
-                            MatchType.LIKE,
-                            MatchStatus.PENDING
-                    );
-                })
-                .sorted(Comparator.comparing(MatchRecommendationResponse.MatchRecommendationItem::getPreferenceScore)
-                        .reversed()) // 높은 점수 순
-                .collect(Collectors.toList());
+    /**
+     * 추천 후보 필터링
+     */
+    private List<UserProfile> filterCandidates(User sender, String sleepPatternFilter, String ageRangeFilter, 
+            String cleaningFrequencyFilter, LocalDate startDate, LocalDate endDate) {
+        return userProfileRepository.findAll()
+                .stream()
+                .filter(p -> !p.getUser().getId().equals(sender.getId()))
+                // 자동 필터 (시스템에서 처리)
+                .filter(p -> p.getUser().getGender().equals(sender.getGender())) // 같은 성별만 매칭
+                .filter(p -> p.getMatchingEnabled()) // 매칭 활성화
+                // 사용자 선택 필터들
+                .filter(p -> matchFilterService.applyUniversityFilter(p, sender.getUniversity())) // 대학 필터 (같은 대학교만)
+                .filter(p -> matchFilterService.applySleepPatternFilter(p, sleepPatternFilter)) // 수면 패턴 필터
+                .filter(p -> matchFilterService.applyAgeRangeFilter(p, ageRangeFilter)) // 나이대 필터
+                .filter(p -> matchFilterService.applyCleaningFrequencyFilter(p, cleaningFrequencyFilter)) // 청결도 필터
+                .filter(p -> matchFilterService.hasOverlappingPeriodByRange(p, startDate, endDate)) // 거주 기간
+                .toList();
+    }
 
-        return new MatchRecommendationResponse(items);
+    /**
+     * 추천 아이템 생성
+     */
+    private List<MatchRecommendationResponse.MatchRecommendationItem> buildRecommendations(
+            List<UserProfile> candidates, UserProfile senderProfile) {
+        return candidates.stream()
+                .map(candidate -> buildRecommendationItem(candidate, senderProfile))
+                .sorted(Comparator.comparing(MatchRecommendationResponse.MatchRecommendationItem::getPreferenceScore).reversed())
+                .limit(10) // 최대 10명으로 제한
+                .toList();
+    }
+
+    /**
+     * 개별 추천 아이템 생성
+     */
+    private MatchRecommendationResponse.MatchRecommendationItem buildRecommendationItem(
+            UserProfile candidate, UserProfile senderProfile) {
+        BigDecimal similarityScore = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderProfile, candidate));
+        return MatchRecommendationResponse.MatchRecommendationItem.builder()
+                .receiverId(candidate.getUser().getId())
+                .name(candidate.getUser().getName())
+                .university(candidate.getUser().getUniversity())
+                .studentVerified(candidate.getUser().getStudentVerified())
+                .gender(candidate.getUser().getGender())
+                .age(matchUtilityService.calculateAge(candidate.getUser().getBirthDate()))
+                .mbti(candidate.getMbti())
+                .preferenceScore(similarityScore)
+                .matchType(null)
+                .matchStatus(null)
+                .build();
     }
 
     /**
@@ -95,78 +125,141 @@ public class MatchService {
      */
     public MatchRecommendationDetailResponse getMatchRecommendationDetail(String senderEmail, Long receiverId) {
         User sender = userRepository.findByEmail(senderEmail)
-                .orElseThrow(() -> ServiceException.notFound("사용자를 찾을 수 없습니다: " + senderEmail));
+                .orElseThrow(() -> ServiceException.notFound("사용자를 찾을 수 없습니다."));
 
         User receiver = userRepository.findById(receiverId)
-                .orElseThrow(() -> ServiceException.notFound("후보 사용자를 찾을 수 없습니다: " + receiverId));
+                .orElseThrow(() -> ServiceException.notFound("상대방 사용자를 찾을 수 없습니다."));
 
-        UserProfile senderProfile = userProfileRepository.findByUserEmail(senderEmail)
-                .orElseThrow(() -> ServiceException.notFound("프로필을 찾을 수 없습니다: " + senderEmail));
+        UserProfile receiverProfile = userProfileRepository.findByUserId(receiver.getId())
+                .orElseThrow(() -> ServiceException.notFound("상대방 프로필을 찾을 수 없습니다."));
 
-        UserProfile receiverProfile = userProfileRepository.findByUserEmail(receiver.getEmail())
-                .orElseThrow(() -> ServiceException.notFound("프로필을 찾을 수 없습니다: " + receiver.getEmail()));
+        UserProfile senderProfile = userProfileRepository.findByUserId(sender.getId())
+                .orElseThrow(() -> ServiceException.notFound("사용자 프로필을 찾을 수 없습니다."));
 
-        BigDecimal preferenceScore = BigDecimal.valueOf(
-                similarityCalculator.calculateSimilarity(senderProfile, receiverProfile));
+        BigDecimal similarityScore = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderProfile, receiverProfile));
 
-        Match existingMatch = matchRepository.findBySenderIdAndReceiverId(sender.getId(), receiverId).orElse(null);
-        MatchType matchType = existingMatch != null ? existingMatch.getMatchType() : MatchType.LIKE;
-        MatchStatus matchStatus = existingMatch != null ? existingMatch.getMatchStatus() : MatchStatus.PENDING;
+        Optional<Match> existingMatch = matchRepository.findBySenderIdAndReceiverId(sender.getId(), receiverId);
 
-        return new MatchRecommendationDetailResponse(
-                receiver.getId(),
-                receiver.getName(),
-                receiver.getUniversity(),
-                receiver.getStudentVerified(),
-                receiverProfile.getMbti(),
-                receiver.getGender().toString(),
-                calculateAge(receiver.getBirthDate()),
-                receiverProfile.getIsSmoker(),
-                receiverProfile.getIsPetAllowed(),
-                receiverProfile.getIsSnoring(),
-                receiverProfile.getSleepTime(),
-                receiverProfile.getCleaningFrequency(),
-                receiverProfile.getHygieneLevel(),
-                receiverProfile.getNoiseSensitivity(),
-                receiverProfile.getDrinkingFrequency(),
-                receiverProfile.getGuestFrequency(),
-                receiverProfile.getPreferredAgeGap(),
-                receiver.getBirthDate(),
-                receiverProfile.getStartUseDate(),
-                receiverProfile.getEndUseDate(),
-                preferenceScore,
-                matchType,
-                matchStatus
-        );
+        MatchType matchType = existingMatch.isPresent() ? existingMatch.get().getMatchType() : null;
+        MatchStatus matchStatus = existingMatch.isPresent() ? existingMatch.get().getMatchStatus() : null;
+
+        return MatchRecommendationDetailResponse.builder()
+                .receiverId(receiver.getId())
+                .name(receiver.getName())
+                .university(receiver.getUniversity())
+                .studentVerified(receiver.getStudentVerified())
+                .mbti(receiverProfile.getMbti())
+                .gender(receiver.getGender())
+                .age(matchUtilityService.calculateAge(receiver.getBirthDate()))
+                .isSmoker(receiverProfile.getIsSmoker())
+                .isPetAllowed(receiverProfile.getIsPetAllowed())
+                .isSnoring(receiverProfile.getIsSnoring())
+                .sleepTime(receiverProfile.getSleepTime())
+                .cleaningFrequency(receiverProfile.getCleaningFrequency())
+                .hygieneLevel(receiverProfile.getHygieneLevel())
+                .noiseSensitivity(receiverProfile.getNoiseSensitivity())
+                .drinkingFrequency(receiverProfile.getDrinkingFrequency())
+                .guestFrequency(receiverProfile.getGuestFrequency())
+                .preferredAgeGap(receiverProfile.getPreferredAgeGap())
+                .birthDate(receiver.getBirthDate())
+                .startUseDate(receiverProfile.getStartUseDate())
+                .endUseDate(receiverProfile.getEndUseDate())
+                .preferenceScore(similarityScore)
+                .matchType(matchType)
+                .matchStatus(matchStatus)
+                .build();
     }
 
-    private Integer calculateAge(LocalDate birthDate) {
-        if (birthDate == null) return null;
-        LocalDate today = LocalDate.now();
-        int years = Period.between(birthDate, today).getYears();
-        return Math.max(0, today.isBefore(birthDate.plusYears(years)) ? years - 1 : years);
+    /**
+     * 룸메이트 최종 확정
+     */
+    @Transactional
+    public Match confirmMatch(Long matchId, Long userId) {
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> ServiceException.notFound("매칭을 찾을 수 없습니다."));
+
+        validateMatchParticipant(match, userId);
+        validateMatchStatusTransition(match);
+        validateAndHandleMatchTypeTransition(match);
+
+        match.setMatchStatus(MatchStatus.ACCEPTED);
+        match.setConfirmedAt(java.time.LocalDateTime.now());
+
+        // TODO: 향후 후기 시스템과 연계된 재매칭 기능 구현 시 rematch_round 활용
+
+        matchRepository.save(match);
+
+        return match;
     }
 
-    private boolean isWithinMatchingPeriod(UserProfile profile) {
-        LocalDate now = LocalDate.now();
-        LocalDate start = profile.getStartUseDate();
-        LocalDate end = profile.getEndUseDate();
-        return start != null && end != null && !now.isBefore(start) && !now.isAfter(end);
+    /**
+     * 룸메이트 최종 거절
+     */
+    @Transactional
+    public Match rejectMatch(Long matchId, Long userId) {
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> ServiceException.notFound("매칭을 찾을 수 없습니다."));
+
+        validateMatchParticipant(match, userId);
+        validateMatchStatusTransition(match);
+        validateAndHandleMatchTypeTransition(match);
+
+        match.setMatchStatus(MatchStatus.REJECTED);
+        match.setConfirmedAt(java.time.LocalDateTime.now()); // 거절 시점 기록
+
+        // TODO: 향후 후기 시스템과 연계된 재매칭 기능 구현 시 rematch_round 활용
+
+        matchRepository.save(match);
+
+        return match;
     }
 
-    // 입주 가능 날짜 범위 기반으로 겹치는지 확인
-    private boolean hasOverlappingPeriodByRange(UserProfile profile, LocalDate startDate, LocalDate endDate) {
-        if (startDate == null || endDate == null) return true; // 필터 없으면 통과
+    /**
+     * 매칭 상태 조회
+     */
+    public MatchStatusResponse getMatchStatus(Long userId) {
+        List<Match> matches = matchRepository.findBySenderIdOrReceiverId(userId);
 
-        LocalDate start = profile.getStartUseDate();
-        LocalDate end = profile.getEndUseDate();
+        List<MatchStatusResponse.MatchStatusItem> matchItems = matches.stream()
+                .map(match -> matchUtilityService.toMatchStatusItem(match, userId))
+                .toList();
 
-        if (start == null || end == null) return false;
+        int total = matches.size();
+        int pending = (int) matches.stream().filter(match -> match.getMatchStatus() == MatchStatus.PENDING).count();
+        int accepted = (int) matches.stream().filter(match -> match.getMatchStatus() == MatchStatus.ACCEPTED).count();
+        int rejected = (int) matches.stream().filter(match -> match.getMatchStatus() == MatchStatus.REJECTED).count();
 
-        // 겹치는 기간 존재: start <= endDate && end >= startDate
-        return !start.isAfter(endDate) && !end.isBefore(startDate);
+        MatchStatusResponse.SummaryInfo summary = MatchStatusResponse.SummaryInfo.builder()
+                .total(total)
+                .pending(pending)
+                .accepted(accepted)
+                .rejected(rejected)
+                .build();
+
+        return MatchStatusResponse.builder()
+                .matches(matchItems)
+                .summary(summary)
+                .build();
     }
 
+    /**
+     * 매칭 성사 결과 조회
+     */
+    public MatchResultResponse getMatchResults(Long userId) {
+        List<MatchResultResponse.MatchResultItem> results = matchRepository.findBySenderIdOrReceiverId(userId)
+                .stream()
+                .filter(match -> match.getMatchStatus() == MatchStatus.ACCEPTED)
+                .map(matchUtilityService::toMatchResultItem)
+                .toList();
+
+        return new MatchResultResponse(results);
+    }
+
+
+    /**
+     * 좋아요 보내기
+     */
+    @Transactional
     public LikeResponse sendLike(LikeRequest requestDto, Long senderId) {
         Long receiverId = requestDto.getReceiverId();
 
@@ -197,15 +290,24 @@ public class MatchService {
             // 상호 '좋아요' 성립: 기존 Match의 타입을 REQUEST로 변경하고 sender/receiver를 교체
             // 요청의 주체는 상호 '좋아요'를 완성시킨 현재 사용자(sender)가 됨
             existingMatch.upgradeToRequest(sender, receiver);
+            matchRepository.save(existingMatch);
             return new LikeResponse(existingMatch.getId(), true); // isMatched=true는 '요청' 단계로 넘어갔음을 의미
 
         } else {
+            UserProfile senderProfile = userProfileRepository.findByUserId(senderId)
+                    .orElseThrow(() -> ServiceException.notFound("사용자 프로필을 찾을 수 없습니다."));
+            UserProfile receiverProfile = userProfileRepository.findByUserId(receiverId)
+                    .orElseThrow(() -> ServiceException.notFound("상대방 프로필을 찾을 수 없습니다."));
+            
+            BigDecimal preferenceScore = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderProfile, receiverProfile));
+            
             // 기존 기록이 없는 경우 (처음 '좋아요')
             Match newLike = Match.builder()
                     .sender(sender)
                     .receiver(receiver)
                     .matchType(MatchType.LIKE)
                     .matchStatus(MatchStatus.PENDING)
+                    .preferenceScore(preferenceScore)
                     .build();
             matchRepository.save(newLike);
 
@@ -213,10 +315,47 @@ public class MatchService {
         }
     }
 
+    /**
+     * 좋아요 취소
+     */
+    @Transactional
     public void cancelLike(Long senderId, Long receiverId) {
         Match like = matchRepository.findBySenderIdAndReceiverIdAndMatchType(senderId, receiverId, MatchType.LIKE)
                 .orElseThrow(() -> ServiceException.notFound("취소할 '좋아요' 기록이 존재하지 않습니다."));
 
         matchRepository.delete(like);
     }
+
+    /**
+     * 매칭 참여자 권한 검증
+     */
+    private void validateMatchParticipant(Match match, Long userId) {
+        if (!match.getSender().getId().equals(userId) && !match.getReceiver().getId().equals(userId)) {
+            throw ServiceException.forbidden("룸메이트 확정 권한이 없습니다.");
+        }
+    }
+
+    /**
+     * 매칭 상태 전이 검증
+     */
+    private void validateMatchStatusTransition(Match match) {
+        if (match.getMatchStatus() != MatchStatus.PENDING) {
+            throw ServiceException.conflict("이미 처리된 매칭입니다.");
+        }
+    }
+
+    /**
+     * 매칭 타입 전이 처리 및 검증
+     */
+    private void validateAndHandleMatchTypeTransition(Match match) {
+        if (match.getMatchType() == MatchType.LIKE) {
+            // LIKE -> REQUEST 전이 처리 (영속 상태에서 자동 flush)
+            match.upgradeToRequest(match.getSender(), match.getReceiver());
+        } else if (match.getMatchType() != MatchType.REQUEST) {
+            // REQUEST가 아닌 다른 타입은 처리 불가
+            throw ServiceException.badRequest("요청 상태가 아닌 매칭은 처리할 수 없습니다.");
+        }
+        // REQUEST 타입은 그대로 진행 (검증만)
+    }
+
 }
