@@ -4,7 +4,7 @@ import React from 'react';
 import { User } from '@/types/user';
 import { ProfileResponse } from '@/types/profile';
 import Button from '@/components/ui/Button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 
 interface ProfileCardProps {
   user: User;

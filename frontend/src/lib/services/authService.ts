@@ -1,5 +1,6 @@
 import { api, API_ENDPOINTS } from '@/lib/services/api';
 import { LoginRequest, LoginResponse, SignupRequest, SignupResponse, User } from '@/types/user';
+import { ApiResponse } from '@/types/api';
 
 // 인증 서비스 클래스
 export class AuthService {
@@ -7,12 +8,14 @@ export class AuthService {
    * 로그인
    */
   static async login(credentials: LoginRequest): Promise<LoginResponse> {
-    const response = await api.post<any>(
+    const response = await api.post<ApiResponse<LoginResponse>>(
       API_ENDPOINTS.LOGIN,
       credentials
     );
     
-    const loginData = response.data || response;
+    // 응답에서 실제 데이터 추출
+    const rawData = response.data?.data || response.data || response;
+    const loginData = rawData as LoginResponse;
     
     // 토큰을 localStorage에 저장
     if (typeof window !== 'undefined') {
@@ -32,13 +35,13 @@ export class AuthService {
    * 회원가입
    */
   static async signup(userData: SignupRequest): Promise<SignupResponse> {
-    const response = await api.post<any>(
+    const response = await api.post<ApiResponse<SignupResponse>>(
       API_ENDPOINTS.SIGNUP,
       userData
     );
     
-    const data = response.data || response;
-    return data as SignupResponse;
+    const rawData = response.data?.data || response.data || response;
+    return rawData as SignupResponse;
   }
 
   /**
@@ -65,18 +68,18 @@ export class AuthService {
    * 현재 사용자 정보 조회 (기본 정보만)
    */
   static async getCurrentUser(): Promise<{ userId: number; email: string }> {
-    const response = await api.get<any>(API_ENDPOINTS.ME);
-    const data = response.data || response;
-    return data as { userId: number; email: string };
+    const response = await api.get<ApiResponse<{ userId: number; email: string }>>(API_ENDPOINTS.ME);
+    const rawData = response.data?.data || response.data || response;
+    return rawData as { userId: number; email: string };
   }
 
   /**
    * 완전한 사용자 정보 가져오기
    */
   static async getFullUserInfo(): Promise<User> {
-    const response = await api.get<any>(API_ENDPOINTS.USER);
-    const data = response.data || response;
-    return data as User;
+    const response = await api.get<ApiResponse<User>>(API_ENDPOINTS.USER);
+    const rawData = response.data?.data || response.data || response;
+    return rawData as User;
   }
 
 
