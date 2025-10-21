@@ -18,7 +18,7 @@ export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
   const [partnerName, setPartnerName] = useState('채팅 상대')
   const [partnerInfo, setPartnerInfo] = useState('')
 
-  // 채팅방 정보 조회
+  // 채팅방 정보 조회 및 읽음 처리
   useEffect(() => {
     const fetchChatroomInfo = async () => {
       try {
@@ -40,6 +40,28 @@ export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
         } catch {
           setPartnerName(`사용자 ${partnerId}`)
           setPartnerInfo('')
+        }
+
+        // 채팅방에 들어갔을 때 읽음 처리
+        try {
+          const messagesResponse = await apiClient.get(
+            `/api/v1/chatrooms/${chatroomId}/messages`,
+            { params: { limit: 1 } }
+          )
+          const messages = messagesResponse.data.items || []
+          
+          if (messages.length > 0) {
+            const message = messages[0]
+            const latestMessageId = message.messageId || message.id
+            
+            if (latestMessageId) {
+              await apiClient.post(`/api/v1/chatrooms/${chatroomId}/read`, {
+                lastReadMessageId: latestMessageId
+              })
+            }
+          }
+        } catch (error) {
+          // 읽음 처리 실패는 무시 (백엔드 트랜잭션 충돌 가능)
         }
       } catch (error) {
         console.error('채팅방 정보 조회 실패:', error)

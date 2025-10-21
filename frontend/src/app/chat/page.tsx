@@ -27,98 +27,121 @@ export default function ChatListPage() {
   const [showMenu, setShowMenu] = useState<number | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState<number | null>(null)
 
-  // 채팅방 목록 조회
-  useEffect(() => {
-    const fetchChatrooms = async () => {
-      try {
-        setIsLoading(true)
-        // apiClient를 직접 사용 (백엔드 API 경로: /api/v1/chatrooms)
-        const response = await apiClient.get('/api/v1/chatrooms')
-        
-        const data = response.data
-        const chatrooms = data.items || []
-        
-        // 각 채팅방의 최신 메시지와 상대방 이름 가져오기
-        const chatroomsWithMessages = await Promise.all(
-          chatrooms.map(async (chat: ChatRoom) => {
-            try {
-              // 최신 메시지 가져오기
-              const messagesResponse = await apiClient.get(
-                `/api/v1/chatrooms/${chat.chatroomId}/messages`,
-                { 
-                  params: { 
-                    limit: 1,
-                    order: 'desc' // 최신 메시지부터
-                  } 
-                }
-              )
-              const messages = messagesResponse.data.items || []
-              const lastMsg = messages[0]
-              
-              // 상대방 이름 가져오기
-              const currentUserId = Number(localStorage.getItem('userId'))
-              console.log(`[Chat List] 채팅방 데이터:`, chat)
-              console.log(`[Chat List] 현재 사용자 ID:`, currentUserId)
-              
-              // 채팅방 데이터 구조에 따라 partnerId 계산
-              const partnerId = chat.partnerId || 
-                                (chat.user1Id === currentUserId ? chat.user2Id : chat.user1Id)
-              
-              if (!partnerId || !currentUserId) {
-                console.log(`[Chat List] 데이터 누락: partnerId=${partnerId}, currentUserId=${currentUserId}`)
-                return {
-                  ...chat,
-                  lastMessage: '상호 좋아요로 매칭되었습니다!',
-                  lastMessageTime: chat.createdAt,
-                  partnerName: '알 수 없는 사용자'
-                }
+  // 채팅방 목록 조회 함수
+  const fetchChatrooms = async () => {
+    try {
+      setIsLoading(true)
+      // apiClient를 직접 사용 (백엔드 API 경로: /api/v1/chatrooms)
+      const response = await apiClient.get('/api/v1/chatrooms')
+      
+      const data = response.data
+      const chatrooms = data.items || []
+      
+      // 각 채팅방의 최신 메시지와 상대방 이름 가져오기
+      const chatroomsWithMessages = await Promise.all(
+        chatrooms.map(async (chat: ChatRoom) => {
+          try {
+            // 최신 메시지 가져오기
+            const messagesResponse = await apiClient.get(
+              `/api/v1/chatrooms/${chat.chatroomId}/messages`,
+              { 
+                params: { 
+                  limit: 1,
+                  order: 'desc' // 최신 메시지부터
+                } 
               }
-              
-              let partnerName = `사용자 ${partnerId}`
-              
-              try {
-                console.log(`[Chat List] 상대방 이름 조회: partnerId=${partnerId}`)
-                const userResponse = await apiClient.get(`/api/v1/user/${partnerId}`)
-                const user = userResponse.data
-                console.log(`[Chat List] 사용자 정보:`, user)
-                partnerName = user.name || `사용자 ${partnerId}`
-                console.log(`[Chat List] 최종 이름: ${partnerName}`)
-              } catch (error) {
-                console.error(`[Chat List] 사용자 정보 조회 실패:`, error)
-                // 사용자 정보 조회 실패 시 기본값 사용
-              }
-              
-              return {
-                ...chat,
-                lastMessage: lastMsg ? lastMsg.content : '상호 좋아요로 매칭되었습니다!',
-                lastMessageTime: lastMsg ? lastMsg.createdAt : chat.createdAt,
-                partnerName: partnerName
-              }
-            } catch (error) {
-              console.error(`채팅방 ${chat.chatroomId} 메시지 로드 실패:`, error)
+            )
+            const messages = messagesResponse.data.items || []
+            const lastMsg = messages[0]
+
+            // 백엔드에서 이미 올바른 unreadCount를 계산해서 보내주므로 그대로 사용
+            const unreadCount = chat.unreadCount || 0
+            
+            // 상대방 이름 가져오기
+            const currentUserId = Number(localStorage.getItem('userId'))
+            console.log(`[Chat List] 채팅방 데이터:`, chat)
+            console.log(`[Chat List] 현재 사용자 ID:`, currentUserId)
+            
+            // 채팅방 데이터 구조에 따라 partnerId 계산
+            const partnerId = chat.partnerId || 
+                              (chat.user1Id === currentUserId ? chat.user2Id : chat.user1Id)
+            
+            if (!partnerId || !currentUserId) {
+              console.log(`[Chat List] 데이터 누락: partnerId=${partnerId}, currentUserId=${currentUserId}`)
               return {
                 ...chat,
                 lastMessage: '상호 좋아요로 매칭되었습니다!',
                 lastMessageTime: chat.createdAt,
-                partnerName: `사용자 ${chat.user1Id === Number(localStorage.getItem('userId')) ? chat.user2Id : chat.user1Id}`
+                partnerName: '알 수 없는 사용자',
+                unreadCount: unreadCount
               }
             }
-          })
-        )
-        
-        setChats(chatroomsWithMessages)
-      } catch (error) {
-        console.error('채팅방 목록 조회 실패:', error)
-        setChats([])
-      } finally {
-        setIsLoading(false)
-      }
+            
+            let partnerName = `사용자 ${partnerId}`
+            
+            try {
+              console.log(`[Chat List] 상대방 이름 조회: partnerId=${partnerId}`)
+              const userResponse = await apiClient.get(`/api/v1/user/${partnerId}`)
+              const user = userResponse.data
+              console.log(`[Chat List] 사용자 정보:`, user)
+              partnerName = user.name || `사용자 ${partnerId}`
+              console.log(`[Chat List] 최종 이름: ${partnerName}`)
+            } catch (error) {
+              console.error(`[Chat List] 사용자 정보 조회 실패:`, error)
+              // 사용자 정보 조회 실패 시 기본값 사용
+            }
+            
+            return {
+              ...chat,
+              lastMessage: lastMsg ? lastMsg.content : '상호 좋아요로 매칭되었습니다!',
+              lastMessageTime: lastMsg ? lastMsg.createdAt : chat.createdAt,
+              partnerName: partnerName,
+              unreadCount: unreadCount
+            }
+          } catch (error) {
+            console.error(`채팅방 ${chat.chatroomId} 메시지 로드 실패:`, error)
+            return {
+              ...chat,
+              lastMessage: '상호 좋아요로 매칭되었습니다!',
+              lastMessageTime: chat.createdAt,
+              partnerName: `사용자 ${chat.user1Id === Number(localStorage.getItem('userId')) ? chat.user2Id : chat.user1Id}`,
+              unreadCount: 0
+            }
+          }
+        })
+      )
+      
+      setChats(chatroomsWithMessages)
+    } catch (error) {
+      console.error('채팅방 목록 조회 실패:', error)
+      setChats([])
+    } finally {
+      setIsLoading(false)
     }
+  }
 
+  // 채팅방 목록 조회
+  useEffect(() => {
     fetchChatrooms()
   }, [])
 
+  // 페이지가 포커스될 때 채팅 목록 새로고침 (채팅방에서 돌아왔을 때)
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchChatrooms()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [])
+
   const handleChatClick = (chatId: number) => {
+    // 채팅방에 들어갈 때 안 읽음 개수를 0으로 업데이트
+    setChats(chats.map(chat => 
+      chat.chatroomId === chatId 
+        ? { ...chat, unreadCount: 0 }
+        : chat
+    ))
     router.push(`/chat/${chatId}`)
   }
 
@@ -192,6 +215,11 @@ export default function ChatListPage() {
                           )}
                         </div>
                         <div className="flex items-center gap-3">
+                          {chat.unreadCount && chat.unreadCount > 0 && (
+                            <span className="bg-[#EF4444] text-white text-xs px-2 py-1 rounded-full min-w-[20px] text-center font-semibold">
+                              {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
+                            </span>
+                          )}
                           <span className="text-sm text-[#9CA3AF]">
                             {chat.lastMessageTime 
                               ? new Date(chat.lastMessageTime).toLocaleTimeString('ko-KR', { 
