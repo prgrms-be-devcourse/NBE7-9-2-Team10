@@ -7,12 +7,9 @@ import com.unimate.domain.match.service.MatchUtilityService;
 import com.unimate.global.jwt.CustomUserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/v1/matches")
@@ -28,20 +25,15 @@ public class MatchController {
     @GetMapping("/recommendations")
     public ResponseEntity<MatchRecommendationResponse> getMatchRecommendations(
             @AuthenticationPrincipal CustomUserPrincipal user,
-            // 사용자 선택 필터들
-            @RequestParam(value = "sleepPattern", required = false) String sleepPattern,
-            @RequestParam(value = "ageRange", required = false) String ageRange,
-            @RequestParam(value = "cleaningFrequency", required = false) String cleaningFrequency,
-            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+            @Valid MatchRecommendationRequest request
     ) {
         MatchRecommendationResponse response = matchService.getMatchRecommendations(
                 user.getEmail(),
-                sleepPattern,
-                ageRange,
-                cleaningFrequency,
-                startDate,
-                endDate
+                request.getSleepPattern(),
+                request.getAgeRange(),
+                request.getCleaningFrequency(),
+                request.getStartDate(),
+                request.getEndDate()
         );
         return ResponseEntity.ok(response);
     }
@@ -65,10 +57,10 @@ public class MatchController {
     @PutMapping("/{id}/confirm")
     public ResponseEntity<MatchConfirmResponse> confirmMatch(
             @PathVariable("id") Long id,
-            @RequestParam(value = "action") String action,
+            @Valid @RequestBody MatchConfirmRequest request,
             @AuthenticationPrincipal CustomUserPrincipal user
     ) {
-        return switch (action) {
+        return switch (request.getAction()) {
             case "accept" -> {
                 Match match = matchService.confirmMatch(id, user.getUserId());
                 yield ResponseEntity.ok(buildMatchConfirmResponse(match, "룸메이트 매칭이 최종 확정되었습니다."));

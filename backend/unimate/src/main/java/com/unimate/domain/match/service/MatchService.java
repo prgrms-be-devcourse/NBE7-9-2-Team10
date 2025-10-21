@@ -7,6 +7,7 @@ import com.unimate.domain.match.entity.MatchType;
 import com.unimate.domain.match.repository.MatchRepository;
 import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.UserRepository;
+import com.unimate.domain.userMatchPreference.repository.UserMatchPreferenceRepository;
 import com.unimate.domain.userProfile.entity.UserProfile;
 import com.unimate.domain.userProfile.repository.UserProfileRepository;
 import com.unimate.global.exception.ServiceException;
@@ -31,6 +32,7 @@ public class MatchService {
     private final SimilarityCalculator similarityCalculator;
     private final MatchFilterService matchFilterService;
     private final MatchUtilityService matchUtilityService;
+    private final UserMatchPreferenceRepository userMatchPreferenceRepository;
 
     /**
      * 룸메이트 추천 목록 조회 (필터 반영)
@@ -79,8 +81,9 @@ public class MatchService {
                 // 자동 필터 (시스템에서 처리)
                 .filter(p -> p.getUser().getGender().equals(sender.getGender())) // 같은 성별만 매칭
                 .filter(p -> p.getMatchingEnabled()) // 매칭 활성화
-                // 사용자 선택 필터들
+                .filter(p -> userMatchPreferenceRepository.findByUserId(p.getUser().getId()).isPresent()) // 매칭 선호도 등록된 사용자만
                 .filter(p -> matchFilterService.applyUniversityFilter(p, sender.getUniversity())) // 대학 필터 (같은 대학교만)
+                // 사용자 선택 필터들
                 .filter(p -> matchFilterService.applySleepPatternFilter(p, sleepPatternFilter)) // 수면 패턴 필터
                 .filter(p -> matchFilterService.applyAgeRangeFilter(p, ageRangeFilter)) // 나이대 필터
                 .filter(p -> matchFilterService.applyCleaningFrequencyFilter(p, cleaningFrequencyFilter)) // 청결도 필터
@@ -120,6 +123,11 @@ public class MatchService {
                 .build();
     }
 
+    private void validateUserMatchPreference(Long userId) {
+        userMatchPreferenceRepository.findByUserId(userId)
+            .orElseThrow(() -> ServiceException.notFound("매칭 선호도가 등록되지 않은 사용자입니다."));
+    }
+
     /**
      * 후보 프로필 상세 조회
      */
@@ -129,6 +137,9 @@ public class MatchService {
 
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> ServiceException.notFound("상대방 사용자를 찾을 수 없습니다."));
+
+        // 매칭 선호도 등록 여부 확인
+        validateUserMatchPreference(receiverId);
 
         UserProfile receiverProfile = userProfileRepository.findByUserId(receiver.getId())
                 .orElseThrow(() -> ServiceException.notFound("상대방 프로필을 찾을 수 없습니다."));
@@ -178,6 +189,10 @@ public class MatchService {
         Match match = matchRepository.findById(matchId)
                 .orElseThrow(() -> ServiceException.notFound("매칭을 찾을 수 없습니다."));
 
+        // 매칭 선호도 등록 여부 확인
+        validateUserMatchPreference(match.getSender().getId());
+        validateUserMatchPreference(match.getReceiver().getId());
+
         validateMatchParticipant(match, userId);
         validateMatchStatusTransition(match);
         validateAndHandleMatchTypeTransition(match);
@@ -199,6 +214,10 @@ public class MatchService {
     public Match rejectMatch(Long matchId, Long userId) {
         Match match = matchRepository.findById(matchId)
                 .orElseThrow(() -> ServiceException.notFound("매칭을 찾을 수 없습니다."));
+
+        // 매칭 선호도 등록 여부 확인
+        validateUserMatchPreference(match.getSender().getId());
+        validateUserMatchPreference(match.getReceiver().getId());
 
         validateMatchParticipant(match, userId);
         validateMatchStatusTransition(match);
@@ -267,6 +286,9 @@ public class MatchService {
             throw ServiceException.badRequest("자기 자신에게 '좋아요'를 보낼 수 없습니다.");
         }
 
+        // 매칭 선호도 등록 여부 확인
+        validateUserMatchPreference(receiverId);
+
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> ServiceException.notFound("전송하는 사용자를 찾을 수 없습니다."));
         User receiver = userRepository.findById(receiverId)
@@ -320,6 +342,9 @@ public class MatchService {
      */
     @Transactional
     public void cancelLike(Long senderId, Long receiverId) {
+        // 매칭 선호도 등록 여부 확인
+        validateUserMatchPreference(receiverId);
+
         Match like = matchRepository.findBySenderIdAndReceiverIdAndMatchType(senderId, receiverId, MatchType.LIKE)
                 .orElseThrow(() -> ServiceException.notFound("취소할 '좋아요' 기록이 존재하지 않습니다."));
 

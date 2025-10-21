@@ -1,10 +1,12 @@
 package com.unimate.domain.match.service;
 
-import com.unimate.domain.userProfile.entity.UserProfile;
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDate;
+
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import com.unimate.domain.userProfile.entity.UserProfile;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * 매칭 필터링 로직을 담당하는 서비스
@@ -27,19 +29,18 @@ public class MatchFilterService {
      */
     public boolean applySleepPatternFilter(UserProfile profile, String sleepPatternFilter) {
         if (sleepPatternFilter == null || sleepPatternFilter.trim().isEmpty()) {
-            return true; // 필터가 없으면 모든 수면 패턴 허용
+            return true; // 필터 미적용 시 전체 허용
         }
 
         Integer sleepTime = profile.getSleepTime();
-        if (sleepTime == null) {
-            return true; // 수면 시간이 없으면 모든 패턴 허용
-        }
 
         return switch (sleepPatternFilter.toLowerCase()) {
-            case "early" -> sleepTime >= 20 && sleepTime <= 22; // 20-22시 (일찍 자는 패턴)
-            case "normal" -> (sleepTime >= 22 && sleepTime <= 23) || (sleepTime >= 0 && sleepTime <= 2); // 22-02시 (일반적인 패턴)
-            case "late" -> sleepTime >= 2 && sleepTime <= 6; // 02-06시 (늦게 자는 패턴)
-            default -> true;
+            case "very_early" -> sleepTime >= 18 && sleepTime < 22; // 22시 이전 
+            case "early" -> sleepTime >= 22 && sleepTime < 24; // 22시 ~ 00시 
+            case "normal" -> sleepTime >= 0 && sleepTime < 2; // 00시 ~ 02시 
+            case "late" -> sleepTime >= 2 && sleepTime < 4; // 02시 ~ 04시 
+            case "very_late" -> sleepTime >= 4 ; // 04시 이후 
+            default -> false;
         };
     }
 
@@ -50,14 +51,15 @@ public class MatchFilterService {
         if (ageRangeFilter == null || ageRangeFilter.trim().isEmpty()) {
             return true; // 필터가 없으면 모든 나이대 허용
         }
-
+    
         int age = matchUtilityService.calculateAge(profile.getUser().getBirthDate());
         return switch (ageRangeFilter.toLowerCase()) {
-            case "20-25" -> age >= 20 && age <= 25;
-            case "26-30" -> age >= 26 && age <= 30;
-            case "31-35" -> age >= 31 && age <= 35;
-            case "36+" -> age >= 36;
-            default -> true;
+            case "20-22" -> age >= 20 && age <= 22;
+            case "23-25" -> age >= 23 && age <= 25;
+            case "26-28" -> age >= 26 && age <= 28;
+            case "28-30" -> age >= 28 && age <= 30;
+            case "30+" -> age >= 30;
+            default -> false;
         };
     }
 
@@ -68,18 +70,16 @@ public class MatchFilterService {
         if (cleaningFrequencyFilter == null || cleaningFrequencyFilter.trim().isEmpty()) {
             return true; // 필터가 없으면 모든 청결도 허용
         }
-
+    
         Integer cleaningFrequency = profile.getCleaningFrequency();
-        if (cleaningFrequency == null) {
-            return true; // 청결도 정보가 없으면 모든 패턴 허용
-        }
-
+    
         return switch (cleaningFrequencyFilter.toLowerCase()) {
             case "daily" -> cleaningFrequency == 5; // 매일 청소
-            case "frequent" -> cleaningFrequency >= 3 && cleaningFrequency <= 4; // 자주 청소
-            case "moderate" -> cleaningFrequency == 2; // 보통
-            case "rare" -> cleaningFrequency <= 1; // 가끔
-            default -> true;
+            case "several_times_weekly" -> cleaningFrequency >= 3 && cleaningFrequency <= 4; // 주 2-3회
+            case "weekly" -> cleaningFrequency == 2; // 주 1회
+            case "monthly" -> cleaningFrequency == 1; // 월 1회
+            case "rarely" -> cleaningFrequency <= 1; // 거의 안함
+            default -> false;
         };
     }
 
