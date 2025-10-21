@@ -129,16 +129,19 @@ public class ChatroomService {
                 }
             }
 
-            // 내 읽음 기준 이후의 안읽은 메시지 수 집계
+            Long partnerId = partnerIdOf(me, r);
+
+            // 내 읽음 기준 이후의 안읽은 메시지 수 집계 (상대방이 보낸 것만)
             Long myLastRead = me.equals(r.getUser1Id()) ? r.getLastReadMessageIdUser1() : r.getLastReadMessageIdUser2();
             long unread = 0L;
             if (myLastRead != null) {
-                unread = messageRepository.countByChatroom_IdAndIdGreaterThan(r.getId(), myLastRead);
+                // 상대방이 보낸 메시지만 카운트
+                unread = messageRepository.countByChatroom_IdAndIdGreaterThanAndSenderId(r.getId(), myLastRead, partnerId);
             } else {
-                unread = messageRepository.countByChatroom_Id(r.getId());
+                // 상대방이 보낸 메시지만 카운트
+                unread = messageRepository.countByChatroom_IdAndSenderId(r.getId(), partnerId);
             }
 
-            Long partnerId = partnerIdOf(me, r);
             return new ChatRoomListResponse.ChatRoomListItem(
                     r.getId(),
                     partnerId,
@@ -257,5 +260,3 @@ public class ChatroomService {
     }
 
 }
-
-
