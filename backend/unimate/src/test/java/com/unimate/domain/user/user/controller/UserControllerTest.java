@@ -84,14 +84,14 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /api/v1/user/name - 사용자 이름 수정 성공")
+    @DisplayName("PATCH /api/v1/user/name - 사용자 이름 수정 성공")
     void updateUserName_success() throws Exception {
         UserUpdateNameRequest request = new UserUpdateNameRequest();
         var field = UserUpdateNameRequest.class.getDeclaredField("name");
         field.setAccessible(true);
         field.set(request, "새로운이름");
 
-        mockMvc.perform(put(baseUrl + "/name")
+        mockMvc.perform(patch(baseUrl + "/name")
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -103,7 +103,7 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /api/v1/user/email - 이메일 수정 성공 (인증 완료된 경우)")
+    @DisplayName("PATCH /api/v1/user/email - 이메일 수정 성공 (인증 완료된 경우)")
     void updateUserEmail_success() throws Exception {
         String newEmail = "newtest@uni.ac.kr";
         String code = "123456";
@@ -120,7 +120,7 @@ class UserControllerTest {
         codeField.setAccessible(true);
         codeField.set(request, code);
 
-        mockMvc.perform(put(baseUrl + "/email")
+        mockMvc.perform(patch(baseUrl + "/email")
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -132,7 +132,7 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /api/v1/user/email - 인증되지 않은 이메일로 수정 시 실패 (400)")
+    @DisplayName("PATCH /api/v1/user/email - 인증되지 않은 이메일로 수정 시 실패 (400)")
     void updateUserEmail_fail_unverified() throws Exception {
         String newEmail = "failtest@uni.ac.kr";
 
@@ -147,7 +147,7 @@ class UserControllerTest {
         codeField.setAccessible(true);
         codeField.set(request, "000000");
 
-        mockMvc.perform(put(baseUrl + "/email")
+        mockMvc.perform(patch(baseUrl + "/email")
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

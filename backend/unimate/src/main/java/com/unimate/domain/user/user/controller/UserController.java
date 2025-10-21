@@ -34,7 +34,7 @@ public class UserController {
                 ));
     }
 
-    @PutMapping("/name")
+    @PatchMapping("/name")
     public ResponseEntity<UserUpdateResponse> updateUserName(
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
             @RequestBody UserUpdateNameRequest request
@@ -51,7 +51,7 @@ public class UserController {
     }
 
 
-    @PutMapping("/email")
+    @PatchMapping("/email")
     public ResponseEntity<UserUpdateResponse> updateUserEmail(
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
             @Valid @RequestBody UserUpdateEmailRequest request
