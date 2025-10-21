@@ -302,14 +302,14 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ onSuccess }) => {
             </section>
 
             {/* 매칭 설정 */}
-            <section>
+            {/* <section>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">매칭 설정</h3>
               <Checkbox
                 label="매칭 활성화 (다른 사용자들이 나를 찾을 수 있습니다)"
                 {...register('matchingEnabled')}
                 error={errors.matchingEnabled?.message}
               />
-            </section>
+            </section> */}
 
             {/* 제출 버튼 */}
             <div className="flex justify-end space-x-4 pt-6 border-t">

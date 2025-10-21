@@ -11,10 +11,8 @@ import com.unimate.domain.userProfile.entity.UserProfile;
 import com.unimate.domain.userProfile.repository.UserProfileRepository;
 import com.unimate.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +25,8 @@ public class UserProfileService {
 
     @Transactional
     public ProfileResponse create(String email, ProfileCreateRequest req){
-        User userRef = userRepository.findByEmail(email).get();
+        User userRef = userRepository.findByEmail(email)
+                .orElseThrow(() -> ServiceException.notFound("이메일에 해당하는 유저를 찾을 수 없습니다."));
         UserProfile profile = UserProfile.builder()
                 .user(userRef)
                 .sleepTime(req.getSleepTime())
@@ -53,7 +52,7 @@ public class UserProfileService {
 
     public ProfileResponse getByEmail(String email) {
         UserProfile profile = userProfileRepository.findByUserEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "profile not found"));
+                .orElseThrow(() -> ServiceException.notFound("사용자 프로필을 찾을 수 없습니다."));
 
         return toResponse(profile);
     }
@@ -61,7 +60,7 @@ public class UserProfileService {
     @Transactional
     public ProfileResponse update(String email, ProfileCreateRequest req) {
         UserProfile profile = userProfileRepository.findByUserEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "profile not found"));
+                .orElseThrow(() -> ServiceException.notFound("사용자 프로필을 찾을 수 없습니다."));
 
         profile.update(req);
 
