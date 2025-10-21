@@ -25,8 +25,4 @@ public class AdminUser extends BaseEntity {
         this.password = password;
         this.name = name;
     }
-
-    public String getRolde() {
-        return "ROLE_ADMIN";
-    }
 }
