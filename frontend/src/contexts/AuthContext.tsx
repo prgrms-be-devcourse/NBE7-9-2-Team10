@@ -1,143 +1,148 @@
-import { api, API_ENDPOINTS } from '@/lib/services/api';
-import { LoginRequest, LoginResponse, SignupRequest, SignupResponse, User } from '@/types/user';
-import { ApiResponse } from '@/types/api';
+'use client';
 
-// 인증 서비스 클래스
-export class AuthService {
-  /**
-   * 로그인
-   */
-  static async login(credentials: LoginRequest): Promise<LoginResponse> {
-    const response = await api.post<ApiResponse<LoginResponse>>(
-      API_ENDPOINTS.LOGIN,
-      credentials
-    );
-    
-    // 응답에서 실제 데이터 추출
-    const rawData = response.data?.data || response.data || response;
-    const loginData = rawData as LoginResponse;
-    
-    // 토큰을 localStorage에 저장
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('accessToken', loginData.accessToken);
-      localStorage.setItem('userId', loginData.userId.toString());
-      localStorage.setItem('userEmail', loginData.email);
-      
-      // JWT 토큰 만료 시간 추정 (1시간)
-      const expirationTime = Date.now() + (60 * 60 * 1000);
-      localStorage.setItem('tokenExpiration', expirationTime.toString());
-    }
-    
-    return loginData as LoginResponse;
-  }
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
+import { AuthService } from '@/lib/services/authService';
+import { User } from '@/types/user';
 
-  /**
-   * 회원가입
-   */
-  static async signup(userData: SignupRequest): Promise<SignupResponse> {
-    const response = await api.post<ApiResponse<SignupResponse>>(
-      API_ENDPOINTS.SIGNUP,
-      userData
-    );
-    
-    const rawData = response.data?.data || response.data || response;
-    return rawData as SignupResponse;
-  }
-
-  /**
-   * 로그아웃
-   */
-  static async logout(): Promise<void> {
-    try {
-      await api.post(API_ENDPOINTS.LOGOUT);
-    } catch (error) {
-      // 서버 로그아웃 실패해도 클라이언트 토큰은 제거
-      console.warn('Server logout failed:', error);
-    } finally {
-      // 클라이언트 토큰 및 사용자 정보 제거
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('tokenExpiration');
-        localStorage.removeItem('userId');
-        localStorage.removeItem('userEmail');
-      }
-    }
-  }
-
-  /**
-   * 현재 사용자 정보 조회 (기본 정보만)
-   */
-  static async getCurrentUser(): Promise<{ userId: number; email: string }> {
-    const response = await api.get<ApiResponse<{ userId: number; email: string }>>(API_ENDPOINTS.ME);
-    const rawData = response.data?.data || response.data || response;
-    return rawData as { userId: number; email: string };
-  }
-
-  /**
-   * 완전한 사용자 정보 가져오기
-   */
-  static async getFullUserInfo(): Promise<User> {
-    const response = await api.get<ApiResponse<User>>(API_ENDPOINTS.USER);
-    const rawData = response.data?.data || response.data || response;
-    return rawData as User;
-  }
-
-
-  /**
-   * 토큰 유효성 확인
-   */
-  static isTokenValid(): boolean {
-    if (typeof window === 'undefined') return false;
-    
-    const token = localStorage.getItem('accessToken');
-    const expiration = localStorage.getItem('tokenExpiration');
-    
-    if (!token) return false;
-    
-    // 만료 시간 확인
-    if (expiration && Date.now() > parseInt(expiration)) {
-      this.clearTokens();
-      return false;
-    }
-    
-    return true;
-  }
-
-  /**
-   * 토큰 가져오기
-   */
-  static getToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('accessToken');
-  }
-
-  /**
-   * 토큰들 제거
-   */
-  static clearTokens(): void {
-    if (typeof window === 'undefined') return;
-    
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('tokenExpiration');
-    localStorage.removeItem('refreshToken');
-  }
-
-  /**
-   * 로그인 상태 확인
-   */
-  static isAuthenticated(): boolean {
-    return this.isTokenValid();
-  }
-
-  /**
-   * 인증이 필요한 경우 로그인 페이지로 리다이렉트
-   */
-  static redirectToLogin(): void {
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login';
-    }
-  }
+// 인증 상태 타입 정의
+interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
+// 인증 컨텍스트 타입 정의
+interface AuthContextType extends AuthState {
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  signup: (userData: any) => Promise<void>;
+  refreshUser: () => Promise<void>;
+}
+
+// 컨텍스트 생성
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// AuthProvider 컴포넌트
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+
+  // 인증 상태 확인
+  const isAuthenticated = !!user && AuthService.isTokenValid();
+
+  // 사용자 정보 새로고침
+  const refreshUser = async () => {
+    try {
+      if (AuthService.isTokenValid()) {
+        // localStorage에서 기본 정보만 가져오기
+        const userId = localStorage.getItem('userId');
+        const email = localStorage.getItem('email');
+        
+        if (userId && email) {
+          setUser({
+            id: Number(userId),
+            email: email,
+            name: '',
+            password: '',
+            gender: 'MALE' as any,
+            birthDate: '',
+            studentVerified: false,
+            university: '',
+            createdAt: '',
+            updatedAt: ''
+          });
+        }
+      } else {
+        setUser(null);
+      }
+    } catch (error) {
+      console.error('사용자 정보 조회 실패:', error);
+      setUser(null);
+    }
+  };
+
+  // 로그인
+  const login = async (email: string, password: string) => {
+    try {
+      setIsLoading(true);
+      await AuthService.login({ email, password });
+      await refreshUser();
+      router.push('/');
+    } catch (error) {
+      console.error('로그인 실패:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 로그아웃
+  const logout = async () => {
+    try {
+      await AuthService.logout();
+      setUser(null);
+      router.push('/');
+    } catch (error) {
+      console.error('로그아웃 실패:', error);
+    }
+  };
+
+  // 회원가입
+  const signup = async (userData: any) => {
+    try {
+      setIsLoading(true);
+      await AuthService.signup(userData);
+      router.push('/login');
+    } catch (error) {
+      console.error('회원가입 실패:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 초기 인증 상태 확인
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        setIsLoading(true);
+        if (AuthService.isTokenValid()) {
+          await refreshUser();
+        }
+      } catch (error) {
+        console.error('인증 초기화 실패:', error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initAuth();
+  }, []);
+
+  const value: AuthContextType = {
+    user,
+    isAuthenticated,
+    isLoading,
+    login,
+    logout,
+    signup,
+    refreshUser,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+// useAuth 훅
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
 // 기본 export
-export default AuthService;
+export default AuthContext;

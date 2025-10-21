@@ -60,8 +60,9 @@ export default function ChatListPage() {
               console.log(`[Chat List] 채팅방 데이터:`, chat)
               console.log(`[Chat List] 현재 사용자 ID:`, currentUserId)
               
-              // 채팅방 데이터 구조에 따라 partnerId 사용
-              const partnerId = chat.partnerId || chat.user1Id || chat.user2Id
+              // 채팅방 데이터 구조에 따라 partnerId 계산
+              const partnerId = chat.partnerId || 
+                                (chat.user1Id === currentUserId ? chat.user2Id : chat.user1Id)
               
               if (!partnerId || !currentUserId) {
                 console.log(`[Chat List] 데이터 누락: partnerId=${partnerId}, currentUserId=${currentUserId}`)
@@ -250,7 +251,7 @@ export default function ChatListPage() {
 
           {/* Delete Chat Modal */}
           {showDeleteModal !== null && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50">
               <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 bg-[#FEE2E2] rounded-xl flex items-center justify-center">
