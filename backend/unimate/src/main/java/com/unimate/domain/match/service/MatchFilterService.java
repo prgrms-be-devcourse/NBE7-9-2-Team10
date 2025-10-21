@@ -40,7 +40,7 @@ public class MatchFilterService {
             case "normal" -> sleepTime >= 0 && sleepTime < 2; // 00시 ~ 02시 
             case "late" -> sleepTime >= 2 && sleepTime < 4; // 02시 ~ 04시 
             case "very_late" -> sleepTime >= 4 ; // 04시 이후 
-            default -> true;
+            default -> false;
         };
     }
 
@@ -59,7 +59,7 @@ public class MatchFilterService {
             case "26-28" -> age >= 26 && age <= 28;
             case "28-30" -> age >= 28 && age <= 30;
             case "30+" -> age >= 30;
-            default -> true;
+            default -> false;
         };
     }
 
@@ -79,7 +79,7 @@ public class MatchFilterService {
             case "weekly" -> cleaningFrequency == 2; // 주 1회
             case "monthly" -> cleaningFrequency == 1; // 월 1회
             case "rarely" -> cleaningFrequency <= 1; // 거의 안함
-            default -> throw new IllegalArgumentException("잘못된 청결도 필터 값: " + cleaningFrequencyFilter);
+            default -> false;
         };
     }
 
