@@ -7,13 +7,13 @@ export interface ApiResponse<T = unknown> {
   status: number;
   success: boolean;
 }
-
-// API 에러 응답
+// API 에러 응답 - errorCode 추가
 export interface ApiError {
   message: string;
   status: number;
   timestamp: string;
   path?: string;
+  errorCode?: string; // BAD_REQUEST, CONFLICT, NOT_FOUND 등
 }
 
 // HTTP 메서드 타입
@@ -60,3 +60,15 @@ export interface FormState<T> {
   isValid: boolean;
   isSubmitting: boolean;
 }
+
+// 에러 코드 상수 (백엔드와 일치)
+export const ERROR_CODES = {
+  BAD_REQUEST: 'BAD_REQUEST',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  NOT_FOUND: 'NOT_FOUND',
+  CONFLICT: 'CONFLICT',
+  INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
+} as const;
+
+export type ErrorCode = typeof ERROR_CODES[keyof typeof ERROR_CODES];
