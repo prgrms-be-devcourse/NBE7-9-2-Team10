@@ -66,7 +66,7 @@ const RegisterForm = () => {
     try {
       await RegisterService.verifyEmailCode(email, code);
       setIsVerified(true);
-      setMessage('이메일 인증이 완료되었습니다 ✅');
+      setMessage('이메일 인증이 완료되었습니다');
       setErrors({});
     } catch (err) {
       const apiError = err as ApiError;
