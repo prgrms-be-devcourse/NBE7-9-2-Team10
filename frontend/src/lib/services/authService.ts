@@ -21,7 +21,7 @@ export class AuthService {
     if (typeof window !== 'undefined') {
       localStorage.setItem('accessToken', loginData.accessToken);
       localStorage.setItem('userId', loginData.userId.toString());
-      localStorage.setItem('email', loginData.email);
+      localStorage.setItem('userEmail', loginData.email);
       
       // JWT 토큰 만료 시간 추정 (1시간)
       const expirationTime = Date.now() + (60 * 60 * 1000);
@@ -59,7 +59,7 @@ export class AuthService {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('tokenExpiration');
         localStorage.removeItem('userId');
-        localStorage.removeItem('email');
+        localStorage.removeItem('userEmail');
       }
     }
   }
@@ -77,7 +77,7 @@ export class AuthService {
    * 완전한 사용자 정보 가져오기
    */
   static async getFullUserInfo(): Promise<User> {
-    const response = await api.get<ApiResponse<User>>(API_ENDPOINTS.ME);
+    const response = await api.get<ApiResponse<User>>(API_ENDPOINTS.USER);
     const rawData = response.data?.data || response.data || response;
     return rawData as User;
   }
