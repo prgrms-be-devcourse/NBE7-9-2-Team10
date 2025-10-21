@@ -1,5 +1,6 @@
 package com.unimate.domain.report.entity;
 
+import com.unimate.domain.user.user.entity.User;
 import com.unimate.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -13,8 +14,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Report extends BaseEntity {
 
-    private Integer reporterId;
-    private Integer reportedId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reporterId")
+    private User reporter;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reportedId")
+    private User reported;
+
     private String  category;
     @Lob //TEXT
     private String  content;
@@ -22,13 +29,13 @@ public class Report extends BaseEntity {
     private ReportStatus reportStatus;
 
     @Builder
-    private Report(Integer reporterId,
-                   Integer reportedId,
+    private Report(User reporter,
+                   User reported,
                    String category,
                    String content,
                    ReportStatus reportStatus) {
-        this.reporterId   = reporterId;
-        this.reportedId   = reportedId;
+        this.reporter = reporter;
+        this.reported = reported;
         this.category     = category;
         this.content      = content;
         this.reportStatus = (reportStatus != null)

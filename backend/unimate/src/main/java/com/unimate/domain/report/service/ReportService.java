@@ -33,8 +33,8 @@ public class ReportService {
 
         Report saved = reportRepository.save(
                 Report.builder()
-                        .reporterId(reporter.getId().intValue())
-                        .reportedId(reported.getId().intValue())
+                        .reporter(reporter)
+                        .reported(reported)
                         .category(rq.getCategory())
                         .content(rq.getContent())
                         .reportStatus(ReportStatus.RECEIVED)

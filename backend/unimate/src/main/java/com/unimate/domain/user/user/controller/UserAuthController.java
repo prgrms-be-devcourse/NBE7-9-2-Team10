@@ -35,7 +35,8 @@ public class UserAuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserLoginResponse> login(@Valid @RequestBody UserLoginRequest request) {
+    public ResponseEntity<UserLoginResponse>
+    login(@Valid @RequestBody UserLoginRequest request) {
         var tokens = userAuthService.login(request);
 
         ResponseCookie cookie = CookieUtils.httpOnlyCookie(
