@@ -1,6 +1,8 @@
 package com.unimate.domain.user.admin.service;
 
 import com.unimate.domain.user.admin.dto.AdminLoginRequest;
+import com.unimate.domain.user.admin.dto.AdminSignupRequest;
+import com.unimate.domain.user.admin.dto.AdminSignupResponse;
 import com.unimate.domain.user.admin.entity.AdminUser;
 import com.unimate.domain.user.admin.repository.AdminRepository;
 import com.unimate.global.auth.dto.Tokens;
@@ -19,6 +21,22 @@ public class AdminAuthService {
     private final AdminRepository adminUserRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final TokenService tokenService;
+
+    @Transactional
+    public AdminSignupResponse signup(AdminSignupRequest req) {
+        if (adminUserRepository.existsByEmail(req.getEmail())) {
+            throw ServiceException.badRequest("이미 등록된 관리자 이메일입니다.");
+        }
+
+        AdminUser admin = new AdminUser(
+                req.getEmail(),
+                passwordEncoder.encode(req.getPassword()),
+                req.getName()
+        );
+
+        adminUserRepository.save(admin);
+        return new AdminSignupResponse(admin.getId(), admin.getEmail(), admin.getName());
+    }
 
     @Transactional
     public Tokens login(AdminLoginRequest req) {

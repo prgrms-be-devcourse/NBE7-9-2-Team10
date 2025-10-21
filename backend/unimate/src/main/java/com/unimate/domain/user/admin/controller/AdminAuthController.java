@@ -33,7 +33,7 @@ public class AdminAuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<AdminSignupResponse> signup(@Valid @RequestBody AdminSignupRequest request) {
-        return ResponseEntity.ok(adminUserService.signup(request));
+        return ResponseEntity.ok(adminAuthService.signup(request));
     }
 
     @PostMapping("/login")
