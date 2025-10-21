@@ -117,6 +117,8 @@ const RegisterForm = () => {
     if (!name) newErrors.name = '이름을 입력해주세요.';
     if (!birthDate) newErrors.birthDate = '생년월일을 입력해주세요.';
     if (!university) newErrors.university = '대학교명을 입력해주세요.';
+    else if (!university.endsWith('대학교'))
+      newErrors.university = '대학교명은 "대학교"로 끝나야 합니다.';
     if (!gender) newErrors.gender = '성별을 선택해주세요.';
     if (!agree) newErrors.agree = '이용약관에 동의해주세요.';
 
@@ -181,7 +183,7 @@ const RegisterForm = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="email@uni.ac.kr"
-              className={`flex-1 border rounded-lg px-3 py-2 ${errors.email ? 'border-red-500' : 'border-gray-300'
+              className={`flex-1 border rounded-lg px-3 py-2 placeholder:text-gray-400 ${errors.email ? 'border-red-500' : 'border-gray-300'
                 } focus:ring-2 focus:ring-blue-500`}
               disabled={isVerified}
             />
@@ -190,8 +192,8 @@ const RegisterForm = () => {
               onClick={handleSendCode}
               disabled={loading || isVerified}
               className={`px-4 py-2 rounded-lg text-white ${isVerified
-                  ? 'bg-green-500 cursor-default'
-                  : 'bg-blue-600 hover:bg-blue-700'
+                ? 'bg-green-500 cursor-default'
+                : 'bg-blue-600 hover:bg-blue-700'
                 }`}
             >
               {isVerified ? '인증 완료' : '인증번호 전송'}
@@ -211,7 +213,7 @@ const RegisterForm = () => {
                 onChange={handleCodeInput}
                 placeholder="인증번호 6자리 입력"
                 maxLength={6}
-                className={`flex-1 border rounded-lg px-3 py-2 ${errors.code ? 'border-red-500' : 'border-gray-300'
+                className={`flex-1 border rounded-lg px-3 py-2 placeholder:text-gray-400 ${errors.code ? 'border-red-500' : 'border-gray-300'
                   } focus:ring-2 focus:ring-blue-500`}
               />
               <button
@@ -235,7 +237,7 @@ const RegisterForm = () => {
             value={password}
             onChange={(e) => handlePasswordChange(e.target.value)}
             placeholder="비밀번호를 입력하세요"
-            className={`w-full border rounded-lg px-3 py-2 ${errors.password ? 'border-red-500' : 'border-gray-300'
+            className={`w-full border rounded-lg px-3 py-2 placeholder:text-gray-400 ${errors.password ? 'border-red-500' : 'border-gray-300'
               } focus:ring-2 focus:ring-blue-500`}
           />
           {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
@@ -249,7 +251,7 @@ const RegisterForm = () => {
             value={confirmPassword}
             onChange={(e) => handleConfirmPasswordChange(e.target.value)}
             placeholder="비밀번호를 다시 입력하세요"
-            className={`w-full border rounded-lg px-3 py-2 ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+            className={`w-full border rounded-lg px-3 py-2 placeholder:text-gray-400 ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
               } focus:ring-2 focus:ring-blue-500`}
           />
           {errors.confirmPassword && (
@@ -265,7 +267,7 @@ const RegisterForm = () => {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="홍길동"
-            className={`w-full border rounded-lg px-3 py-2 ${errors.name ? 'border-red-500' : 'border-gray-300'
+            className={`w-full border rounded-lg px-3 py-2 placeholder:text-gray-400 ${errors.name ? 'border-red-500' : 'border-gray-300'
               } focus:ring-2 focus:ring-blue-500`}
           />
           {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
@@ -295,7 +297,7 @@ const RegisterForm = () => {
             value={university}
             onChange={(e) => setUniversity(e.target.value)}
             placeholder="예: 서울대학교"
-            className={`w-full border rounded-lg px-3 py-2 ${errors.university ? 'border-red-500' : 'border-gray-300'
+            className={`w-full border rounded-lg px-3 py-2 placeholder:text-gray-400 ${errors.university ? 'border-red-500' : 'border-gray-300'
               } focus:ring-2 focus:ring-blue-500`}
           />
           {errors.university && (
