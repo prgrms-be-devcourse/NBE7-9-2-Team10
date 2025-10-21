@@ -66,4 +66,17 @@ public class UserController {
                         updated.getUniversity()
                 ));
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<UserInfoResponse> getUserById(@PathVariable Long id) {
+        User user = userService.findById(id);
+        return ResponseEntity.ok(
+                new UserInfoResponse(
+                        user.getEmail(),
+                        user.getName(),
+                        user.getGender(),
+                        user.getBirthDate(),
+                        user.getUniversity()
+                ));
+    }
 }

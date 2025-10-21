@@ -1,25 +1,54 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import useChatroom from '@/hooks/useChatroom'
 import { ArrowLeft, Send } from 'lucide-react'
 import AppHeader from '@/components/layout/AppHeader'
+import { apiClient } from '@/lib/services/api'
 
 interface ChatRoomViewProps {
   chatroomId: number
-  partnerName?: string
-  partnerUniversity?: string
 }
 
-export default function ChatRoomView({ 
-  chatroomId, 
-  partnerName = "정수아", 
-  partnerUniversity = "Harvard" 
-}: ChatRoomViewProps) {
+export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
   const router = useRouter()
   const { messages, send, reconnect } = useChatroom(chatroomId)
   const [text, setText] = useState('')
+  const [partnerName, setPartnerName] = useState('채팅 상대')
+  const [partnerInfo, setPartnerInfo] = useState('')
+
+  // 채팅방 정보 조회
+  useEffect(() => {
+    const fetchChatroomInfo = async () => {
+      try {
+        const response = await apiClient.get(`/api/v1/chatrooms/${chatroomId}`)
+        const chatroomData = response.data
+        
+        // 상대방 ID 추출
+        const currentUserId = Number(localStorage.getItem('userId'))
+        const partnerId = chatroomData.user1Id === currentUserId 
+          ? chatroomData.user2Id 
+          : chatroomData.user1Id
+        
+        // 상대방 정보 조회 (user 테이블에서)
+        try {
+          const userResponse = await apiClient.get(`/api/v1/user/${partnerId}`)
+          const user = userResponse.data
+          setPartnerName(user.name || `사용자 ${partnerId}`)
+          setPartnerInfo(user.university || '')
+        } catch {
+          setPartnerName(`사용자 ${partnerId}`)
+          setPartnerInfo('')
+        }
+      } catch (error) {
+        console.error('채팅방 정보 조회 실패:', error)
+      }
+    }
+    
+    fetchChatroomInfo()
+  }, [chatroomId])
+
   const sendMessage = (content: string) => {
     if (!content.trim()) return
     send(content)
@@ -43,7 +72,7 @@ export default function ChatRoomView({
             </button>
             <div>
               <h2 className="font-semibold text-[#111827]">{partnerName}</h2>
-              <p className="text-sm text-[#6B7280]">{partnerUniversity}</p>
+              {partnerInfo && <p className="text-sm text-[#6B7280]">{partnerInfo}</p>}
             </div>
           </div>
         </div>

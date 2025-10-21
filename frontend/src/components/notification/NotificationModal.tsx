@@ -59,10 +59,6 @@ export default function NotificationModal({
   }
 
   const getNotificationAction = (notification: Notification) => {
-    console.log('[NotificationModal] Processing notification:', JSON.stringify(notification, null, 2));
-    console.log('[NotificationModal] chatroomId:', notification.chatroomId);
-    console.log('[NotificationModal] type:', notification.type);
-    
     switch (notification.type) {
       case 'like':
         return (
@@ -83,7 +79,6 @@ export default function NotificationModal({
           </button>
         )
       case 'match':
-        console.log('[NotificationModal] Match notification - chatroomId:', notification.chatroomId);
         return (
           <div className="flex gap-2">
             <button

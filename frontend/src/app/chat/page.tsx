@@ -9,12 +9,15 @@ import { apiClient } from '@/lib/services/api'
 
 interface ChatRoom {
   chatroomId: number
-  user1Id: number
-  user2Id: number
+  user1Id?: number
+  user2Id?: number
+  partnerId?: number
   status: string
   createdAt: string
   lastMessage?: string
   lastMessageTime?: string
+  partnerName?: string
+  unreadCount?: number
 }
 
 export default function ChatListPage() {
@@ -31,16 +34,15 @@ export default function ChatListPage() {
         setIsLoading(true)
         // apiClient를 직접 사용 (백엔드 API 경로: /api/v1/chatrooms)
         const response = await apiClient.get('/api/v1/chatrooms')
-        console.log('API 전체 응답:', response)
-        console.log('응답 데이터:', response.data)
         
         const data = response.data
         const chatrooms = data.items || []
         
-        // 각 채팅방의 최신 메시지 가져오기
+        // 각 채팅방의 최신 메시지와 상대방 이름 가져오기
         const chatroomsWithMessages = await Promise.all(
           chatrooms.map(async (chat: ChatRoom) => {
             try {
+              // 최신 메시지 가져오기
               const messagesResponse = await apiClient.get(
                 `/api/v1/chatrooms/${chat.chatroomId}/messages`,
                 { 
@@ -53,19 +55,51 @@ export default function ChatListPage() {
               const messages = messagesResponse.data.items || []
               const lastMsg = messages[0]
               
-              console.log(`[Chat List] 채팅방 ${chat.chatroomId} 최신 메시지:`, lastMsg?.content)
+              // 상대방 이름 가져오기
+              const currentUserId = Number(localStorage.getItem('userId'))
+              console.log(`[Chat List] 채팅방 데이터:`, chat)
+              console.log(`[Chat List] 현재 사용자 ID:`, currentUserId)
+              
+              // 채팅방 데이터 구조에 따라 partnerId 사용
+              const partnerId = chat.partnerId || chat.user1Id || chat.user2Id
+              
+              if (!partnerId || !currentUserId) {
+                console.log(`[Chat List] 데이터 누락: partnerId=${partnerId}, currentUserId=${currentUserId}`)
+                return {
+                  ...chat,
+                  lastMessage: '상호 좋아요로 매칭되었습니다!',
+                  lastMessageTime: chat.createdAt,
+                  partnerName: '알 수 없는 사용자'
+                }
+              }
+              
+              let partnerName = `사용자 ${partnerId}`
+              
+              try {
+                console.log(`[Chat List] 상대방 이름 조회: partnerId=${partnerId}`)
+                const userResponse = await apiClient.get(`/api/v1/user/${partnerId}`)
+                const user = userResponse.data
+                console.log(`[Chat List] 사용자 정보:`, user)
+                partnerName = user.name || `사용자 ${partnerId}`
+                console.log(`[Chat List] 최종 이름: ${partnerName}`)
+              } catch (error) {
+                console.error(`[Chat List] 사용자 정보 조회 실패:`, error)
+                // 사용자 정보 조회 실패 시 기본값 사용
+              }
               
               return {
                 ...chat,
                 lastMessage: lastMsg ? lastMsg.content : '상호 좋아요로 매칭되었습니다!',
-                lastMessageTime: lastMsg ? lastMsg.createdAt : chat.createdAt
+                lastMessageTime: lastMsg ? lastMsg.createdAt : chat.createdAt,
+                partnerName: partnerName
               }
             } catch (error) {
               console.error(`채팅방 ${chat.chatroomId} 메시지 로드 실패:`, error)
               return {
                 ...chat,
                 lastMessage: '상호 좋아요로 매칭되었습니다!',
-                lastMessageTime: chat.createdAt
+                lastMessageTime: chat.createdAt,
+                partnerName: `사용자 ${chat.user1Id === Number(localStorage.getItem('userId')) ? chat.user2Id : chat.user1Id}`
               }
             }
           })
@@ -100,11 +134,6 @@ export default function ChatListPage() {
     }
   }
 
-  const getPartnerName = (chat: ChatRoom) => {
-    const currentUserId = Number(localStorage.getItem('userId'))
-    const partnerId = chat.user1Id === currentUserId ? chat.user2Id : chat.user1Id
-    return `사용자 ${partnerId}`
-  }
 
   return (
     <ProtectedRoute>
@@ -154,7 +183,7 @@ export default function ChatListPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-[#111827]">{getPartnerName(chat)}</h3>
+                          <h3 className="font-semibold text-[#111827]">{chat.partnerName || `사용자 ${chat.partnerId || chat.user1Id || chat.user2Id}`}</h3>
                           {chat.status === 'ACTIVE' && (
                             <span className="px-2 py-0.5 bg-[#10B981] text-white text-xs font-bold rounded">
                               활성

@@ -90,8 +90,13 @@ public class ChatroomService {
         );
     }
 
-    //내 방 목록
+    ///내 방 목록
     public ChatRoomListResponse listMyRooms(Long me, String cursor, int limit, ChatroomStatus status) {
+        // status가 null이면 ACTIVE만 조회 (CLOSED 제외)
+        if (status == null) {
+            status = ChatroomStatus.ACTIVE;
+        }
+
         LocalDateTime cursorAt = null;
         if (cursor != null && !cursor.isBlank()) {
             try {
