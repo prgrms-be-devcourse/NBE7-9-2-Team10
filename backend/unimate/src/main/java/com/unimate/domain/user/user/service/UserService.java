@@ -1,5 +1,6 @@
 package com.unimate.domain.user.user.service;
 
+import com.unimate.domain.user.user.dto.UserUpdateRequest;
 import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.UserRepository;
 import com.unimate.domain.verification.service.VerificationService;
@@ -21,5 +22,12 @@ public class UserService {
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> ServiceException.notFound("사용자를 찾을 수 없습니다."));
+    }
+
+    @Transactional
+    public User update(String email, UserUpdateRequest request) {
+        User user = findByEmail(email);
+        user.update(request.getName(), request.getEmail(), request.getBirthDate(), request.getUniversity());
+        return userRepository.save(user);
     }
 }
