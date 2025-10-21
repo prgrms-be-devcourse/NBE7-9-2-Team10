@@ -1,32 +1,15 @@
 package com.unimate.domain.match.controller;
 
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.unimate.domain.match.dto.LikeRequest;
-import com.unimate.domain.match.dto.LikeResponse;
-import com.unimate.domain.match.dto.MatchConfirmRequest;
-import com.unimate.domain.match.dto.MatchConfirmResponse;
-import com.unimate.domain.match.dto.MatchRecommendationDetailResponse;
-import com.unimate.domain.match.dto.MatchRecommendationRequest;
-import com.unimate.domain.match.dto.MatchRecommendationResponse;
-import com.unimate.domain.match.dto.MatchResultResponse;
-import com.unimate.domain.match.dto.MatchStatusResponse;
+import com.unimate.domain.match.dto.*;
 import com.unimate.domain.match.entity.Match;
 import com.unimate.domain.match.service.MatchService;
 import com.unimate.domain.match.service.MatchUtilityService;
 import com.unimate.global.jwt.CustomUserPrincipal;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/matches")
