@@ -51,3 +51,19 @@ export interface MatchingStatus {
   enabled: boolean;
   lastUpdated: string;
 }
+
+// 매칭 선호도 등록/수정 타입
+export interface MatchPreference {
+  startUseDate: string;
+  endUseDate: string;
+  sleepTime: number;
+  isPetAllowed: boolean;
+  isSmoker: boolean;
+  cleaningFrequency: number;
+  preferredAgeGap: number;
+  hygieneLevel: number;
+  isSnoring: boolean;
+  drinkingFrequency: number;
+  noiseSensitivity: number;
+  guestFrequency: number;
+}
