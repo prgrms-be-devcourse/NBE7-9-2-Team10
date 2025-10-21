@@ -21,29 +21,26 @@ function useChatroom(chatroomId: number) {
       try {
         const { apiClient } = await import('@/lib/services/api')
         const response = await apiClient.get(`/api/v1/chatrooms/${chatroomId}/messages`, {
-          params: { 
-            limit: 100,
-            order: 'desc'
-          }
+          params: { limit: 100 }
         })
         
+        console.log('[Message History] Loaded:', response.data)
+        
+        // 응답 형태: { items: [...], nextCursor: ... }
         const historyData = response.data
         if (historyData.items && Array.isArray(historyData.items)) {
+          // 백엔드 메시지를 WsMessagePush 형태로 변환
           const historyMessages: WsMessagePush[] = historyData.items.map((msg: any) => ({
             messageId: msg.messageId,
             chatroomId: chatroomId,
             senderId: msg.senderId,
-            type: msg.type || 'TEXT',
+            type: 'TEXT',
             content: msg.content,
             createdAt: msg.createdAt
           }))
           
-          // 시간 순으로 정렬
-          const sortedMessages = historyMessages.sort((a, b) => {
-            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          })
-          
-          setMessages(sortedMessages)
+          setMessages(historyMessages)
+          console.log('[Message History] Loaded messages:', historyMessages.length)
         }
       } catch (error) {
         console.error('[Message History] Load failed:', error)
@@ -53,77 +50,67 @@ function useChatroom(chatroomId: number) {
     loadHistory()
   }, [chatroomId])
 
-  // WebSocket 구독 설정
   useEffect(() => {
+    // 클라이언트에서만 WebSocket 연결
     if (typeof window === 'undefined') return
-    
+
     let mounted = true
-    
+
     const initWebSocket = async () => {
       try {
-        const { startWs } = await import('@/lib/services/wsManager')
-        const ws = await startWs()
-        
+        const { getWs, startWs } = await import('@/lib/services/wsManager')
+
+        console.log(`[WebSocket] Starting connection for chatroom ${chatroomId}`)
+        await startWs()
+        const ws = getWs()
+
         if (!mounted) return
 
-        // 채팅방 메시지 구독
+        console.log(`[WebSocket] Connected, subscribing to chatroom ${chatroomId}`)
+
         subRef.current = ws.subscribe(`/sub/chatroom.${chatroomId}`, (msg) => {
           try {
             const body = JSON.parse(msg.body) as WsMessagePush
-            setMessages((prev) => {
-              const exists = prev.some(m => m.messageId === body.messageId)
-              if (exists) return prev
-              return [...prev, body]
-            })
+            setMessages((prev) => [...prev, body])
+            console.log(`[WebSocket] Received message:`, body)
           } catch (e) {
             console.error('[WebSocket] Message parsing error:', e)
           }
         })
 
-        // ACK 구독
         ackRef.current = ws.subscribe('/user/queue/ack', (msg) => {
           try {
             const ack = JSON.parse(msg.body) as WsSendAckResponse
+            console.log('[ACK]', ack)
           } catch (e) {
             console.error('[WebSocket] ACK parsing error:', e)
           }
         })
 
-        // 에러 구독
-        errRef.current = ws.subscribe(`/sub/chatroom.${chatroomId}.error`, (msg) => {
+        errRef.current = ws.subscribe('/user/queue/error', (msg) => {
           try {
-            const err = JSON.parse(msg.body)
-            
-            if (!err || Object.keys(err).length === 0) return
-            
-            const errorMessage = err.error || err.message || '알 수 없는 오류'
-            
-            if (errorMessage.includes('닫힌 채팅방') || 
-                errorMessage.includes('차단된 채팅방') ||
-                errorMessage.includes('CLOSED') ||
-                errorMessage.includes('종료된 채팅방')) {
-              alert('메시지 전송 실패\n\n상대방이 채팅방에서 나갔습니다.')
-            } else {
-              alert(`메시지 전송 실패\n\n${errorMessage}`)
-            }
+            const err = JSON.parse(msg.body) as WsError
+            console.error('[WS ERROR]', err)
           } catch (e) {
             console.error('[WebSocket] Error parsing error:', e)
-            alert('메시지 전송에 실패했습니다.')
           }
         })
+
+        console.log(`[WebSocket] Successfully subscribed to chatroom ${chatroomId}`)
       } catch (e) {
-        console.error('[WebSocket] Connection error:', e)
-        if (e instanceof Error && e.message.includes('Access token is required')) {
-          return
-        }
+        console.error('[WS start error]', e)
+        // 연결 실패 시 재시도
         setTimeout(() => {
-          if (mounted) initWebSocket()
+          if (mounted) {
+            console.log('[WebSocket] Retrying connection...')
+            initWebSocket()
+          }
         }, 5000)
       }
     }
-    
+
     initWebSocket()
-    
+
     return () => {
       mounted = false
       subRef.current?.unsubscribe()
@@ -135,17 +122,10 @@ function useChatroom(chatroomId: number) {
   const send = async (content: string) => {
     if (!content.trim()) return
     if (typeof window === 'undefined') return
-    
+
     try {
-      const { getWs, startWs } = await import('@/lib/services/wsManager')
-      
-      let ws
-      try {
-        ws = getWs()
-      } catch {
-        ws = await startWs()
-      }
-      
+      const { getWs } = await import('@/lib/services/wsManager')
+      // 고유한 clientMessageId 생성 (타임스탬프 + 랜덤)
       const clientMessageId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       const payload: WsSendMessageRequest = {
         chatroomId,
@@ -153,17 +133,16 @@ function useChatroom(chatroomId: number) {
         type: 'TEXT',
         clientMessageId
       }
-      
-      ws.publish('/pub/chat.send', payload)
+      console.log('[Send] Sending message with clientMessageId:', clientMessageId)
+      getWs().publish('/pub/chat.send', payload)
     } catch (e) {
       console.error('[Send error]', e)
-      alert('메시지 전송에 실패했습니다.')
     }
   }
 
   const reconnect = async () => {
     if (typeof window === 'undefined') return
-    
+
     try {
       const { restartWs } = await import('@/lib/services/wsManager')
       await restartWs()
@@ -176,3 +155,4 @@ function useChatroom(chatroomId: number) {
 }
 
 export default useChatroom
+

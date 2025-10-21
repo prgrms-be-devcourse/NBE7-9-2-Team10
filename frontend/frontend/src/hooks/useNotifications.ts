@@ -1,18 +1,17 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Notification } from '@/types/notification'
 import { NotificationService } from '@/lib/services/notificationService'
 import { useAuth } from '@/contexts/AuthContext'
-import type { StompSubscription } from '@stomp/stompjs'
 
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const { isAuthenticated } = useAuth()
-  const notificationSubRef = useRef<StompSubscription | null>(null)
 
+  // 백엔드에서 알림 목록 조회
   const loadNotifications = useCallback(async () => {
     if (!isAuthenticated) {
       setNotifications([])
@@ -24,6 +23,7 @@ export function useNotifications() {
     try {
       const response = await NotificationService.getNotifications(0, 50)
       
+      // 백엔드 응답을 프론트엔드 Notification 타입으로 변환
       const mappedNotifications: Notification[] = response.content.map((n: any) => ({
         id: n.id.toString(),
         type: n.type.toLowerCase() as 'like' | 'chat' | 'match',
@@ -32,15 +32,17 @@ export function useNotifications() {
         senderId: n.senderId || undefined,
         chatroomId: n.chatroomId || undefined,
         isRead: n.isRead,
-        timestamp: n.createdAt
+        timestamp: n.createdAt // ISO string
       }))
 
       setNotifications(mappedNotifications)
       
+      // 읽지 않은 알림 개수도 조회
       const count = await NotificationService.getUnreadCount()
       setUnreadCount(count)
     } catch (error) {
       console.error('Failed to load notifications:', error)
+      // 에러 발생 시 빈 배열로 설정
       setNotifications([])
       setUnreadCount(0)
     } finally {
@@ -86,14 +88,18 @@ export function useNotifications() {
     }
   }, [])
 
+  // 모든 알림 읽음 처리 (백엔드에 API가 없으면 개별 호출)
   const markAllAsRead = useCallback(async () => {
     try {
+      // 읽지 않은 알림들만 필터링
       const unreadNotifications = notifications.filter(n => !n.isRead)
       
+      // 모든 알림을 읽음 처리 (병렬 처리)
       await Promise.all(
         unreadNotifications.map(n => NotificationService.markAsRead(n.id))
       )
       
+      // 로컬 상태 업데이트
       setNotifications(prev =>
         prev.map(n => ({ ...n, isRead: true }))
       )
@@ -103,91 +109,17 @@ export function useNotifications() {
     }
   }, [notifications])
 
+  // 알림 새로고침 함수 (다른 컴포넌트에서 호출 가능)
   const refreshNotifications = useCallback(() => {
     loadNotifications()
   }, [loadNotifications])
 
+  // 컴포넌트 마운트 시 알림 로드
   useEffect(() => {
     if (isAuthenticated) {
       loadNotifications()
     }
   }, [isAuthenticated, loadNotifications])
-
-  // WebSocket 실시간 알림 구독
-  useEffect(() => {
-    if (!isAuthenticated || typeof window === 'undefined') return
-
-    let mounted = true
-
-    const setupNotificationWebSocket = async () => {
-      try {
-        const { startWs } = await import('@/lib/services/wsManager')
-        const ws = await startWs()
-        
-        if (!mounted) return
-
-        notificationSubRef.current = ws.subscribe('/user/queue/notifications', (msg) => {
-          try {
-            const notification = JSON.parse(msg.body)
-            
-            const newNotification: Notification = {
-              id: notification.id?.toString() || Date.now().toString(),
-              type: notification.type?.toLowerCase() as 'like' | 'chat' | 'match',
-              message: notification.message || '새 알림이 도착했습니다',
-              senderName: notification.senderName,
-              senderId: notification.senderId,
-              chatroomId: notification.chatroomId,
-              profileId: notification.profileId,
-              isRead: false,
-              timestamp: notification.createdAt || new Date().toISOString()
-            }
-            
-            setNotifications(prev => [newNotification, ...prev])
-            setUnreadCount(prev => prev + 1)
-            
-            // 브라우저 데스크톱 알림
-            if (typeof window !== 'undefined' && 'Notification' in window && window.Notification && window.Notification.permission === 'granted') {
-              new window.Notification('Unimate', {
-                body: newNotification.message,
-                icon: '/favicon.ico'
-              })
-            }
-          } catch (e) {
-            console.error('[Notification] Parse error:', e)
-          }
-        })
-      } catch (error) {
-        console.error('[Notification] WebSocket setup failed:', error)
-        if (error instanceof Error && error.message.includes('Access token is required')) {
-          return
-        }
-      }
-    }
-
-    setupNotificationWebSocket()
-
-    // 브라우저 알림 권한 요청
-    if (typeof window !== 'undefined' && 'Notification' in window && window.Notification && window.Notification.permission === 'default') {
-      window.Notification.requestPermission()
-    }
-
-    return () => {
-      mounted = false
-      notificationSubRef.current?.unsubscribe()
-    }
-  }, [isAuthenticated])
-
-  const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
-    const newNotification: Notification = {
-      id: Date.now().toString(),
-      timestamp: new Date().toISOString(),
-      isRead: false,
-      ...notification
-    }
-    
-    setNotifications(prev => [newNotification, ...prev])
-    setUnreadCount(prev => prev + 1)
-  }, [])
 
   return {
     notifications,
@@ -196,7 +128,8 @@ export function useNotifications() {
     markAsRead,
     deleteNotification,
     markAllAsRead,
-    refreshNotifications,
-    addNotification
+    refreshNotifications
   }
 }
+
+
