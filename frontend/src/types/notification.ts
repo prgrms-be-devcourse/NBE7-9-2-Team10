@@ -2,7 +2,7 @@ export interface Notification {
   id: string
   type: 'like' | 'chat' | 'match'
   message: string
-  timestamp: Date
+  timestamp: string
   isRead: boolean
   senderName?: string
   senderId?: number

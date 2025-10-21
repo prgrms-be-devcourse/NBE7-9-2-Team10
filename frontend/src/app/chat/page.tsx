@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { User, MoreVertical, Flag, Trash2 } from 'lucide-react'
+import { User, MoreVertical, Trash2 } from 'lucide-react'
 import AppHeader from '@/components/layout/AppHeader'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { apiClient } from '@/lib/services/api'
@@ -198,30 +198,6 @@ export default function ChatListPage() {
                             onClick={() => setShowMenu(null)}
                           />
                           <div className="absolute right-0 top-10 w-48 bg-white border border-[#E5E7EB] rounded-xl shadow-lg z-20 overflow-hidden">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setShowMenu(null)
-                                const currentUserId = Number(localStorage.getItem('userId'))
-                                const partnerId = chat.user1Id === currentUserId ? chat.user2Id : chat.user1Id
-                                router.push(`/profile/${partnerId}`)
-                              }}
-                              className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-[#F9FAFB] transition-colors"
-                            >
-                              <User className="w-4 h-4 text-[#6B7280]" />
-                              <span className="text-sm text-[#111827]">프로필 보기</span>
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setShowMenu(null)
-                                // 신고 로직
-                              }}
-                              className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-[#F9FAFB] transition-colors"
-                            >
-                              <Flag className="w-4 h-4 text-[#6B7280]" />
-                              <span className="text-sm text-[#111827]">신고</span>
-                            </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()

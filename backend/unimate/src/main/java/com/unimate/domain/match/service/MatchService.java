@@ -327,7 +327,7 @@ public class MatchService {
                 // 채팅방 생성 실패해도 매칭은 진행
             }
 
-            // ⭐ 수정된 부분: 상호 좋아요 성사 알림 (매칭 알림) - 양쪽 모두에게 알림 전송
+            // 수정된 부분: 상호 좋아요 성사 알림 (매칭 알림) - 양쪽 모두에게 알림 전송
             try {
                 // 받은 쪽에게 알림
                 notificationService.createChatNotification(
