@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Gender } from '@/types/user';
 import { RegisterService } from '@/lib/services/registerService';
+import { ApiError, ERROR_CODES } from '@/types/api';
 
 const RegisterForm = () => {
   const router = useRouter();
@@ -32,12 +33,15 @@ const RegisterForm = () => {
     }
     setLoading(true);
     setErrors({});
+    setMessage('');
+    
     try {
       await RegisterService.requestVerification(email);
       setIsCodeSent(true);
       setMessage('인증번호가 이메일로 전송되었습니다.');
-    } catch {
-      setErrors({ email: '인증번호 전송에 실패했습니다.' });
+    } catch (err) {
+      const apiError = err as ApiError;
+      setErrors({ email: apiError.message });
     } finally {
       setLoading(false);
     }
@@ -64,8 +68,9 @@ const RegisterForm = () => {
       setIsVerified(true);
       setMessage('이메일 인증이 완료되었습니다 ✅');
       setErrors({});
-    } catch {
-      setErrors({ code: '인증번호가 올바르지 않습니다.' });
+    } catch (err) {
+      const apiError = err as ApiError;
+      setErrors({ code: apiError.message });
     } finally {
       setLoading(false);
     }
@@ -123,15 +128,30 @@ const RegisterForm = () => {
         email,
         password,
         name,
-        gender,
+        gender: gender as Gender,
         birthDate,
         university,
       });
       alert('회원가입이 완료되었습니다!');
       router.push('/login');
     } catch (err) {
-      console.error(err);
-      setErrors({ form: '회원가입에 실패했습니다. 다시 시도해주세요.' });
+      const apiError = err as ApiError;
+      
+      // 에러 코드와 메시지에 따른 세분화된 처리
+      if (apiError.errorCode === ERROR_CODES.BAD_REQUEST) {
+        // 이메일 관련 에러는 email 필드에 표시
+        if (apiError.message.includes('이메일')) {
+          setErrors({ email: apiError.message });
+          setIsVerified(false); // 인증 상태 초기화
+        } else {
+          setErrors({ form: apiError.message });
+        }
+      } else if (apiError.errorCode === ERROR_CODES.CONFLICT) {
+        setErrors({ email: apiError.message });
+        setIsVerified(false);
+      } else {
+        setErrors({ form: apiError.message });
+      }
     } finally {
       setLoading(false);
     }
@@ -262,12 +282,15 @@ const RegisterForm = () => {
           <input
             type="date"
             value={birthDate}
+            max={new Date().toISOString().split('T')[0]}
             onChange={(e) => setBirthDate(e.target.value)}
             className={`w-full border rounded-lg px-3 py-2 ${
               errors.birthDate ? 'border-red-500' : 'border-gray-300'
             } focus:ring-2 focus:ring-blue-500`}
           />
-          {errors.birthDate && <p className="text-red-500 text-sm mt-1">{errors.birthDate}</p>}
+          {errors.birthDate && (
+            <p className="text-red-500 text-sm mt-1">{errors.birthDate}</p>
+          )}
         </div>
 
         {/* 대학교 */}
@@ -317,19 +340,25 @@ const RegisterForm = () => {
 
         {/* 이용약관 */}
         <div className="flex items-center space-x-2">
-          <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={agree}
+            onChange={(e) => setAgree(e.target.checked)}
+          />
           <label className="text-sm text-gray-600">
             이용약관 및 개인정보처리방침에 동의합니다
           </label>
         </div>
         {errors.agree && <p className="text-red-500 text-sm">{errors.agree}</p>}
 
+        {/* 성공/에러 메시지 */}
         {message && <p className="text-blue-600 text-sm">{message}</p>}
+        {errors.form && <p className="text-red-500 text-sm">{errors.form}</p>}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 rounded-lg mt-4 hover:bg-blue-700"
+          className="w-full bg-blue-600 text-white py-2 rounded-lg mt-4 hover:bg-blue-700 disabled:bg-gray-400"
         >
           {loading ? '가입 중...' : '다음'}
         </button>

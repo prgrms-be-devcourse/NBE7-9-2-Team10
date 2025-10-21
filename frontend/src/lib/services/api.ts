@@ -79,12 +79,13 @@ const createApiInstance = (): AxiosInstance => {
 // API 인스턴스 생성
 export const apiClient = createApiInstance();
 
-// API 응답 래퍼 함수
+// API 응답 래퍼 함수 - 수정됨
 export const apiRequest = async <T>(
   requestConfig: AxiosRequestConfig
-): Promise<ApiResponse<T>> => {
+): Promise<T> => {
   try {
-    const response = await apiClient.request<ApiResponse<T>>(requestConfig);
+    const response = await apiClient.request<T>(requestConfig);
+    // response.data를 직접 반환 (이미 T 타입)
     return response.data;
   } catch (error: unknown) {
     throw error;
