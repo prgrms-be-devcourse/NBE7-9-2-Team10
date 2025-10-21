@@ -241,13 +241,13 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ user, profile, onEdit, onTogg
 
       {/* 액션 버튼들 */}
       <div className="flex gap-3 justify-center">
-        <Button
+        {/* <Button
           onClick={onToggleMatching}
           variant={profile.matchingEnabled ? "outline" : "primary"}
           className="flex-1 max-w-xs"
         >
           {profile.matchingEnabled ? '매칭 중지' : '매칭 시작'}
-        </Button>
+        </Button> */}
         <Button
           onClick={onEdit}
           variant="primary"

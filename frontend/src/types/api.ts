@@ -38,8 +38,9 @@ export const API_ENDPOINTS = {
   PROFILE_GET: '/api/v1/profile',
   PROFILE_UPDATE: '/api/v1/profile',
   
-      // 사용자 관련
-      USER: '/api/v1/auth',
+  // 사용자 관련
+  USER: '/api/v1/auth',
+  USER_DELETE_MATCHING_STATUS: "/api/v1/users/me/matching-status"
 } as const;
 
 // API 기본 설정
