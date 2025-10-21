@@ -1,4 +1,3 @@
-// src/main/java/com/unimate/domain/message/controller/MessageController.java
 package com.unimate.domain.message.controller;
 
 import com.unimate.domain.message.dto.MessageSendRequest;

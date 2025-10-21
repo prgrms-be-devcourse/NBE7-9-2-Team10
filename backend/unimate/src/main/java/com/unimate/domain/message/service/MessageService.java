@@ -22,7 +22,7 @@ public class MessageService {
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
     /**
-     * REST 보조 전송(멱등 보장)
+     * REST 방식 전송(멱등 보장)
      */
     @Transactional
     public MessageSendResponse sendText(Long me, Long chatroomId, String content, String clientMessageId) {
@@ -39,7 +39,7 @@ public class MessageService {
         }
 
         try {
-            // 신규 저장
+            // 새로 저장
             Message saved = messageRepository.save(Message.builder()
                     .chatroom(room)
                     .senderId(me)
@@ -54,7 +54,7 @@ public class MessageService {
             );
 
         } catch (org.springframework.dao.DataIntegrityViolationException dup) {
-            // 동시성/중복 충돌 → 재조회하여 멱등 반환
+            // 동시 중복 충돌 시 재조회하여 멱등 반환
             var m = messageRepository.findByChatroom_IdAndSenderIdAndClientMessageId(chatroomId, me, clientMessageId)
                     .orElseThrow(() -> dup);
             return new MessageSendResponse(

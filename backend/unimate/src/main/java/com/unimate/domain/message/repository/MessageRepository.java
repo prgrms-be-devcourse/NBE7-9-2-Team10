@@ -1,6 +1,7 @@
 package com.unimate.domain.message.repository;
 
 import com.unimate.domain.message.entity.Message;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -18,6 +19,8 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     List<Message> findByChatroom_IdAndIdLessThanOrderByIdDesc(Long chatroomId, Long cursorMessageId, Pageable pageable);
 
     boolean existsByIdAndChatroom_Id(Long id, Long chatroomId);
+
+    Page<Message> findByChatroomId(Long chatroomId, Pageable pageable);
 
     // 멱등 처리용
     Optional<Message> findByChatroom_IdAndSenderIdAndClientMessageId(Long chatroomId, Long senderId, String clientMessageId);
