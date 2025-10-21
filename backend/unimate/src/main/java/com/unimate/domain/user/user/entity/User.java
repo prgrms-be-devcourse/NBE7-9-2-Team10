@@ -45,6 +45,13 @@ public class User extends BaseEntity {
         this.university = university;
     }
 
+    public void updateName(String newName) {
+        this.name = newName;
+    }
+    public void updateEmail(String newEmail) {
+        this.email = newEmail;
+    }
+
     public void verifyStudent() {
         this.studentVerified = true;
     }
