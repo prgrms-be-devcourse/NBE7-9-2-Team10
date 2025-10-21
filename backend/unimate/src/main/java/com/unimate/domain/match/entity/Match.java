@@ -59,6 +59,8 @@ public class Match extends BaseEntity {
     // @Column(name = "rematch_round", nullable = false)
     // @Builder.Default
     // private Integer rematchRound = 0;
+    @Column(name = "rematch_round", nullable = false)
+    private Integer rematchRound = 0;
 
     @Builder
     public Match(User sender, User receiver, MatchType matchType, MatchStatus matchStatus, BigDecimal preferenceScore) {
@@ -67,6 +69,7 @@ public class Match extends BaseEntity {
         this.matchType = matchType;
         this.matchStatus = matchStatus;
         this.preferenceScore = preferenceScore != null ? preferenceScore : BigDecimal.ZERO;
+        this.rematchRound = 0; // 항상 0으로 초기화. 프론트 테스트 위해 임시로 넣음.
     }
 
     public void upgradeToRequest(User requestSender, User requestReceiver) {
