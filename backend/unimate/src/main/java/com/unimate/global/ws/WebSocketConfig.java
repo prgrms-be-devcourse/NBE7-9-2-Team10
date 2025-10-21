@@ -26,7 +26,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.setApplicationDestinationPrefixes("/pub");
 
         // 서버 → 클라이언트 브로드캐스트 경로
-        registry.enableSimpleBroker("/sub", "/queue"); // <-- "/user" 제거
+        registry.enableSimpleBroker("/sub", "/queue","/user"); // <-- "/user" 제거
 
         // 사용자별 큐 prefix
         registry.setUserDestinationPrefix("/user");

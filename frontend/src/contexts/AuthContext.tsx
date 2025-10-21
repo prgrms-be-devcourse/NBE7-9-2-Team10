@@ -64,6 +64,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {
+      // 토큰과 사용자 정보 제거
+      AuthService.clearTokens();
       setUser(null);
       setIsLoading(false);
     }

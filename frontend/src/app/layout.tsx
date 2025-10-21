@@ -34,7 +34,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <ToastProvider>
             <AuthProvider>
-              <Layout>
+              <Layout showHeader={false}>
                 {children}
               </Layout>
             </AuthProvider>

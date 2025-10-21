@@ -1,10 +1,13 @@
 import Link from "next/link";
 import Button from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
+import AppHeader from '@/components/layout/AppHeader';
 
 export default function Home() {
   return (
-        <div className="container mx-auto px-4 py-8 bg-white dark:bg-gray-900 min-h-screen">
+    <div className="min-h-screen bg-[#F9FAFB]">
+      <AppHeader />
+      <div className="container mx-auto px-4 py-8 bg-white dark:bg-gray-900 min-h-screen">
       {/* 히어로 섹션 */}
       <section className="text-center py-20 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 opacity-50"></div>
@@ -187,6 +190,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      </div>
     </div>
   );
 }

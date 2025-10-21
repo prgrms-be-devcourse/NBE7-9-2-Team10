@@ -6,6 +6,7 @@ import com.unimate.domain.chatroom.entity.ChatroomStatus;
 import com.unimate.domain.chatroom.repository.ChatroomRepository;
 import com.unimate.domain.message.entity.Message;
 import com.unimate.domain.message.repository.MessageRepository;
+import com.unimate.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -202,7 +203,8 @@ public class ChatroomService {
         return new ChatReadResponse(chatroomId, me, lastReadMessageId, updatedAt);
     }
 
-    //나가기(정책상 CLOSED 처리)
+    //나가기(채팅방을 완전히 삭제하지 않고 사용자만 채팅방에서 나가기 처리)
+    //상대방은 채팅방 목록에서 볼 수 있지만 메시지 전송은 불가능
     @Transactional
     public ChatRoomLeaveResponse leave(Long me, Long chatroomId) {
         Chatroom room = getRoomOrThrow(chatroomId);
@@ -224,6 +226,14 @@ public class ChatroomService {
         room.block(me);
     }
      */
+
+    public Chatroom validateReadable(Long userId, Long chatroomId) {
+        Chatroom room = getRoomOrThrow(chatroomId);
+        if (!room.getUser1Id().equals(userId) && !room.getUser2Id().equals(userId)) {
+            throw ServiceException.forbidden("해당 채팅방에 대한 권한이 없습니다.");
+        }
+        return room;
+    }
 
     // WS 전송 전 검증
     public Chatroom validateWritable(Long senderId, Long chatroomId) {

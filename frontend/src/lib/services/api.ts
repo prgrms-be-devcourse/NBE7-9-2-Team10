@@ -1,20 +1,24 @@
+// src/lib/services/api.ts
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { API_CONFIG, API_ENDPOINTS, ApiResponse, ApiError } from '@/types/api';
 
-// Axios 인스턴스 생성
+/**
+ * Axios 인스턴스 (쿠키 기반)
+ * - 모든 요청에 쿠키 자동 포함 (withCredentials)
+ * - Authorization 헤더 사용하지 않음
+ */
 const createApiInstance = (): AxiosInstance => {
   const instance = axios.create({
     baseURL: API_CONFIG.BASE_URL,
     timeout: API_CONFIG.TIMEOUT,
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
+    withCredentials: true, // ✅ 쿠키 포함 요청 허용
   });
 
-  // 요청 인터셉터 - JWT 토큰 자동 추가
+  // 요청 인터셉터: JWT 토큰을 Authorization 헤더에 추가
   instance.interceptors.request.use(
     (config) => {
-      // 클라이언트 사이드에서만 토큰 처리
+      // localStorage에서 토큰 가져오기
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('accessToken');
         if (token) {
@@ -23,45 +27,33 @@ const createApiInstance = (): AxiosInstance => {
       }
       return config;
     },
-    (error) => {
-      return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
   );
 
-  // 응답 인터셉터 - 에러 처리 및 토큰 갱신
+  // 응답 인터셉터: 공통 에러 처리
   instance.interceptors.response.use(
-    (response: AxiosResponse) => {
-      return response;
-    },
+    (response: AxiosResponse) => response,
     async (error: AxiosError) => {
       const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
 
-      // 401 에러 처리 (토큰 만료)
-      if (error.response?.status === 401 && !originalRequest._retry) {
+      // 401: 세션 만료/미인증 → 로그인 페이지로 이동
+      if (error.response?.status === 401 && !originalRequest?._retry) {
         originalRequest._retry = true;
 
-        // 토큰 갱신 로직 (필요시 구현)
-        // const refreshToken = localStorage.getItem('refreshToken');
-        // if (refreshToken) {
-        //   try {
-        //     const response = await instance.post('/auth/refresh', { refreshToken });
-        //     localStorage.setItem('accessToken', response.data.accessToken);
-        //     return instance(originalRequest);
-        //   } catch (refreshError) {
-        //     // 리프레시 실패 시 로그인 페이지로 리다이렉트
-        //     localStorage.removeItem('accessToken');
-        //     window.location.href = '/login';
-        //   }
+        // (선택) 나중에 리프레시 토큰 엔드포인트가 준비되면 여기서 호출
+        // try {
+        //   await instance.post(API_ENDPOINTS.REFRESH);
+        //   return instance(originalRequest);
+        // } catch (_) {
+        //   // Refresh 실패 시 로그인 이동
         // }
 
-        // 현재는 토큰 제거 후 로그인 페이지로 리다이렉트
         if (typeof window !== 'undefined') {
-          localStorage.removeItem('accessToken');
           window.location.href = '/login';
         }
       }
 
-      // 에러 응답 변환
+      // 에러 응답 표준화
       const apiError: ApiError = {
         message: (error.response?.data as { message?: string })?.message || error.message || 'Unknown error',
         status: error.response?.status || 500,
@@ -76,40 +68,37 @@ const createApiInstance = (): AxiosInstance => {
   return instance;
 };
 
-// API 인스턴스 생성
+// 인스턴스
 export const apiClient = createApiInstance();
 
-// API 응답 래퍼 함수
-export const apiRequest = async <T>(
-  requestConfig: AxiosRequestConfig
-): Promise<ApiResponse<T>> => {
+// 공통 요청 래퍼
+export const apiRequest = async <T>(requestConfig: AxiosRequestConfig): Promise<ApiResponse<T>> => {
   try {
     const response = await apiClient.request<ApiResponse<T>>(requestConfig);
     return response.data;
-  } catch (error: unknown) {
+  } catch (error) {
     throw error;
   }
 };
 
-// HTTP 메서드별 헬퍼 함수들
+// HTTP 메서드 헬퍼
 export const api = {
-  get: <T>(url: string, config?: AxiosRequestConfig) =>
+  get:  <T>(url: string, config?: AxiosRequestConfig) =>
     apiRequest<T>({ ...config, method: 'GET', url }),
-  
+
   post: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
     apiRequest<T>({ ...config, method: 'POST', url, data }),
-  
-  put: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
+
+  put:  <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
     apiRequest<T>({ ...config, method: 'PUT', url, data }),
-  
-  delete: <T>(url: string, config?: AxiosRequestConfig) =>
+
+  delete:<T>(url: string, config?: AxiosRequestConfig) =>
     apiRequest<T>({ ...config, method: 'DELETE', url }),
-  
-  patch: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
+
+  patch:<T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
     apiRequest<T>({ ...config, method: 'PATCH', url, data }),
 };
 
-// API 엔드포인트 상수들 export
+// 엔드포인트/설정 export
 export { API_ENDPOINTS, API_CONFIG };
-
 export default apiClient;

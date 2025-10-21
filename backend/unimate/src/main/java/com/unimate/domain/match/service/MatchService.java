@@ -1,10 +1,13 @@
 package com.unimate.domain.match.service;
 
+import com.unimate.domain.chatroom.service.ChatroomService;
 import com.unimate.domain.match.dto.*;
 import com.unimate.domain.match.entity.Match;
 import com.unimate.domain.match.entity.MatchStatus;
 import com.unimate.domain.match.entity.MatchType;
 import com.unimate.domain.match.repository.MatchRepository;
+import com.unimate.domain.notification.entity.NotificationType;
+import com.unimate.domain.notification.service.NotificationService;
 import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.UserRepository;
 import com.unimate.domain.userMatchPreference.repository.UserMatchPreferenceRepository;
@@ -32,6 +35,8 @@ public class MatchService {
     private final SimilarityCalculator similarityCalculator;
     private final MatchFilterService matchFilterService;
     private final MatchUtilityService matchUtilityService;
+    private final ChatroomService chatroomService;
+    private final NotificationService notificationService;
     private final UserMatchPreferenceRepository userMatchPreferenceRepository;
 
     /**
@@ -313,7 +318,43 @@ public class MatchService {
             // 요청의 주체는 상호 '좋아요'를 완성시킨 현재 사용자(sender)가 됨
             existingMatch.upgradeToRequest(sender, receiver);
             matchRepository.save(existingMatch);
-            return new LikeResponse(existingMatch.getId(), true); // isMatched=true는 '요청' 단계로 넘어갔음을 의미
+
+            Long chatroomId = null;
+            try {
+                var chatroomResponse = chatroomService.createIfNotExists(senderId, receiverId);
+                chatroomId = chatroomResponse.getChatroomId();
+            } catch (Exception e) {
+                // 채팅방 생성 실패해도 매칭은 진행
+            }
+
+            // ⭐ 수정된 부분: 상호 좋아요 성사 알림 (매칭 알림) - 양쪽 모두에게 알림 전송
+            try {
+                // 받은 쪽에게 알림
+                notificationService.createChatNotification(
+                        receiverId,
+                        NotificationType.MATCH,
+                        sender.getName() + " 님과 매칭되었습니다!",
+                        sender.getName(),
+                        senderId,
+                        chatroomId
+                );
+
+                // 보낸 쪽에게도 알림
+                notificationService.createChatNotification(
+                        senderId,
+                        NotificationType.MATCH,
+                        receiver.getName() + " 님과 매칭되었습니다!",
+                        receiver.getName(),
+                        receiverId,
+                        chatroomId
+                );
+            } catch (Exception e) {
+                // 알림 생성 실패해도 매칭은 진행
+            }
+
+
+
+            return new LikeResponse(existingMatch.getId(), true);
 
         } else {
             UserProfile senderProfile = userProfileRepository.findByUserId(senderId)
@@ -332,6 +373,19 @@ public class MatchService {
                     .preferenceScore(preferenceScore)
                     .build();
             matchRepository.save(newLike);
+
+            // 좋아요 알림 생성
+            try {
+                notificationService.createNotification(
+                        receiverId,
+                        NotificationType.LIKE,
+                        sender.getName() + " 님이 회원님을 좋아합니다.",
+                        sender.getName(),
+                        senderId
+                );
+            } catch (Exception e) {
+                // 알림 생성 실패해도 좋아요는 진행
+            }
 
             return new LikeResponse(newLike.getId(), false); // 아직 상호 매칭(요청)은 아님
         }
