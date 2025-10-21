@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Gender } from '@/types/user';
 import { RegisterService } from '@/lib/services/registerService';
 import { ApiError, ERROR_CODES } from '@/types/api';
+import Link from "next/link";
 
 const RegisterForm = () => {
   const router = useRouter();
@@ -34,7 +35,7 @@ const RegisterForm = () => {
     setLoading(true);
     setErrors({});
     setMessage('');
-    
+
     try {
       await RegisterService.requestVerification(email);
       setIsCodeSent(true);
@@ -136,7 +137,7 @@ const RegisterForm = () => {
       router.push('/login');
     } catch (err) {
       const apiError = err as ApiError;
-      
+
       // 에러 코드와 메시지에 따른 세분화된 처리
       if (apiError.errorCode === ERROR_CODES.BAD_REQUEST) {
         // 이메일 관련 에러는 email 필드에 표시
@@ -180,20 +181,18 @@ const RegisterForm = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="email@uni.ac.kr"
-              className={`flex-1 border rounded-lg px-3 py-2 ${
-                errors.email ? 'border-red-500' : 'border-gray-300'
-              } focus:ring-2 focus:ring-blue-500`}
+              className={`flex-1 border rounded-lg px-3 py-2 ${errors.email ? 'border-red-500' : 'border-gray-300'
+                } focus:ring-2 focus:ring-blue-500`}
               disabled={isVerified}
             />
             <button
               type="button"
               onClick={handleSendCode}
               disabled={loading || isVerified}
-              className={`px-4 py-2 rounded-lg text-white ${
-                isVerified
+              className={`px-4 py-2 rounded-lg text-white ${isVerified
                   ? 'bg-green-500 cursor-default'
                   : 'bg-blue-600 hover:bg-blue-700'
-              }`}
+                }`}
             >
               {isVerified ? '인증 완료' : '인증번호 전송'}
             </button>
@@ -212,9 +211,8 @@ const RegisterForm = () => {
                 onChange={handleCodeInput}
                 placeholder="인증번호 6자리 입력"
                 maxLength={6}
-                className={`flex-1 border rounded-lg px-3 py-2 ${
-                  errors.code ? 'border-red-500' : 'border-gray-300'
-                } focus:ring-2 focus:ring-blue-500`}
+                className={`flex-1 border rounded-lg px-3 py-2 ${errors.code ? 'border-red-500' : 'border-gray-300'
+                  } focus:ring-2 focus:ring-blue-500`}
               />
               <button
                 type="button"
@@ -237,9 +235,8 @@ const RegisterForm = () => {
             value={password}
             onChange={(e) => handlePasswordChange(e.target.value)}
             placeholder="비밀번호를 입력하세요"
-            className={`w-full border rounded-lg px-3 py-2 ${
-              errors.password ? 'border-red-500' : 'border-gray-300'
-            } focus:ring-2 focus:ring-blue-500`}
+            className={`w-full border rounded-lg px-3 py-2 ${errors.password ? 'border-red-500' : 'border-gray-300'
+              } focus:ring-2 focus:ring-blue-500`}
           />
           {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
         </div>
@@ -252,9 +249,8 @@ const RegisterForm = () => {
             value={confirmPassword}
             onChange={(e) => handleConfirmPasswordChange(e.target.value)}
             placeholder="비밀번호를 다시 입력하세요"
-            className={`w-full border rounded-lg px-3 py-2 ${
-              errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-            } focus:ring-2 focus:ring-blue-500`}
+            className={`w-full border rounded-lg px-3 py-2 ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+              } focus:ring-2 focus:ring-blue-500`}
           />
           {errors.confirmPassword && (
             <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
@@ -269,9 +265,8 @@ const RegisterForm = () => {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="홍길동"
-            className={`w-full border rounded-lg px-3 py-2 ${
-              errors.name ? 'border-red-500' : 'border-gray-300'
-            } focus:ring-2 focus:ring-blue-500`}
+            className={`w-full border rounded-lg px-3 py-2 ${errors.name ? 'border-red-500' : 'border-gray-300'
+              } focus:ring-2 focus:ring-blue-500`}
           />
           {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
         </div>
@@ -284,9 +279,8 @@ const RegisterForm = () => {
             value={birthDate}
             max={new Date().toISOString().split('T')[0]}
             onChange={(e) => setBirthDate(e.target.value)}
-            className={`w-full border rounded-lg px-3 py-2 ${
-              errors.birthDate ? 'border-red-500' : 'border-gray-300'
-            } focus:ring-2 focus:ring-blue-500`}
+            className={`w-full border rounded-lg px-3 py-2 ${errors.birthDate ? 'border-red-500' : 'border-gray-300'
+              } focus:ring-2 focus:ring-blue-500`}
           />
           {errors.birthDate && (
             <p className="text-red-500 text-sm mt-1">{errors.birthDate}</p>
@@ -301,9 +295,8 @@ const RegisterForm = () => {
             value={university}
             onChange={(e) => setUniversity(e.target.value)}
             placeholder="예: 서울대학교"
-            className={`w-full border rounded-lg px-3 py-2 ${
-              errors.university ? 'border-red-500' : 'border-gray-300'
-            } focus:ring-2 focus:ring-blue-500`}
+            className={`w-full border rounded-lg px-3 py-2 ${errors.university ? 'border-red-500' : 'border-gray-300'
+              } focus:ring-2 focus:ring-blue-500`}
           />
           {errors.university && (
             <p className="text-red-500 text-sm mt-1">{errors.university}</p>
@@ -362,6 +355,15 @@ const RegisterForm = () => {
         >
           {loading ? '가입 중...' : '다음'}
         </button>
+        <div className="text-center text-sm text-gray-600 mt-6">
+          이미 계정이 있으신가요?{" "}
+          <Link
+            href="/login"
+            className="text-blue-600 hover:underline font-medium"
+          >
+            로그인
+          </Link>
+        </div>
       </form>
     </div>
   );
