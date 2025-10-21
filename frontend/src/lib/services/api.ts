@@ -81,7 +81,7 @@ export const apiRequest = async <T>(requestConfig: AxiosRequestConfig): Promise<
   }
 };
 
-// HTTP 메서드 헬퍼
+// HTTP 메서드별 헬퍼 함수들
 export const api = {
   get:  <T>(url: string, config?: AxiosRequestConfig) =>
     apiRequest<T>({ ...config, method: 'GET', url }),
@@ -99,6 +99,6 @@ export const api = {
     apiRequest<T>({ ...config, method: 'PATCH', url, data }),
 };
 
-// 엔드포인트/설정 export
+// API 엔드포인트 상수들 export
 export { API_ENDPOINTS, API_CONFIG };
 export default apiClient;
