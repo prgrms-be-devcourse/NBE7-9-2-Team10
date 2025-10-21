@@ -77,7 +77,7 @@ export class AuthService {
    * 완전한 사용자 정보 가져오기
    */
   static async getFullUserInfo(): Promise<User> {
-    const response = await api.get<ApiResponse<User>>(API_ENDPOINTS.USER);
+    const response = await api.get<ApiResponse<User>>(API_ENDPOINTS.ME);
     const rawData = response.data?.data || response.data || response;
     return rawData as User;
   }
