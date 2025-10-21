@@ -51,6 +51,10 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
     implementation ("org.springframework.boot:spring-boot-starter-mail")
+
+    //부하 테스트를 위해 랜덤 시드 생성 의존성
+    implementation ("org.springframework.boot:spring-boot-starter-batch")
+    implementation ("net.datafaker:datafaker:2.5.2")
 }
 
 tasks.withType<Test> {
