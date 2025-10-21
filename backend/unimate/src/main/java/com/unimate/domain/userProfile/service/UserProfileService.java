@@ -25,7 +25,8 @@ public class UserProfileService {
 
     @Transactional
     public ProfileResponse create(String email, ProfileCreateRequest req){
-        User userRef = userRepository.findByEmail(email).get();
+        User userRef = userRepository.findByEmail(email)
+                .orElseThrow(() -> ServiceException.notFound("이메일에 해당하는 유저를 찾을 수 없습니다."));
         UserProfile profile = UserProfile.builder()
                 .user(userRef)
                 .sleepTime(req.getSleepTime())
