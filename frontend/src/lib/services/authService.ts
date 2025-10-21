@@ -21,7 +21,7 @@ export class AuthService {
     if (typeof window !== 'undefined') {
       localStorage.setItem('accessToken', loginData.accessToken);
       localStorage.setItem('userId', loginData.userId.toString());
-      localStorage.setItem('userEmail', loginData.email);
+      localStorage.setItem('email', loginData.email);
       
       // JWT 토큰 만료 시간 추정 (1시간)
       const expirationTime = Date.now() + (60 * 60 * 1000);
@@ -59,7 +59,7 @@ export class AuthService {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('tokenExpiration');
         localStorage.removeItem('userId');
-        localStorage.removeItem('userEmail');
+        localStorage.removeItem('email');
       }
     }
   }

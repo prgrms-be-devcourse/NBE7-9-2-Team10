@@ -26,7 +26,7 @@ export const API_ENDPOINTS = {
   SIGNUP: '/api/v1/auth/signup',
   LOGOUT: '/api/v1/auth/logout',
   REFRESH: '/api/v1/auth/token/refresh',
-  ME: '/api/v1/auth/me',
+  ME: '/api/v1/users/me',
   
   // 이메일 인증 관련
   EMAIL_REQUEST: '/api/v1/email/request',

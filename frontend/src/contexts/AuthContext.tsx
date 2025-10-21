@@ -26,30 +26,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const isAuthenticated = !!user && AuthService.isTokenValid();
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        if (AuthService.isTokenValid()) {
-          const userData = await AuthService.getFullUserInfo();
-          setUser(userData);
+    // 로그인 시 저장된 정보만 사용 (API 호출 없음)
+    try {
+      if (AuthService.isTokenValid()) {
+        const userId = localStorage.getItem('userId');
+        const email = localStorage.getItem('email');
+        if (userId && email) {
+          setUser({ userId: Number(userId), email } as User);
         }
-      } catch (error) {
-        console.error('Auth initialization failed:', error);
-        // 토큰이 유효하지 않으면 제거
-        AuthService.clearTokens();
-      } finally {
-        setIsLoading(false);
       }
-    };
-
-    initializeAuth();
+    } catch (error) {
+      console.error('Auth initialization failed:', error);
+      AuthService.clearTokens();
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
       await AuthService.login({ email, password });
-      const userData = await AuthService.getFullUserInfo();
-      setUser(userData);
+      // localStorage에서 바로 사용자 정보 가져오기
+      const userId = localStorage.getItem('userId');
+      const userEmail = localStorage.getItem('email');
+      if (userId && userEmail) {
+        setUser({ userId: Number(userId), email: userEmail } as User);
+      }
     } catch (error) {
       throw error;
     } finally {
@@ -74,8 +77,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const refreshUser = async () => {
     try {
       if (AuthService.isTokenValid()) {
-        const userData = await AuthService.getFullUserInfo();
-        setUser(userData);
+        // localStorage에서 바로 사용자 정보 가져오기
+        const userId = localStorage.getItem('userId');
+        const email = localStorage.getItem('email');
+        if (userId && email) {
+          setUser({ userId: Number(userId), email } as User);
+        }
       }
     } catch (error) {
       console.error('User refresh failed:', error);
