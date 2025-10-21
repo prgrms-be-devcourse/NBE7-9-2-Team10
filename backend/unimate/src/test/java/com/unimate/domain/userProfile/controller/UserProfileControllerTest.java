@@ -2,11 +2,13 @@ package com.unimate.domain.userProfile.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.unimate.domain.user.user.dto.UserLoginRequest;
 import com.unimate.domain.user.user.entity.Gender;
 import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.UserRepository;
 import com.unimate.domain.userProfile.dto.ProfileCreateRequest;
 import com.unimate.domain.userProfile.repository.UserProfileRepository;
+import com.unimate.domain.verification.repository.VerificationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,24 +34,24 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 public class UserProfileControllerTest {
 
-    @Autowired private MockMvc               mvc;
-    @Autowired private ObjectMapper          objectMapper;
-    @Autowired private UserRepository        userRepository;
-    @Autowired private UserProfileRepository userProfileRepository;
-    @Autowired private BCryptPasswordEncoder passwordEncoder;
+    @Autowired private MockMvc                mvc;
+    @Autowired private ObjectMapper           objectMapper;
+    @Autowired private UserRepository         userRepository;
+    @Autowired private UserProfileRepository  userProfileRepository;
+    @Autowired private VerificationRepository verificationRepository;
+    @Autowired private BCryptPasswordEncoder  passwordEncoder;
 
     //---------------------- FIXTURE ------------------------------
     private String email;
     private String rawPassword;
 
     @BeforeEach
-    void setUp() {
-        email = "tester@example.com";
-        rawPassword = "1234";
+    void setUp() throws Exception {
+        email = "tester@test.ac.kr";
+        rawPassword = "test1234";
 
         // 이미 존재하면 중복 생성 방지
         userRepository.findByEmail(email).ifPresent(userRepository::delete);
-
         User u = new User(
                 "테스트유저",
                 email,
@@ -57,6 +59,7 @@ public class UserProfileControllerTest {
                 Gender.MALE, // enum으로 변경
                 LocalDate.of(1991,1,1),
                 "서울대");
+        u.verifyStudent();
         userRepository.save(u);
 
         // 프로필 테이블은 비워두고 시작
@@ -72,7 +75,9 @@ public class UserProfileControllerTest {
                 }
                 """.formatted(email, rawPassword);
 
-        String json = mvc.perform(post("/auth/login")
+        UserLoginRequest loginRequest = new UserLoginRequest(email, rawPassword);
+
+        String json = mvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isOk())
