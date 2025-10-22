@@ -27,7 +27,7 @@ public class UserProfile extends BaseEntity {
     private Boolean   isPetAllowed;
     private Boolean   isSmoker;
     private Integer   cleaningFrequency;
-    private Integer   preferredAgeRange;
+    private Integer   preferredAgeGap;
     private Integer   hygieneLevel;
     private Boolean   isSnoring;
     private Integer   drinkingFrequency;
@@ -45,7 +45,7 @@ public class UserProfile extends BaseEntity {
             Boolean   isPetAllowed,
             Boolean   isSmoker,
             Integer   cleaningFrequency,
-            Integer   preferredAgeRange,
+            Integer   preferredAgeGap,
             Integer   hygieneLevel,
             Boolean   isSnoring,
             Integer   drinkingFrequency,
@@ -61,7 +61,7 @@ public class UserProfile extends BaseEntity {
         this.isPetAllowed      = isPetAllowed;
         this.isSmoker          = isSmoker;
         this.cleaningFrequency = cleaningFrequency;
-        this.preferredAgeRange = preferredAgeRange;
+        this.preferredAgeGap = preferredAgeGap;
         this.hygieneLevel      = hygieneLevel;
         this.isSnoring         = isSnoring;
         this.drinkingFrequency = drinkingFrequency;
@@ -78,7 +78,7 @@ public class UserProfile extends BaseEntity {
         this.isPetAllowed      = req.getIsPetAllowed();
         this.isSmoker          = req.getIsSmoker();
         this.cleaningFrequency = req.getCleaningFrequency();
-        this.preferredAgeRange = req.getPreferredAgeRange();
+        this.preferredAgeGap = req.getPreferredAgeGap();
         this.hygieneLevel      = req.getHygieneLevel();
         this.isSnoring         = req.getIsSnoring();
         this.drinkingFrequency = req.getDrinkingFrequency();

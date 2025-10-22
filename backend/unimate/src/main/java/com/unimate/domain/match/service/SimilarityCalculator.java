@@ -39,7 +39,7 @@ public class SimilarityCalculator {
         double petScore = calculateBooleanScore(userA.getIsPetAllowed(), userB.getIsPetAllowed());
 
         // 나이 차이 점수
-        double ageRangeScore = calculateAgeRangeScore(userA, userB);
+        double ageGapScore = calculateAgeGapScore(userA, userB);
 
         // 청결 점수 (청소 빈도 + 위생 수준)
         double cleaningFrequencyScore = calculateIntegerScore(userA.getCleaningFrequency(), userB.getCleaningFrequency());
@@ -88,18 +88,18 @@ public class SimilarityCalculator {
     private double calculateAgeRangeScore(UserProfile profileA, UserProfile profileB) {
         LocalDate birthDateA = profileA.getUser().getBirthDate();
         LocalDate birthDateB = profileB.getUser().getBirthDate();
-        Integer preferredRangeA = profileA.getPreferredAgeRange();
-        Integer preferredRangeB = profileB.getPreferredAgeRange();
+        Integer preferredGapA = profileA.getPreferredAgeGap();
+        Integer preferredGapB = profileB.getPreferredAgeGap();
 
-        if (birthDateA == null || birthDateB == null || preferredRangeA == null || preferredRangeB == null) {
+        if (birthDateA == null || birthDateB == null || preferredGapA == null || preferredGapB == null) {
             return 0.0;
         }
 
         int ageA = Period.between(birthDateA, LocalDate.now()).getYears();
         int ageB = Period.between(birthDateB, LocalDate.now()).getYears();
 
-        boolean isASatisfied = isAgeInRange(ageB, preferredRangeA);
-        boolean isBSatisfied = isAgeInRange(ageA, preferredRangeB);
+        boolean isASatisfied = isAgeInRange(ageB, preferredGapA);
+        boolean isBSatisfied = isAgeInRange(ageA, preferredGapB);
 
         if (isASatisfied && isBSatisfied) {
             return 1.0; // 둘 다 만족

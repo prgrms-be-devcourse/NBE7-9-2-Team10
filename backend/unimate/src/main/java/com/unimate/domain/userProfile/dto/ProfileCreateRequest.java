@@ -16,7 +16,7 @@ public class ProfileCreateRequest {
     private Boolean   isPetAllowed;
     private Boolean   isSmoker;
     private Integer   cleaningFrequency;
-    private Integer   preferredAgeRange;
+    private Integer   preferredAgeGap;
     private Integer   hygieneLevel;
     private Boolean   isSnoring;
     private Integer   drinkingFrequency;

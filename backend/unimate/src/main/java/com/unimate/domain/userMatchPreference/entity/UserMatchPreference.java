@@ -23,7 +23,7 @@ public class UserMatchPreference extends BaseEntity {
     private Boolean isPetAllowed;
     private Boolean isSmoker;
     private Integer cleaningFrequency;
-    private Integer preferredAgeRange;
+    private Integer preferredAgeGap;
     private Integer hygieneLevel;
     private Boolean isSnoring;
     private Integer drinkingFrequency;
@@ -33,7 +33,7 @@ public class UserMatchPreference extends BaseEntity {
     @Builder
     public UserMatchPreference(User user, LocalDate startUseDate, LocalDate endUseDate,
                                Integer sleepTime, Boolean isPetAllowed, Boolean isSmoker, Integer cleaningFrequency,
-                               Integer preferredAgeRange, Integer hygieneLevel, Boolean isSnoring,
+                               Integer preferredAgeGap, Integer hygieneLevel, Boolean isSnoring,
                                Integer drinkingFrequency, Integer noiseSensitivity, Integer guestFrequency) {
         this.user = user;
         this.startUseDate = startUseDate;
@@ -42,7 +42,7 @@ public class UserMatchPreference extends BaseEntity {
         this.isPetAllowed = isPetAllowed;
         this.isSmoker = isSmoker;
         this.cleaningFrequency = cleaningFrequency;
-        this.preferredAgeRange = preferredAgeRange;
+        this.preferredAgeGap = preferredAgeGap;
         this.hygieneLevel = hygieneLevel;
         this.isSnoring = isSnoring;
         this.drinkingFrequency = drinkingFrequency;
@@ -57,7 +57,7 @@ public class UserMatchPreference extends BaseEntity {
         this.isPetAllowed = dto.getPetAllowed();
         this.isSmoker = dto.getSmoker();
         this.cleaningFrequency = dto.getCleaningFrequency();
-        this.preferredAgeRange = dto.getPreferredAgeRange();
+        this.preferredAgeGap = dto.getPreferredAgeGap();
         this.hygieneLevel = dto.getHygieneLevel();
         this.isSnoring = dto.getSnoring();
         this.drinkingFrequency = dto.getDrinkingFrequency();
@@ -75,7 +75,7 @@ public class UserMatchPreference extends BaseEntity {
                 .isPetAllowed(dto.getPetAllowed())
                 .isSmoker(dto.getSmoker())
                 .cleaningFrequency(dto.getCleaningFrequency())
-                .preferredAgeRange(dto.getPreferredAgeRange())
+                .preferredAgeGap(dto.getPreferredAgeGap())
                 .hygieneLevel(dto.getHygieneLevel())
                 .isSnoring(dto.getSnoring())
                 .drinkingFrequency(dto.getDrinkingFrequency())
