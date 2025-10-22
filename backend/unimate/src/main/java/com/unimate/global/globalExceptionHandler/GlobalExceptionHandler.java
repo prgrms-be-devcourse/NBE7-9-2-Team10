@@ -3,6 +3,8 @@ package com.unimate.global.globalExceptionHandler;
 import com.unimate.global.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -26,6 +28,29 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(ex.getStatus()).body(body);
+    }
+
+    // Validation 예외 처리 (추가)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidationException(MethodArgumentNotValidException ex) {
+        // 첫 번째 필드 에러의 메시지만 추출
+        String errorMessage = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .findFirst()
+                .map(FieldError::getDefaultMessage)
+                .orElse("입력값이 올바르지 않습니다.");
+
+        log.warn("[ValidationException] {}", errorMessage);
+
+        Map<String, Object> body = Map.of(
+                "timestamp", LocalDateTime.now().toString(),
+                "status", 400,
+                "error", "BAD_REQUEST",
+                "message", errorMessage
+        );
+
+        return ResponseEntity.badRequest().body(body);
     }
 
     //예상치 못한 시스템 예외 (NullPointerException, SQL 오류 등)
