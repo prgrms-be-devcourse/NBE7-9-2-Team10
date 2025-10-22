@@ -20,7 +20,7 @@ public class ProfileResponse {
     private Boolean   isPetAllowed;
     private Boolean   isSmoker;
     private Integer   cleaningFrequency;
-    private Integer   preferredAgeGap;
+    private Integer   preferredAgeRange;
     private Integer   hygieneLevel;
     private Boolean   isSnoring;
     private Integer   drinkingFrequency;
