@@ -14,7 +14,7 @@ export default function AppHeader() {
   const router = useRouter()
   const pathname = usePathname()
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
-  const { notifications, unreadCount, markAsRead, deleteNotification } = useNotifications()
+  const { notifications, unreadCount, markAsRead, deleteNotification, deleteAllNotifications } = useNotifications()
   const { success } = useToast()
   const { isAuthenticated, isLoading, logout } = useAuth()
 
@@ -160,6 +160,7 @@ export default function AppHeader() {
         notifications={notifications}
         onMarkAsRead={markAsRead}
         onDeleteNotification={deleteNotification}
+        onDeleteAllNotifications={deleteAllNotifications}
         onViewProfile={handleViewProfile}
         onViewChat={handleViewChat}
       />

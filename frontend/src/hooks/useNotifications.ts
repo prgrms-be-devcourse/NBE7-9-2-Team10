@@ -261,6 +261,24 @@ export function useNotifications() {
     setUnreadCount(prev => prev + 1)
   }, [])
 
+  // 모든 알림 삭제
+  const deleteAllNotifications = useCallback(async () => {
+    try {
+      // 모든 알림을 서버에서 삭제
+      await Promise.all(
+        notifications.map(notification => 
+          NotificationService.deleteNotification(notification.id)
+        )
+      )
+      
+      // 로컬 상태 초기화
+      setNotifications([])
+      setUnreadCount(0)
+    } catch (error) {
+      console.error('Failed to delete all notifications:', error)
+    }
+  }, [notifications])
+
   // 활성 채팅방 설정
   const setActiveChatroom = useCallback((chatroomId: number | null) => {
     setActiveChatroomId(chatroomId)
@@ -273,6 +291,7 @@ export function useNotifications() {
     isLoading,
     markAsRead,
     deleteNotification,
+    deleteAllNotifications,
     markAllAsRead,
     markChatroomNotificationsAsRead,
     refreshNotifications,
