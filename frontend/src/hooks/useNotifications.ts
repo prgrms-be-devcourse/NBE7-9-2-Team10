@@ -126,8 +126,14 @@ export function useNotifications() {
         
         if (!mounted) return
 
-        notificationSubRef.current = ws.subscribe('/user/queue/notifications', (msg) => {
+        // 현재 사용자 ID를 가져와서 동적으로 구독 경로 생성
+        const currentUserId = localStorage.getItem('userId')
+        const subscriptionPath = `/user/${currentUserId}/queue/notifications`
+        console.log('[Notification] 구독 경로:', subscriptionPath)
+        
+        notificationSubRef.current = ws.subscribe(subscriptionPath, (msg) => {
           try {
+            console.log('[Notification] 알림 수신:', msg.body)
             const notification = JSON.parse(msg.body)
             
             const newNotification: Notification = {
