@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import useChatroom from '@/hooks/useChatroom'
+import { useNotifications } from '@/hooks/useNotifications'
 import { ArrowLeft, Send } from 'lucide-react'
 import AppHeader from '@/components/layout/AppHeader'
 import { apiClient } from '@/lib/services/api'
@@ -14,24 +15,25 @@ interface ChatRoomViewProps {
 export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
   const router = useRouter()
   const { messages, send, reconnect } = useChatroom(chatroomId)
+  const { markChatroomNotificationsAsRead, setActiveChatroom, refreshNotifications } = useNotifications()
   const [text, setText] = useState('')
   const [partnerName, setPartnerName] = useState('채팅 상대')
   const [partnerInfo, setPartnerInfo] = useState('')
   const [isPartnerDeleted, setIsPartnerDeleted] = useState(false)
+  const cleanupExecuted = useRef(false)
 
-  // 채팅방 정보 조회 및 읽음 처리
+  // 채팅방 정보 조회
   useEffect(() => {
     const fetchChatroomInfo = async () => {
       try {
         const response = await apiClient.get(`/api/v1/chatrooms/${chatroomId}`)
         const chatroomData = response.data
         
-        // 백엔드에서 이미 partnerName, partnerUniversity, isPartnerDeleted를 보내줌
         setPartnerName(chatroomData.partnerName || '채팅 상대')
         setPartnerInfo(chatroomData.partnerUniversity || '')
         setIsPartnerDeleted(chatroomData.isPartnerDeleted || false)
+        
 
-        // 채팅방에 들어갔을 때 읽음 처리
         try {
           const messagesResponse = await apiClient.get(
             `/api/v1/chatrooms/${chatroomId}/messages`,
@@ -50,8 +52,12 @@ export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
             }
           }
         } catch (error) {
-          // 읽음 처리 실패는 무시 (백엔드 트랜잭션 충돌 가능)
+          // 읽음 처리 실패는 무시
         }
+
+        markChatroomNotificationsAsRead(chatroomId)
+        
+        setActiveChatroom(chatroomId)
       } catch (error) {
         console.error('채팅방 정보 조회 실패:', error)
       }
@@ -59,6 +65,35 @@ export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
     
     fetchChatroomInfo()
   }, [chatroomId])
+
+  // 채팅방 퇴장 시 cleanup
+  useEffect(() => {
+    return () => {
+      if (cleanupExecuted.current) {
+        return
+      }
+      cleanupExecuted.current = true
+      
+      setActiveChatroom(null)
+      
+      setTimeout(() => {
+        markChatroomNotificationsAsRead(chatroomId)
+        
+        setTimeout(() => {
+          refreshNotifications()
+        }, 200)
+      }, 100)
+      
+      const notifyExit = async () => {
+        try {
+          await apiClient.post(`/api/v1/chatrooms/${chatroomId}/exit`)
+        } catch (error) {
+          console.error('Failed to notify chatroom exit:', error)
+        }
+      }
+      notifyExit()
+    }
+  }, [chatroomId, setActiveChatroom, markChatroomNotificationsAsRead, refreshNotifications])
 
   const sendMessage = (content: string) => {
     if (!content.trim()) return
@@ -76,7 +111,38 @@ export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
         <div className="px-4 py-4">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => router.back()}
+              onClick={async () => {
+                try {
+                  const messagesResponse = await apiClient.get(
+                    `/api/v1/chatrooms/${chatroomId}/messages`,
+                    { params: { limit: 1 } }
+                  )
+                  const messages = messagesResponse.data.items || []
+                  
+                  if (messages.length > 0) {
+                    const message = messages[0]
+                    const latestMessageId = message.messageId || message.id
+                    
+                    if (latestMessageId) {
+                      await apiClient.post(`/api/v1/chatrooms/${chatroomId}/read`, {
+                        lastReadMessageId: latestMessageId
+                      })
+                    }
+                  }
+                } catch (error) {
+                  console.error('Failed to mark messages as read:', error)
+                }
+                
+                try {
+                  await apiClient.post(`/api/v1/chatrooms/${chatroomId}/exit`)
+                } catch (error) {
+                  console.error('Failed to notify chatroom exit:', error)
+                }
+                
+                setActiveChatroom(null)
+                
+                router.back()
+              }}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-gray-600" />
@@ -103,7 +169,6 @@ export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
           </div>
         ) : (
           messages.map((m) => {
-            // 현재 사용자 ID를 localStorage에서 가져오기
             const currentUserId = typeof window !== 'undefined' ? 
               parseInt(localStorage.getItem('userId') || '0') : 0
             const isMe = m.senderId === currentUserId

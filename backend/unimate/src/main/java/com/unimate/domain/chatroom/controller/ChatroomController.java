@@ -3,37 +3,34 @@ package com.unimate.domain.chatroom.controller;
 import com.unimate.domain.chatroom.dto.*;
 import com.unimate.domain.chatroom.entity.ChatroomStatus;
 import com.unimate.domain.chatroom.service.ChatroomService;
+import com.unimate.domain.chatroom.service.UserSessionService;
 import com.unimate.global.jwt.CustomUserPrincipal;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/chatrooms")
-@RequiredArgsConstructor
-@Validated
 public class ChatroomController {
 
     private final ChatroomService chatroomService;
+    private final UserSessionService userSessionService; // 추가
 
-    /** 방 생성(멱등) */
+    /** 생성 (멱등) */
     @PostMapping
     public ResponseEntity<ChatRoomCreateResponse> create(
             @AuthenticationPrincipal CustomUserPrincipal me,
-            @Valid @RequestBody ChatRoomCreateRequest req
+            @RequestBody ChatRoomCreateRequest req
     ) {
         ChatRoomCreateResponse res = chatroomService.createIfNotExists(me.getUserId(), req.getPartnerId());
         return ResponseEntity.ok(res);
     }
 
-    /** 방 상세 */
+    /** 상세 */
     @GetMapping("/{chatroomId}")
-    public ResponseEntity<ChatRoomDetailResponse> detail(
+    public ResponseEntity<ChatRoomDetailResponse> getDetail(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @PathVariable Long chatroomId
     ) {
@@ -41,43 +38,38 @@ public class ChatroomController {
         return ResponseEntity.ok(res);
     }
 
-    /** 내 방 목록(커서 페이지네이션) */
+    /** 내 방 목록 */
     @GetMapping
-    public ResponseEntity<ChatRoomListResponse> list(
+    public ResponseEntity<ChatRoomListResponse> listMyRooms(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @RequestParam(required = false) String cursor,
-            @RequestParam(defaultValue = "30") @Min(1) @Max(100) int limit,
-            @RequestParam(required = false) ChatroomStatus status // 잘못된 값이면 400 자동
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(required = false) ChatroomStatus status
     ) {
         ChatRoomListResponse res = chatroomService.listMyRooms(me.getUserId(), cursor, limit, status);
         return ResponseEntity.ok(res);
     }
 
-    /** 메시지 히스토리 조회 (보조 REST) */
+    /** 메시지 히스토리 */
     @GetMapping("/{chatroomId}/messages")
-    public ResponseEntity<ChatHistoryResponse> history(
+    public ResponseEntity<ChatHistoryResponse> getHistory(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @PathVariable Long chatroomId,
-            @RequestParam(defaultValue = "30") @Min(1) @Max(100) int limit,
-            @RequestParam(required = false) Long beforeMessageId
+            @RequestParam(required = false) Long beforeMessageId,
+            @RequestParam(defaultValue = "20") int limit
     ) {
-        // 서비스 시그니처와 순서 일치: (me, chatroomId, beforeMessageId, limit)
-        ChatHistoryResponse res = chatroomService.getHistory(
-                me.getUserId(), chatroomId, beforeMessageId, limit
-        );
+        ChatHistoryResponse res = chatroomService.getHistory(me.getUserId(), chatroomId, beforeMessageId, limit);
         return ResponseEntity.ok(res);
     }
 
     /** 읽음 처리 */
     @PostMapping("/{chatroomId}/read")
-    public ResponseEntity<ChatReadResponse> read(
+    public ResponseEntity<ChatReadResponse> updateLastRead(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @PathVariable Long chatroomId,
-            @Valid @RequestBody ChatReadRequest req
+            @RequestBody ChatReadRequest req
     ) {
-        ChatReadResponse res = chatroomService.updateLastRead(
-                me.getUserId(), chatroomId, req.getLastReadMessageId()
-        );
+        ChatReadResponse res = chatroomService.updateLastRead(me.getUserId(), chatroomId, req.getLastReadMessageId());
         return ResponseEntity.ok(res);
     }
 
@@ -91,13 +83,24 @@ public class ChatroomController {
         return ResponseEntity.ok(res);
     }
 
-    /** 차단 (응답 바디 없음) */
+    /** 채팅방 퇴장 (세션만 제거) */
+    @PostMapping("/{chatroomId}/exit")
+    public ResponseEntity<Void> exitChatroom(
+            @AuthenticationPrincipal CustomUserPrincipal me,
+            @PathVariable Long chatroomId
+    ) {
+        // 사용자가 특정 채팅방에서 나갔음을 기록
+        userSessionService.leaveChatroom(me.getUserId(), chatroomId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**차단 (응답 바디 없음) */
     //@PostMapping("/{chatroomId}/block")
     //public ResponseEntity<Void> block(
     //        @AuthenticationPrincipal CustomUserPrincipal me,
     //        @PathVariable Long chatroomId
     //) {
     //    chatroomService.block(me.getUserId(), chatroomId);
-    //    return ResponseEntity.noContent().build();
+    //    return ResponseEntity.ok().build();
     //}
 }

@@ -27,6 +27,7 @@ public class ChatroomService {
     private final ChatroomRepository chatroomRepository;
     private final MessageRepository messageRepository;
     private final com.unimate.domain.user.user.repository.UserRepository userRepository;
+    private final UserSessionService userSessionService;
 
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
@@ -79,7 +80,10 @@ public class ChatroomService {
     public ChatRoomDetailResponse getDetail(Long me, Long chatroomId) {
         Chatroom room = getRoomOrThrow(chatroomId);
         assertMember(me, room);
-        
+
+        // 사용자가 채팅방에 입장했음을 기록
+        userSessionService.enterChatroom(me, chatroomId);
+
         // 상대방 ID 및 정보 조회
         Long partnerId = partnerIdOf(me, room);
         // 상대방이 존재하는지 확인
@@ -99,7 +103,7 @@ public class ChatroomService {
                     .map(com.unimate.domain.user.user.entity.User::getUniversity)
                     .orElse("");
         }
-        
+
         return new ChatRoomDetailResponse(
                 room.getId(),
                 room.getUser1Id(),
@@ -155,7 +159,7 @@ public class ChatroomService {
             }
 
             Long partnerId = partnerIdOf(me, r);
-            
+
             // 상대방 이름 조회
             String partnerName = userRepository.findById(partnerId)
                     .map(com.unimate.domain.user.user.entity.User::getName)

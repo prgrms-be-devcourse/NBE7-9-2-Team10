@@ -136,7 +136,7 @@ const MatchPreferenceModal: FC<MatchPreferenceModalProps> = ({ isOpen, onClose, 
                 <div>
                   <h4 className="font-semibold text-gray-800 mb-2">선호하는 나이 차이</h4>
                   <div className="flex items-center gap-4">
-                    <input type="range" min="0" max="10" name="preferredAgeGap" value={preferences.preferredAgeGap} onChange={handleChange} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                    <input type="range" min="0" max="10" name="preferredAgeGap" value={preferences.preferredAgeGap} onChange={handleChange} className="w-full h-2 bg-gray-200 rounded-lg -webkit-appearance-none appearance-none cursor-pointer accent-blue-600" />
                     <span className="font-bold text-blue-600 w-12 text-center">{preferences.preferredAgeGap}살</span>
                   </div>
                 </div>

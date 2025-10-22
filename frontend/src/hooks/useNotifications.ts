@@ -10,6 +10,7 @@ export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
+  const [activeChatroomId, setActiveChatroomId] = useState<number | null>(null)
   const { isAuthenticated } = useAuth()
   const notificationSubRef = useRef<StompSubscription | null>(null)
 
@@ -103,9 +104,36 @@ export function useNotifications() {
     }
   }, [notifications])
 
+  // 특정 채팅방의 모든 알림을 읽음 처리
+  const markChatroomNotificationsAsRead = useCallback(async (chatroomId: number) => {
+    try {
+      const chatroomNotifications = notifications.filter(n => 
+        n.chatroomId === chatroomId && !n.isRead
+      )
+      
+      
+      if (chatroomNotifications.length === 0) return
+      
+      await Promise.all(
+        chatroomNotifications.map(n => NotificationService.markAsRead(n.id))
+      )
+      
+      setNotifications(prev =>
+        prev.map(n => 
+          n.chatroomId === chatroomId ? { ...n, isRead: true } : n
+        )
+      )
+      
+          setUnreadCount(prev => Math.max(0, prev - chatroomNotifications.length))
+    } catch (error) {
+      console.error('Failed to mark chatroom notifications as read:', error)
+    }
+  }, [notifications])
+
   const refreshNotifications = useCallback(() => {
     loadNotifications()
   }, [loadNotifications])
+
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -118,9 +146,17 @@ export function useNotifications() {
     if (!isAuthenticated || typeof window === 'undefined') return
 
     let mounted = true
+    let reconnectAttempts = 0
+    const maxReconnectAttempts = 3
 
     const setupNotificationWebSocket = async () => {
       try {
+        // 기존 연결이 있다면 정리
+        if (notificationSubRef.current) {
+          notificationSubRef.current.unsubscribe()
+          notificationSubRef.current = null
+        }
+        
         const { startWs } = await import('@/lib/services/wsManager')
         const ws = await startWs()
         
@@ -129,12 +165,20 @@ export function useNotifications() {
         // 현재 사용자 ID를 가져와서 동적으로 구독 경로 생성
         const currentUserId = localStorage.getItem('userId')
         const subscriptionPath = `/user/${currentUserId}/queue/notifications`
-        console.log('[Notification] 구독 경로:', subscriptionPath)
         
         notificationSubRef.current = ws.subscribe(subscriptionPath, (msg) => {
           try {
-            console.log('[Notification] 알림 수신:', msg.body)
             const notification = JSON.parse(msg.body)
+            
+            // 현재 활성 채팅방의 채팅 알림인지 확인
+            const isInChatroom = window.location.pathname.includes('/chat/')
+            const currentChatroomId = window.location.pathname.match(/\/chat\/(\d+)/)?.[1]
+            const isCurrentChatroomNotification = 
+              notification.type?.toLowerCase() === 'chat' && 
+              notification.chatroomId?.toString() === currentChatroomId
+            
+            const isActiveChatroomNotification = isInChatroom && isCurrentChatroomNotification
+            
             
             const newNotification: Notification = {
               id: notification.id?.toString() || Date.now().toString(),
@@ -144,15 +188,33 @@ export function useNotifications() {
               senderId: notification.senderId,
               chatroomId: notification.chatroomId,
               profileId: notification.profileId,
-              isRead: false,
+              isRead: isActiveChatroomNotification, // 활성 채팅방의 알림은 자동으로 읽음 처리
               timestamp: notification.createdAt || new Date().toISOString()
             }
             
             setNotifications(prev => [newNotification, ...prev])
+            
+          // 활성 채팅방의 알림이 아닌 경우에만 unreadCount 증가
+          if (!isActiveChatroomNotification) {
             setUnreadCount(prev => prev + 1)
             
-            // 브라우저 데스크톱 알림
-            if (typeof window !== 'undefined' && 'Notification' in window && window.Notification && window.Notification.permission === 'granted') {
+            // 서버에서 최신 unread count를 가져와서 동기화
+            setTimeout(async () => {
+              try {
+                const count = await NotificationService.getUnreadCount()
+                setUnreadCount(count)
+              } catch (error) {
+                console.error('[Notification] Failed to sync unread count:', error)
+              }
+            }, 100)
+          }
+            
+            // 활성 채팅방의 알림이 아닌 경우에만 브라우저 데스크톱 알림 표시
+            if (!isActiveChatroomNotification && 
+                typeof window !== 'undefined' && 
+                'Notification' in window && 
+                window.Notification && 
+                window.Notification.permission === 'granted') {
               new window.Notification('Unimate', {
                 body: newNotification.message,
                 icon: '/favicon.ico'
@@ -164,6 +226,10 @@ export function useNotifications() {
         })
       } catch (error) {
         console.error('[Notification] WebSocket setup failed:', error)
+        console.error('[Notification] Error details:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined
+        })
         if (error instanceof Error && error.message.includes('Access token is required')) {
           return
         }
@@ -195,6 +261,12 @@ export function useNotifications() {
     setUnreadCount(prev => prev + 1)
   }, [])
 
+  // 활성 채팅방 설정
+  const setActiveChatroom = useCallback((chatroomId: number | null) => {
+    setActiveChatroomId(chatroomId)
+    
+  }, [])
+
   return {
     notifications,
     unreadCount,
@@ -202,7 +274,10 @@ export function useNotifications() {
     markAsRead,
     deleteNotification,
     markAllAsRead,
+    markChatroomNotificationsAsRead,
     refreshNotifications,
-    addNotification
+    addNotification,
+    setActiveChatroom,
+    activeChatroomId,
   }
 }

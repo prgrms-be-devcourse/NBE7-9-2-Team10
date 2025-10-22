@@ -83,6 +83,11 @@ export default function ChatListPage() {
       setChats(chatroomsWithMessages)
     } catch (error) {
       console.error('채팅방 목록 조회 실패:', error)
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        status: error instanceof Error && 'response' in error ? (error as any).response?.status : undefined,
+        data: error instanceof Error && 'response' in error ? (error as any).response?.data : undefined
+      })
       setChats([])
     } finally {
       setIsLoading(false)

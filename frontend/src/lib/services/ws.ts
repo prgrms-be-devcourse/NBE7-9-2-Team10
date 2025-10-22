@@ -25,6 +25,7 @@ export function createStomp(): StompHandle {
   if (!token) {
     throw new Error('Access token is required for WebSocket connection');
   }
+  
 
   const client = new Client({
     webSocketFactory: () => {
@@ -38,7 +39,8 @@ export function createStomp(): StompHandle {
     heartbeatOutgoing: 10000,
     connectHeaders: token ? {
       'Authorization': `Bearer ${token}`,
-      'access-token': token
+      'access-token': token,
+      'token': token
     } : {},
     onStompError: (frame) => {
       console.error('[STOMP] Connection failed:', frame.headers.message || 'Unknown error')
