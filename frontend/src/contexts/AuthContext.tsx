@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           // localStorage에서 기본 정보 가져오기 (API 호출 대신)
           const userId = localStorage.getItem('userId');
-          const email = localStorage.getItem('email');
+          const email = localStorage.getItem('userEmail');
           
           if (userId && email) {
             setUser({
@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshUser = async () => {
     if (AuthService.isAuthenticated()) {
       const userId = localStorage.getItem('userId');
-      const email = localStorage.getItem('email');
+      const email = localStorage.getItem('userEmail');
       
       if (userId && email) {
         setUser({
