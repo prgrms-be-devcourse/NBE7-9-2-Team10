@@ -20,7 +20,7 @@ export default function AppHeader() {
 
   const navigationItems = [
     { key: '/', label: '홈', icon: Home },
-    { key: '/match', label: '매칭', icon: Users },
+    { key: '/matches', label: '매칭', icon: Users },
     { key: '/chat', label: '채팅', icon: MessageCircle },
     { key: '/profile', label: '프로필', icon: User },
   ]
