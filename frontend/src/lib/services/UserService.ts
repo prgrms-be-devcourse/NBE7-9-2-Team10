@@ -9,6 +9,10 @@ export interface UserInfo {
   university: string;
 }
 
+export interface UserUpdateEmailResponse extends UserInfo {
+  accessToken: string;
+}
+
 export class UserService {
   static async getUserInfo(): Promise<UserInfo> {
     const response = await api.get<UserInfo>(API_ENDPOINTS.USER);
@@ -19,6 +23,14 @@ export class UserService {
     const response = await api.patch<UserInfo>(
       `${API_ENDPOINTS.USER}/name`,
       { name }
+    );
+    return response;
+  }
+
+  static async updateEmail(newEmail: string, code: string): Promise<UserUpdateEmailResponse> {
+    const response = await api.patch<UserUpdateEmailResponse>(
+      `${API_ENDPOINTS.USER}/email`,
+      { newEmail, code }
     );
     return response;
   }
