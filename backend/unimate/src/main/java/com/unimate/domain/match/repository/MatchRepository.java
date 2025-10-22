@@ -3,6 +3,7 @@ package com.unimate.domain.match.repository;
 import com.unimate.domain.match.entity.Match;
 import com.unimate.domain.match.entity.MatchStatus;
 import com.unimate.domain.match.entity.MatchType;
+import com.unimate.domain.user.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -25,11 +26,14 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     Optional<Match> findBySenderIdAndReceiverIdAndMatchType(Long senderId, Long receiverId, MatchType matchType);
 
     // 양방향으로 두 사용자 간의 'LIKE' 기록을 찾는 메서드
-    @Query("SELECT m FROM Match m WHERE m.matchType = 'LIKE' AND ((m.sender.id = :user1Id AND m.receiver.id = :user2Id) OR (m.sender.id = :user2Id AND m.receiver.id = :user1Id))")
-    Optional<Match> findLikeBetweenUsers(@Param("user1Id") Long user1Id, @Param("user2Id") Long user2Id);
-
-    // 매칭 취소 시 쓰레기 row 삭제
-    @Modifying
-    @Query("DELETE FROM Match m WHERE (m.sender.id = :userId OR m.receiver.id = :userId) AND NOT (m.matchType = :requestType AND m.matchStatus = :acceptedStatus)")
-    void deleteUnconfirmedMatchesByUserId(@Param("userId") Long userId, @Param("requestType") MatchType requestType, @Param("acceptedStatus") MatchStatus acceptedStatus);
-}
+        @Query("SELECT m FROM Match m WHERE m.matchType = 'LIKE' AND ((m.sender.id = :user1Id AND m.receiver.id = :user2Id) OR (m.sender.id = :user2Id AND m.receiver.id = :user1Id))")
+        Optional<Match> findLikeBetweenUsers(@Param("user1Id") Long user1Id, @Param("user2Id") Long user2Id);
+    
+        // 매칭 취소 시 쓰레기 row 삭제
+        @Modifying
+        @Query("DELETE FROM Match m WHERE (m.sender.id = :userId OR m.receiver.id = :userId) AND NOT (m.matchType = :requestType AND m.matchStatus = :acceptedStatus)")
+        void deleteUnconfirmedMatchesByUserId(@Param("userId") Long userId, @Param("requestType") MatchType requestType, @Param("acceptedStatus") MatchStatus acceptedStatus);
+    
+        void deleteAllBySenderOrReceiver(User sender, User receiver);
+    }
+    

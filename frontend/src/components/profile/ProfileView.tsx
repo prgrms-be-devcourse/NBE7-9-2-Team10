@@ -10,6 +10,7 @@ import Button from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import ProfileCard from './ProfileCard';
 import ProfileEmpty from './ProfileEmpty';
+import { User } from '@/types/user';
 
 interface ProfileViewProps {
   onEdit?: () => void;
@@ -17,34 +18,32 @@ interface ProfileViewProps {
 }
 
 const ProfileView: React.FC<ProfileViewProps> = ({ onEdit, onCreate }) => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
 
-  // ProfileView.tsx 의 fetchProfile 함수 부분
-useEffect(() => {
-  const fetchProfile = async () => {
-    try {
-      const profileData = await ProfileService.getMyProfile();
-      setProfile(profileData);
-      setHasProfile(true);
-    } catch (err: any) {
-      const errorMessage = getErrorMessage(err);
-      // 404 에러인 경우 프로필이 없는 것으로 간주
-      if (err?.status === 404 || errorMessage.includes('404') || errorMessage.includes('not found')) {
-        setHasProfile(false);
-      } else {
-        setError(errorMessage);
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const profileData = await ProfileService.getMyProfile();
+        setProfile(profileData);
+        setHasProfile(true);
+      } catch (err: any) {
+        const errorMessage = getErrorMessage(err);
+        if (err?.status === 404 || errorMessage.includes('404') || errorMessage.includes('not found')) {
+          setHasProfile(false);
+        } else {
+          setError(errorMessage);
+        }
+      } finally {
+        setIsLoading(false);
       }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
-  fetchProfile();
-}, []);
+    fetchProfile();
+  }, []);
 
   const toggleMatchingStatus = async () => {
     if (!profile) return;
@@ -60,6 +59,12 @@ useEffect(() => {
   const handleCreateProfile = () => {
     if (onCreate) {
       onCreate();
+    }
+  };
+
+  const handleUserUpdate = (updatedUser: User) => {
+    if (updateUser) {
+      updateUser(updatedUser);
     }
   };
 
@@ -126,6 +131,7 @@ useEffect(() => {
         profile={profile}
         onEdit={onEdit || (() => window.location.href = '/profile/edit')}
         onToggleMatching={toggleMatchingStatus}
+        onUserUpdate={handleUserUpdate}
       />
     </div>
   );

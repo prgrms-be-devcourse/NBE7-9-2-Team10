@@ -12,7 +12,14 @@ export interface UserInfo {
 export class UserService {
   static async getUserInfo(): Promise<UserInfo> {
     const response = await api.get<UserInfo>(API_ENDPOINTS.USER);
-    // api.get이 이미 response.data를 반환하므로 직접 사용
+    return response;
+  }
+
+  static async updateName(name: string): Promise<UserInfo> {
+    const response = await api.patch<UserInfo>(
+      `${API_ENDPOINTS.USER}/name`,
+      { name }
+    );
     return response;
   }
 }

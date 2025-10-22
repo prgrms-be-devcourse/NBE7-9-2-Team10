@@ -18,6 +18,7 @@ const ReportList: FC = () => {
     handlePageChange,
     handleFilterChange,
     filters,
+    fetchReports, // 새로고침 함수 가져오기
   } = useReports();
 
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
@@ -30,9 +31,14 @@ const ReportList: FC = () => {
     setSelectedReportId(null);
   }, []);
 
+  const handleActionSuccess = useCallback(() => {
+    fetchReports(); // 액션 성공 시 목록 새로고침
+  }, [fetchReports]);
+
   if (isLoading) {
     return <div className="flex justify-center p-10"><LoadingSpinner /></div>;
   }
+
 
   if (error) {
     return <div className="text-center p-10 text-red-500">오류: {error}</div>;
@@ -78,6 +84,7 @@ const ReportList: FC = () => {
         <ReportDetailModal
           reportId={selectedReportId}
           onClose={handleCloseModal}
+          onActionSuccess={handleActionSuccess}
         />
       )}
     </>
