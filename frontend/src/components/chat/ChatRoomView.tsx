@@ -83,10 +83,10 @@ export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
             </button>
             <div>
               <h2 className={`font-semibold ${isPartnerDeleted ? 'text-red-500' : 'text-[#111827]'}`}>
-                {partnerName}
+                {isPartnerDeleted ? '알 수 없음' : partnerName}
               </h2>
               {isPartnerDeleted ? (
-                <p className="text-sm text-red-400">이 사용자는 탈퇴했습니다</p>
+                <p className="text-sm text-red-400">탈퇴한 사용자입니다</p>
               ) : (
                 partnerInfo && <p className="text-sm text-[#6B7280]">{partnerInfo}</p>
               )}

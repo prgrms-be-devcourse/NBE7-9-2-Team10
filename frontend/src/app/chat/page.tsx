@@ -177,11 +177,6 @@ export default function ChatListPage() {
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold text-[#111827]">{chat.partnerName || `사용자 ${chat.partnerId || chat.user1Id || chat.user2Id}`}</h3>
-                          {chat.status === 'ACTIVE' && (
-                            <span className="px-2 py-0.5 bg-[#10B981] text-white text-xs font-bold rounded">
-                              활성
-                            </span>
-                          )}
                         </div>
                         <div className="flex flex-col items-end gap-1">
                           <span className="text-sm text-[#9CA3AF]">
