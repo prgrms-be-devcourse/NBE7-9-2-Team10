@@ -1,12 +1,11 @@
 package com.unimate.domain.user.user.controller;
 
-import com.unimate.domain.user.user.dto.UserInfoResponse;
-import com.unimate.domain.user.user.dto.UserUpdateEmailRequest;
-import com.unimate.domain.user.user.dto.UserUpdateNameRequest;
-import com.unimate.domain.user.user.dto.UserUpdateResponse;
+import com.unimate.domain.user.user.dto.*;
 import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.service.UserService;
 import com.unimate.global.jwt.CustomUserPrincipal;
+import com.unimate.global.jwt.JwtProvider;
+import com.unimate.global.jwt.JwtToken;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 public class UserController {
     private final UserService userService;
+    private final JwtProvider jwtProvider;
 
     @GetMapping
     public ResponseEntity<UserInfoResponse> getUserInfo(@AuthenticationPrincipal CustomUserPrincipal userPrincipal) {
@@ -52,18 +52,22 @@ public class UserController {
 
 
     @PatchMapping("/email")
-    public ResponseEntity<UserUpdateResponse> updateUserEmail(
+    public ResponseEntity<UserUpdateEmailResponse> updateUserEmail(
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
             @Valid @RequestBody UserUpdateEmailRequest request
     ) {
         User updated = userService.updateEmail(userPrincipal.getEmail(), request);
+
+        JwtToken newToken = jwtProvider.generateToken(updated.getEmail(), updated.getId());
+
         return ResponseEntity.ok(
-                new UserUpdateResponse(
+                new UserUpdateEmailResponse(
                         updated.getEmail(),
                         updated.getName(),
                         updated.getGender(),
                         updated.getBirthDate(),
-                        updated.getUniversity()
+                        updated.getUniversity(),
+                        newToken.getAccessToken()
                 ));
     }
 }
