@@ -34,7 +34,7 @@ public class MatchRecommendationDetailResponse {
     private Integer noiseSensitivity;
     private Integer drinkingFrequency;
     private Integer guestFrequency;
-    private Integer preferredAgeRange;
+    private Integer preferredAgeGap;
 
     private LocalDate birthDate;
     private LocalDate startUseDate;

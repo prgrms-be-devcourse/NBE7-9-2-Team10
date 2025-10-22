@@ -36,7 +36,7 @@ public class MatchPreferenceResponse {
 
     private boolean isSmoker;
     private Integer cleaningFrequency;
-    private Integer preferredAgeRange;
+    private Integer preferredAgeGap;
     private Integer hygieneLevel;
 
     private boolean isSnoring;
@@ -71,7 +71,7 @@ public class MatchPreferenceResponse {
         this.isPetAllowed = userMatchPreference.getIsPetAllowed();
         this.isSmoker = userMatchPreference.getIsSmoker();
         this.cleaningFrequency = userMatchPreference.getCleaningFrequency();
-        this.preferredAgeRange = userMatchPreference.getPreferredAgeRange();
+        this.preferredAgeGap = userMatchPreference.getPreferredAgeGap();
         this.hygieneLevel = userMatchPreference.getHygieneLevel();
         this.isSnoring = userMatchPreference.getIsSnoring();
         this.drinkingFrequency = userMatchPreference.getDrinkingFrequency();

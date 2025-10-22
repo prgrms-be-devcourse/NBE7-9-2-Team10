@@ -37,10 +37,10 @@ public class MatchPreferenceRequest {
     @Max(value = 5, message = "cleaningFrequency은 5 이하의 값이어야 합니다.")
     private Integer cleaningFrequency; // 선호하는 청소 빈도
 
-    @NotNull(message = "preferredAgeRange 필드는 null일 수 없습니다.")
-    @Min(value = 1, message = "preferredAgeRange는 1에서 5 사이의 값이어야 합니다.")
-    @Max(value = 5, message = "preferredAgeRange는 1에서 5 사이의 값이어야 합니다.")
-    private Integer preferredAgeRange; // 선호하는 나이대
+    @NotNull(message = "preferredAgeGap 필드는 null일 수 없습니다.")
+    @Min(value = 1, message = "preferredAgeGap는 1에서 5 사이의 값이어야 합니다.")
+    @Max(value = 5, message = "preferredAgeGap는 1에서 5 사이의 값이어야 합니다.")
+    private Integer preferredAgeGap; // 선호하는 나이대
 
     @NotNull(message = "hygieneLevel 필드는 null일 수 없습니다.")
     @Min(value = 1, message = "hygieneLevel은 1 이상의 값이어야 합니다.")
