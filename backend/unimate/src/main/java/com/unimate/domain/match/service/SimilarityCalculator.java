@@ -61,7 +61,7 @@ public class SimilarityCalculator {
         double finalScore = (smokerScore * WEIGHT_SMOKING) +
                 (sleepScore * WEIGHT_SLEEP) +
                 (cleanlinessScore * WEIGHT_CLEANLINESS) +
-                (ageRangeScore * WEIGHT_AGE) +
+                (ageGapScore * WEIGHT_AGE) +
                 (noiseScore * WEIGHT_NOISE) +
                 (petScore * WEIGHT_PET) +
                 (lifestyleScore * WEIGHT_LIFESTYLE);
@@ -85,7 +85,7 @@ public class SimilarityCalculator {
         return Objects.equals(valueA, valueB) ? 1.0 : 0.0;
     }
 
-    private double calculateAgeRangeScore(UserProfile profileA, UserProfile profileB) {
+    private double calculateAgeGapScore(UserProfile profileA, UserProfile profileB) {
         LocalDate birthDateA = profileA.getUser().getBirthDate();
         LocalDate birthDateB = profileB.getUser().getBirthDate();
         Integer preferredGapA = profileA.getPreferredAgeGap();
