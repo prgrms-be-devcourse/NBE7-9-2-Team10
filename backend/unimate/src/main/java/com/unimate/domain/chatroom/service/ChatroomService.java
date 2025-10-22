@@ -26,6 +26,7 @@ public class ChatroomService {
 
     private final ChatroomRepository chatroomRepository;
     private final MessageRepository messageRepository;
+    private final com.unimate.domain.user.user.repository.UserRepository userRepository;
 
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
@@ -78,10 +79,22 @@ public class ChatroomService {
     public ChatRoomDetailResponse getDetail(Long me, Long chatroomId) {
         Chatroom room = getRoomOrThrow(chatroomId);
         assertMember(me, room);
+        
+        // 상대방 ID 및 정보 조회
+        Long partnerId = partnerIdOf(me, room);
+        String partnerName = userRepository.findById(partnerId)
+                .map(com.unimate.domain.user.user.entity.User::getName)
+                .orElse("알 수 없는 사용자");
+        String partnerUniversity = userRepository.findById(partnerId)
+                .map(com.unimate.domain.user.user.entity.User::getUniversity)
+                .orElse("");
+        
         return new ChatRoomDetailResponse(
                 room.getId(),
                 room.getUser1Id(),
                 room.getUser2Id(),
+                partnerName,
+                partnerUniversity,
                 room.getStatus().name(),
                 ISO.format(room.getCreatedAt()),
                 ISO.format(room.getUpdatedAt()),
@@ -90,8 +103,13 @@ public class ChatroomService {
         );
     }
 
-    //내 방 목록
+    ///내 방 목록
     public ChatRoomListResponse listMyRooms(Long me, String cursor, int limit, ChatroomStatus status) {
+        // status가 null이면 ACTIVE만 조회 (CLOSED 제외)
+        if (status == null) {
+            status = ChatroomStatus.ACTIVE;
+        }
+
         LocalDateTime cursorAt = null;
         if (cursor != null && !cursor.isBlank()) {
             try {
@@ -124,19 +142,28 @@ public class ChatroomService {
                 }
             }
 
-            // 내 읽음 기준 이후의 안읽은 메시지 수 집계
+            Long partnerId = partnerIdOf(me, r);
+            
+            // 상대방 이름 조회
+            String partnerName = userRepository.findById(partnerId)
+                    .map(com.unimate.domain.user.user.entity.User::getName)
+                    .orElse("알 수 없는 사용자");
+
+            // 내 읽음 기준 이후의 안읽은 메시지 수 집계 (상대방이 보낸 것만)
             Long myLastRead = me.equals(r.getUser1Id()) ? r.getLastReadMessageIdUser1() : r.getLastReadMessageIdUser2();
             long unread = 0L;
             if (myLastRead != null) {
-                unread = messageRepository.countByChatroom_IdAndIdGreaterThan(r.getId(), myLastRead);
+                // 상대방이 보낸 메시지만 카운트
+                unread = messageRepository.countByChatroom_IdAndIdGreaterThanAndSenderId(r.getId(), myLastRead, partnerId);
             } else {
-                unread = messageRepository.countByChatroom_Id(r.getId());
+                // 상대방이 보낸 메시지만 카운트
+                unread = messageRepository.countByChatroom_IdAndSenderId(r.getId(), partnerId);
             }
 
-            Long partnerId = partnerIdOf(me, r);
             return new ChatRoomListResponse.ChatRoomListItem(
                     r.getId(),
                     partnerId,
+                    partnerName,
                     last,
                     unread,
                     r.getStatus().name(),
@@ -252,5 +279,3 @@ public class ChatroomService {
     }
 
 }
-
-

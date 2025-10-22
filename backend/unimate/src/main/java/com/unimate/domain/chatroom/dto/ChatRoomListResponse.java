@@ -12,6 +12,7 @@ public class ChatRoomListResponse {
     public static class ChatRoomListItem {
         private Long chatroomId;
         private Long partnerId;
+        private String partnerName;  // 상대방 이름
         private LastMessageSummary lastMessage; // { messageId, content, createdAt }
         private Long unreadCount;
         private String status;      // ACTIVE | CLOSED

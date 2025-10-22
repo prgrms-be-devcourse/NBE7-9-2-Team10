@@ -79,8 +79,8 @@ public class Chatroom {
             columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
 
-    @Version
-    private Long version;
+    //@Version
+    //private Long version;
 
     public void block(Long byUserId) {
         this.status = ChatroomStatus.CLOSED;

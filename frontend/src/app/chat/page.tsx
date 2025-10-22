@@ -9,12 +9,15 @@ import { apiClient } from '@/lib/services/api'
 
 interface ChatRoom {
   chatroomId: number
-  user1Id: number
-  user2Id: number
+  user1Id?: number
+  user2Id?: number
+  partnerId?: number
   status: string
   createdAt: string
   lastMessage?: string
   lastMessageTime?: string
+  partnerName?: string
+  unreadCount?: number
 }
 
 export default function ChatListPage() {
@@ -24,66 +27,90 @@ export default function ChatListPage() {
   const [showMenu, setShowMenu] = useState<number | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState<number | null>(null)
 
+  // 채팅방 목록 조회 함수
+  const fetchChatrooms = async () => {
+    try {
+      setIsLoading(true)
+      // apiClient를 직접 사용 (백엔드 API 경로: /api/v1/chatrooms)
+      const response = await apiClient.get('/api/v1/chatrooms')
+      
+      const data = response.data
+      const chatrooms = data.items || []
+      
+      // 각 채팅방의 최신 메시지와 상대방 이름 가져오기
+      const chatroomsWithMessages = await Promise.all(
+        chatrooms.map(async (chat: ChatRoom) => {
+          try {
+            // 최신 메시지 가져오기
+            const messagesResponse = await apiClient.get(
+              `/api/v1/chatrooms/${chat.chatroomId}/messages`,
+              { 
+                params: { 
+                  limit: 1,
+                  order: 'desc' // 최신 메시지부터
+                } 
+              }
+            )
+            const messages = messagesResponse.data.items || []
+            const lastMsg = messages[0]
+
+            // 백엔드에서 이미 올바른 unreadCount를 계산해서 보내주므로 그대로 사용
+            const unreadCount = chat.unreadCount || 0
+            
+            // 백엔드에서 이미 partnerName을 보내주므로 별도 조회 불필요
+            const partnerName = chat.partnerName || '알 수 없는 사용자'
+            
+            return {
+              ...chat,
+              lastMessage: lastMsg ? lastMsg.content : '상호 좋아요로 매칭되었습니다!',
+              lastMessageTime: lastMsg ? lastMsg.createdAt : chat.createdAt,
+              partnerName: partnerName,
+              unreadCount: unreadCount
+            }
+          } catch (error) {
+            console.error(`채팅방 ${chat.chatroomId} 메시지 로드 실패:`, error)
+            return {
+              ...chat,
+              lastMessage: '상호 좋아요로 매칭되었습니다!',
+              lastMessageTime: chat.createdAt,
+              partnerName: chat.partnerName || '알 수 없는 사용자',
+              unreadCount: 0
+            }
+          }
+        })
+      )
+      
+      setChats(chatroomsWithMessages)
+    } catch (error) {
+      console.error('채팅방 목록 조회 실패:', error)
+      setChats([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   // 채팅방 목록 조회
   useEffect(() => {
-    const fetchChatrooms = async () => {
-      try {
-        setIsLoading(true)
-        // apiClient를 직접 사용 (백엔드 API 경로: /api/v1/chatrooms)
-        const response = await apiClient.get('/api/v1/chatrooms')
-        console.log('API 전체 응답:', response)
-        console.log('응답 데이터:', response.data)
-        
-        const data = response.data
-        const chatrooms = data.items || []
-        
-        // 각 채팅방의 최신 메시지 가져오기
-        const chatroomsWithMessages = await Promise.all(
-          chatrooms.map(async (chat: ChatRoom) => {
-            try {
-              const messagesResponse = await apiClient.get(
-                `/api/v1/chatrooms/${chat.chatroomId}/messages`,
-                { 
-                  params: { 
-                    limit: 1,
-                    order: 'desc' // 최신 메시지부터
-                  } 
-                }
-              )
-              const messages = messagesResponse.data.items || []
-              const lastMsg = messages[0]
-              
-              console.log(`[Chat List] 채팅방 ${chat.chatroomId} 최신 메시지:`, lastMsg?.content)
-              
-              return {
-                ...chat,
-                lastMessage: lastMsg ? lastMsg.content : '상호 좋아요로 매칭되었습니다!',
-                lastMessageTime: lastMsg ? lastMsg.createdAt : chat.createdAt
-              }
-            } catch (error) {
-              console.error(`채팅방 ${chat.chatroomId} 메시지 로드 실패:`, error)
-              return {
-                ...chat,
-                lastMessage: '상호 좋아요로 매칭되었습니다!',
-                lastMessageTime: chat.createdAt
-              }
-            }
-          })
-        )
-        
-        setChats(chatroomsWithMessages)
-      } catch (error) {
-        console.error('채팅방 목록 조회 실패:', error)
-        setChats([])
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     fetchChatrooms()
   }, [])
 
+  // 페이지가 포커스될 때 채팅 목록 새로고침 (채팅방에서 돌아왔을 때)
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchChatrooms()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [])
+
   const handleChatClick = (chatId: number) => {
+    // 채팅방에 들어갈 때 안 읽음 개수를 0으로 업데이트
+    setChats(chats.map(chat => 
+      chat.chatroomId === chatId 
+        ? { ...chat, unreadCount: 0 }
+        : chat
+    ))
     router.push(`/chat/${chatId}`)
   }
 
@@ -100,11 +127,6 @@ export default function ChatListPage() {
     }
   }
 
-  const getPartnerName = (chat: ChatRoom) => {
-    const currentUserId = Number(localStorage.getItem('userId'))
-    const partnerId = chat.user1Id === currentUserId ? chat.user2Id : chat.user1Id
-    return `사용자 ${partnerId}`
-  }
 
   return (
     <ProtectedRoute>
@@ -154,7 +176,7 @@ export default function ChatListPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-[#111827]">{getPartnerName(chat)}</h3>
+                          <h3 className="font-semibold text-[#111827]">{chat.partnerName || `사용자 ${chat.partnerId || chat.user1Id || chat.user2Id}`}</h3>
                           {chat.status === 'ACTIVE' && (
                             <span className="px-2 py-0.5 bg-[#10B981] text-white text-xs font-bold rounded">
                               활성
@@ -162,6 +184,11 @@ export default function ChatListPage() {
                           )}
                         </div>
                         <div className="flex items-center gap-3">
+                          {chat.unreadCount && chat.unreadCount > 0 && (
+                            <span className="bg-[#EF4444] text-white text-xs px-2 py-1 rounded-full min-w-[20px] text-center font-semibold">
+                              {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
+                            </span>
+                          )}
                           <span className="text-sm text-[#9CA3AF]">
                             {chat.lastMessageTime 
                               ? new Date(chat.lastMessageTime).toLocaleTimeString('ko-KR', { 
@@ -221,7 +248,7 @@ export default function ChatListPage() {
 
           {/* Delete Chat Modal */}
           {showDeleteModal !== null && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50">
               <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 bg-[#FEE2E2] rounded-xl flex items-center justify-center">

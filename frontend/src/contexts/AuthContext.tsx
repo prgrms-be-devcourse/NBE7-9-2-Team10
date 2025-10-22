@@ -7,7 +7,7 @@ import {
   useState,
   ReactNode,
 } from "react";
-import AuthService from "@/lib/services/AuthService";
+import AuthService from "@/lib/services/authService";
 import { UserService } from "@/lib/services/UserService";
 
 interface User {
