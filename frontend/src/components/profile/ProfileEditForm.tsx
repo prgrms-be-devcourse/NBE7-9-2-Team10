@@ -41,6 +41,12 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ onSuccess }) => {
         const profileData = await ProfileService.getMyProfile();
         setProfile(profileData);
         
+        // yyyy-MM-dd 형식으로 변환하는 헬퍼 함수
+        const formatDateForInput = (dateString?: string) => {
+          if (!dateString) return '';
+          return new Date(dateString).toISOString().split('T')[0];
+        };
+
         // 폼에 기존 데이터 설정
         reset({
           sleepTime: profileData.sleepTime,
@@ -54,8 +60,8 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ onSuccess }) => {
           noiseSensitivity: profileData.noiseSensitivity,
           guestFrequency: profileData.guestFrequency,
           mbti: profileData.mbti,
-          startUseDate: profileData.startUseDate,
-          endUseDate: profileData.endUseDate,
+          startUseDate: formatDateForInput(profileData.startUseDate),
+          endUseDate: formatDateForInput(profileData.endUseDate),
           matchingEnabled: profileData.matchingEnabled,
         });
       } catch (error) {

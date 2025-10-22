@@ -41,7 +41,7 @@ export class AuthService {
     );
     
     const rawData = response.data?.data || response.data || response;
-    return rawData as SignupResponse;
+    return rawData;
   }
 
   /**
