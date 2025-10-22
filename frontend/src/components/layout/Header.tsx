@@ -30,7 +30,9 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated = false, userEmail }) =
 
   const navigation = [
     { name: '홈', href: '/' },
+    { name: '룸메이트 찾기', href: '/matches' },
     { name: '프로필', href: '/profile' },
+    { name: '관리자', href: '/admin/reports' }, // 수정: 관리자 페이지 링크 추가
   ];
 
       return (

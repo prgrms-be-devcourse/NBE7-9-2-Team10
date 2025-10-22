@@ -26,7 +26,7 @@ export const API_ENDPOINTS = {
   SIGNUP: '/api/v1/auth/signup',
   LOGOUT: '/api/v1/auth/logout',
   REFRESH: '/api/v1/auth/token/refresh',
-  ME: '/api/v1/auth/me',
+  ME: '/api/v1/user',
   
   // 이메일 인증 관련
   EMAIL_REQUEST: '/api/v1/email/request',
@@ -40,7 +40,18 @@ export const API_ENDPOINTS = {
   
   // 사용자 관련
   USER: '/api/v1/user',
-  USER_DELETE_MATCHING_STATUS: "/api/v1/users/me/matching-status"
+  USER_PREFERENCES: '/api/v1/users/me/preferences',
+  USER_DELETE_MATCHING_STATUS: "/api/v1/users/me/matching-status",
+
+  // 매칭 관련
+  MATCHES: '/api/v1/matches',
+  MATCH_STATUS: '/api/v1/matches/status',
+  MATCH_RECOMMENDATIONS: '/api/v1/matches/recommendations',
+  MATCH_LIKES: '/api/v1/matches/likes',
+
+  // 관리자 관련
+  ADMIN_REPORTS: '/api/v1/admin/reports',
+  ADMIN_REPORT_DETAIL: '/api/v1/admin/reports', // 상세 조회를 위해 /:id가 추가되어야 함
 } as const;
 
 // API 기본 설정
