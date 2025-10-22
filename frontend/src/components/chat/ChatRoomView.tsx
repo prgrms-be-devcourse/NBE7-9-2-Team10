@@ -17,6 +17,7 @@ export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
   const [text, setText] = useState('')
   const [partnerName, setPartnerName] = useState('채팅 상대')
   const [partnerInfo, setPartnerInfo] = useState('')
+  const [isPartnerDeleted, setIsPartnerDeleted] = useState(false)
 
   // 채팅방 정보 조회 및 읽음 처리
   useEffect(() => {
@@ -25,9 +26,10 @@ export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
         const response = await apiClient.get(`/api/v1/chatrooms/${chatroomId}`)
         const chatroomData = response.data
         
-        // 백엔드에서 이미 partnerName, partnerUniversity를 보내줌
+        // 백엔드에서 이미 partnerName, partnerUniversity, isPartnerDeleted를 보내줌
         setPartnerName(chatroomData.partnerName || '채팅 상대')
         setPartnerInfo(chatroomData.partnerUniversity || '')
+        setIsPartnerDeleted(chatroomData.isPartnerDeleted || false)
 
         // 채팅방에 들어갔을 때 읽음 처리
         try {
@@ -80,8 +82,14 @@ export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
             <div>
-              <h2 className="font-semibold text-[#111827]">{partnerName}</h2>
-              {partnerInfo && <p className="text-sm text-[#6B7280]">{partnerInfo}</p>}
+              <h2 className={`font-semibold ${isPartnerDeleted ? 'text-red-500' : 'text-[#111827]'}`}>
+                {partnerName}
+              </h2>
+              {isPartnerDeleted ? (
+                <p className="text-sm text-red-400">이 사용자는 탈퇴했습니다</p>
+              ) : (
+                partnerInfo && <p className="text-sm text-[#6B7280]">{partnerInfo}</p>
+              )}
             </div>
           </div>
         </div>
@@ -134,26 +142,32 @@ export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
       {/* Message Input */}
       <div className="bg-white border-t border-[#E5E7EB] sticky bottom-0">
         <div className="px-4 py-4">
-          <div className="flex gap-3">
-            <input
-              placeholder="메시지를 입력하세요..."
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  sendMessage(text)
-                }
-              }}
-              className="flex-1 px-4 py-3 border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F46E5] focus:border-transparent"
-            />
-            <button
-              onClick={() => sendMessage(text)}
-              disabled={!text.trim()}
-              className="w-12 h-12 bg-[#4F46E5] text-white rounded-xl flex items-center justify-center hover:bg-[#4338CA] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <Send className="w-5 h-5" />
-            </button>
-          </div>
+          {isPartnerDeleted ? (
+            <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-xl">
+              <p className="text-sm">탈퇴한 사용자와는 메시지를 주고받을 수 없습니다</p>
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              <input
+                placeholder="메시지를 입력하세요..."
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    sendMessage(text)
+                  }
+                }}
+                className="flex-1 px-4 py-3 border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F46E5] focus:border-transparent"
+              />
+              <button
+                onClick={() => sendMessage(text)}
+                disabled={!text.trim()}
+                className="w-12 h-12 bg-[#4F46E5] text-white rounded-xl flex items-center justify-center hover:bg-[#4338CA] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

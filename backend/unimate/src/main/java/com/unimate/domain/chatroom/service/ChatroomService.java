@@ -82,12 +82,23 @@ public class ChatroomService {
         
         // 상대방 ID 및 정보 조회
         Long partnerId = partnerIdOf(me, room);
-        String partnerName = userRepository.findById(partnerId)
-                .map(com.unimate.domain.user.user.entity.User::getName)
-                .orElse("알 수 없는 사용자");
-        String partnerUniversity = userRepository.findById(partnerId)
-                .map(com.unimate.domain.user.user.entity.User::getUniversity)
-                .orElse("");
+        // 상대방이 존재하는지 확인
+        boolean isPartnerDeleted = !userRepository.existsById(partnerId);
+
+        String partnerName;
+        String partnerUniversity;
+
+        if (isPartnerDeleted) {
+            partnerName = "탈퇴한 사용자";
+            partnerUniversity = "";
+        } else {
+            partnerName = userRepository.findById(partnerId)
+                    .map(com.unimate.domain.user.user.entity.User::getName)
+                    .orElse("알 수 없는 사용자");
+            partnerUniversity = userRepository.findById(partnerId)
+                    .map(com.unimate.domain.user.user.entity.User::getUniversity)
+                    .orElse("");
+        }
         
         return new ChatRoomDetailResponse(
                 room.getId(),
@@ -95,6 +106,7 @@ public class ChatroomService {
                 room.getUser2Id(),
                 partnerName,
                 partnerUniversity,
+                isPartnerDeleted,
                 room.getStatus().name(),
                 ISO.format(room.getCreatedAt()),
                 ISO.format(room.getUpdatedAt()),
