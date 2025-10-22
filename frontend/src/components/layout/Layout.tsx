@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import Header from './Header';
+import AppHeader from './AppHeader';
 import Footer from './Footer';
 
 interface LayoutProps {
@@ -28,12 +28,7 @@ const Layout: React.FC<LayoutProps> = ({
 
   return (
     <div className="min-h-screen flex flex-col">
-      {showHeader && (
-        <Header 
-          isAuthenticated={isAuthenticated} 
-          userEmail={user?.email || ''} 
-        />
-      )}
+      {showHeader && <AppHeader />}
       
       <main className="flex-1">
         {children}

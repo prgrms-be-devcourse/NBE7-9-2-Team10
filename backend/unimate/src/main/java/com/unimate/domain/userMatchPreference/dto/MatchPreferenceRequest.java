@@ -1,12 +1,14 @@
 package com.unimate.domain.userMatchPreference.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.unimate.global.validator.ValidDateRange;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 
 import java.time.LocalDate;
 
 @Getter
+@ValidDateRange(startDate = "startUseDate", endDate = "endUseDate", message = "룸메이트 종료일은 시작일보다 빠를 수 없습니다.")
 public class MatchPreferenceRequest {
 
     @NotNull(message = "startUseDate 필드는 null일 수 없습니다.")

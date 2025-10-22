@@ -1,148 +1,128 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
-import { AuthService } from '@/lib/services/authService';
-import { User } from '@/types/user';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
+import AuthService from "@/lib/services/authService";
 
-// 인증 상태 타입 정의
-interface AuthState {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
+// ✅ User 타입 정의 (ProfileCard에서 필요한 모든 필드 포함)
+interface User {
+  userId: number;
+  email: string;
+  name: string;
+  gender: 'MALE' | 'FEMALE';
+  birthDate: string;
+  university: string;
 }
 
-// 인증 컨텍스트 타입 정의
-interface AuthContextType extends AuthState {
+interface AuthContextType {
+  user: User | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  signup: (userData: any) => Promise<void>;
-  refreshUser: () => Promise<void>;
+  isAuthenticated: boolean;
+  signup?: (userData: any) => Promise<void>;
+  refreshUser?: () => Promise<void>;
 }
 
-// 컨텍스트 생성
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// AuthProvider 컴포넌트
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // 인증 상태 확인
-  const isAuthenticated = !!user && AuthService.isTokenValid();
-
-  // 사용자 정보 새로고침
-  const refreshUser = async () => {
-    try {
-      if (AuthService.isTokenValid()) {
-        // localStorage에서 기본 정보만 가져오기
-        const userId = localStorage.getItem('userId');
-        const email = localStorage.getItem('email');
-        
-        if (userId && email) {
-          setUser({
-            id: Number(userId),
-            email: email,
-            name: '',
-            password: '',
-            gender: 'MALE' as any,
-            birthDate: '',
-            studentVerified: false,
-            university: '',
-            createdAt: '',
-            updatedAt: ''
-          });
-        }
-      } else {
-        setUser(null);
-      }
-    } catch (error) {
-      console.error('사용자 정보 조회 실패:', error);
-      setUser(null);
-    }
-  };
-
-  // 로그인
-  const login = async (email: string, password: string) => {
-    try {
-      setIsLoading(true);
-      await AuthService.login({ email, password });
-      await refreshUser();
-      router.push('/');
-    } catch (error) {
-      console.error('로그인 실패:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // 로그아웃
-  const logout = async () => {
-    try {
-      await AuthService.logout();
-      setUser(null);
-      router.push('/');
-    } catch (error) {
-      console.error('로그아웃 실패:', error);
-    }
-  };
-
-  // 회원가입
-  const signup = async (userData: any) => {
-    try {
-      setIsLoading(true);
-      await AuthService.signup(userData);
-      router.push('/login');
-    } catch (error) {
-      console.error('회원가입 실패:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // 초기 인증 상태 확인
+  // ✅ 앱 시작 시 로그인 상태 확인 및 전체 유저 정보 가져오기
   useEffect(() => {
     const initAuth = async () => {
-      try {
-        setIsLoading(true);
-        if (AuthService.isTokenValid()) {
-          await refreshUser();
+      if (AuthService.isAuthenticated()) {
+        try {
+          // localStorage에서 기본 정보 가져오기 (API 호출 대신)
+          const userId = localStorage.getItem('userId');
+          const email = localStorage.getItem('email');
+          
+          if (userId && email) {
+            setUser({
+              userId: userId ? parseInt(userId) : 0,
+              email: email,
+              name: '',
+              gender: 'MALE',
+              birthDate: '',
+              university: ''
+            });
+            setIsAuthenticated(true);
+          }
+        } catch (error) {
+          console.error('Failed to fetch user info:', error);
+          AuthService.clearTokens();
+          setIsAuthenticated(false);
         }
-      } catch (error) {
-        console.error('인증 초기화 실패:', error);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
       }
     };
 
     initAuth();
   }, []);
 
-  const value: AuthContextType = {
-    user,
-    isAuthenticated,
-    isLoading,
-    login,
-    logout,
-    signup,
-    refreshUser,
+  // ✅ 로그인 후 전체 유저 정보 가져오기
+  const login = async (email: string, password: string) => {
+    const result = await AuthService.login({ email, password });
+    
+    setUser({
+      userId: result.userId,
+      email: result.email,
+      name: '',
+      gender: 'MALE',
+      birthDate: '',
+      university: ''
+    });
+    setIsAuthenticated(true);
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  // ✅ 로그아웃
+  const logout = async () => {
+    await AuthService.logout();
+    AuthService.clearTokens();
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
+  // 회원가입 (선택적 - 기존 코드와의 호환성)
+  const signup = async (userData: any) => {
+    await AuthService.signup(userData);
+  };
+
+  // refreshUser (선택적 - 기존 코드와의 호환성)
+  const refreshUser = async () => {
+    if (AuthService.isAuthenticated()) {
+      const userId = localStorage.getItem('userId');
+      const email = localStorage.getItem('email');
+      
+      if (userId && email) {
+        setUser({
+          userId: parseInt(userId),
+          email: email,
+          name: '',
+          gender: 'MALE',
+          birthDate: '',
+          university: ''
+        });
+        setIsAuthenticated(true);
+      }
+    }
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated, signup, refreshUser }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-// useAuth 훅
-export const useAuth = (): AuthContextType => {
+// ✅ 훅 export
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 };
-
-// 기본 export
-export default AuthContext;
