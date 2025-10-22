@@ -1,0 +1,25 @@
+[33mcommit cf5c1d0e85ab79de8dc5bc4b3931adfe60ce0d21[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeat/#119/chat[m[33m)[m
+Author: chehyeon <rlacogus06090@gmail.com>
+Date:   Thu Oct 23 00:20:57 2025 +0900
+
+    feat(notification): 알림 시스템 개선 및 디버깅 로그 정리
+    
+    - 백엔드 디버깅 로그 제거 (ChatroomService, UserSessionService, ChatWsController)
+    - 프론트엔드 디버깅 로그 제거 (useNotifications, ChatRoomView, ws.ts)
+    - 알림 시스템 정상 작동 확인
+    - 좋아요 기능 테스트 완료
+    - 코드 정리 및 최적화
+
+backend/unimate/data/unimate.mv.db
+backend/unimate/src/main/java/com/unimate/domain/chatroom/controller/ChatroomController.java
+backend/unimate/src/main/java/com/unimate/domain/chatroom/service/ChatroomService.java
+backend/unimate/src/main/java/com/unimate/domain/chatroom/service/UserSessionService.java
+backend/unimate/src/main/java/com/unimate/domain/message/ws/ChatWsController.java
+backend/unimate/src/main/resources/application-dev.yml
+backend/unimate/src/main/resources/application.yml
+frontend/src/app/chat/page.tsx
+frontend/src/app/layout.tsx
+frontend/src/components/chat/ChatRoomView.tsx
+frontend/src/components/profile/MatchPreferenceModal.tsx
+frontend/src/hooks/useNotifications.ts
+frontend/src/lib/services/ws.ts
