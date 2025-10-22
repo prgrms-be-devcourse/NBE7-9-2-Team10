@@ -275,7 +275,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                     type="text"
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400"
                     placeholder="이름을 입력하세요"
                     disabled={isUpdatingName}
                   />
@@ -329,7 +329,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                       type="email"
                       value={newEmail}
                       onChange={(e) => setNewEmail(e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 "
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400"
                       placeholder="new.email@uni.ac.kr"
                       disabled={isEmailVerified}
                     />
@@ -354,7 +354,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                         value={emailCode}
                         onChange={handleEmailCodeInput}
                         maxLength={6}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400"
                         placeholder="인증번호 6자리"
                       />
                       <button
