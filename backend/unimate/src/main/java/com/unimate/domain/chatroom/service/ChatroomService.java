@@ -79,10 +79,22 @@ public class ChatroomService {
     public ChatRoomDetailResponse getDetail(Long me, Long chatroomId) {
         Chatroom room = getRoomOrThrow(chatroomId);
         assertMember(me, room);
+        
+        // 상대방 ID 및 정보 조회
+        Long partnerId = partnerIdOf(me, room);
+        String partnerName = userRepository.findById(partnerId)
+                .map(com.unimate.domain.user.user.entity.User::getName)
+                .orElse("알 수 없는 사용자");
+        String partnerUniversity = userRepository.findById(partnerId)
+                .map(com.unimate.domain.user.user.entity.User::getUniversity)
+                .orElse("");
+        
         return new ChatRoomDetailResponse(
                 room.getId(),
                 room.getUser1Id(),
                 room.getUser2Id(),
+                partnerName,
+                partnerUniversity,
                 room.getStatus().name(),
                 ISO.format(room.getCreatedAt()),
                 ISO.format(room.getUpdatedAt()),

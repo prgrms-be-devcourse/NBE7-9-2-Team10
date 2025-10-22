@@ -25,22 +25,9 @@ export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
         const response = await apiClient.get(`/api/v1/chatrooms/${chatroomId}`)
         const chatroomData = response.data
         
-        // 상대방 ID 추출
-        const currentUserId = Number(localStorage.getItem('userId'))
-        const partnerId = chatroomData.user1Id === currentUserId 
-          ? chatroomData.user2Id 
-          : chatroomData.user1Id
-        
-        // 상대방 정보 조회 (user 테이블에서)
-        try {
-          const userResponse = await apiClient.get(`/api/v1/user/${partnerId}`)
-          const user = userResponse.data
-          setPartnerName(user.name || `사용자 ${partnerId}`)
-          setPartnerInfo(user.university || '')
-        } catch {
-          setPartnerName(`사용자 ${partnerId}`)
-          setPartnerInfo('')
-        }
+        // 백엔드에서 이미 partnerName, partnerUniversity를 보내줌
+        setPartnerName(chatroomData.partnerName || '채팅 상대')
+        setPartnerInfo(chatroomData.partnerUniversity || '')
 
         // 채팅방에 들어갔을 때 읽음 처리
         try {
