@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { ProfileService } from '@/lib/services/profileService';
 import { MatchService } from '@/lib/services/matchService';
 import { getErrorMessage } from '@/lib/utils/helpers';
 import UserCard from '@/components/matches/UserCard';
@@ -40,18 +41,21 @@ export default function MatchesPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const checkMatchStatus = async () => {
+    const checkProfileStatus = async () => {
       setIsLoading(true);
       try {
-        const response = await MatchService.getMatchStatus();
-        const matchStatus = (response as any).data?.data || (response as any).data || response;
+        // getMatchStatus 대신 getMyProfile으로 사용자의 프로필 정보를 직접 조회
+        const response = await ProfileService.getMyProfile();
+        // API 응답에서 data 객체를 추출하고, matchingEnabled 값으로 선호도 등록 여부 판단
+        const profile = (response as any).data || response;
         
-        if (matchStatus && matchStatus.hasPreference) {
+        if (profile && profile.matchingEnabled) {
           setHasPreferences(true);
         } else {
           setHasPreferences(false);
         }
       } catch (err) {
+        // 프로필이 존재하지 않으면 404 에러가 발생하며, 이 경우 선호도가 없는 것으로 간주
         if ((err as any).status === 404) {
           setHasPreferences(false);
         } else {
@@ -62,7 +66,7 @@ export default function MatchesPage() {
       }
     };
 
-    checkMatchStatus();
+    checkProfileStatus();
   }, []);
 
   useEffect(() => {
@@ -92,7 +96,7 @@ export default function MatchesPage() {
   };
 
   const handleOpenPreferenceModal = () => setIsPreferenceModalOpen(true);
-  const handleClosePreferenceModal = () => setIsPreferenceModalOpen(false);
+  const handleClosePreferenceModal = useCallback(() => setIsPreferenceModalOpen(false), []);
   
   const openCancelModal = () => setIsCancelModalOpen(true);
   const closeCancelModal = () => setIsCancelModalOpen(false);

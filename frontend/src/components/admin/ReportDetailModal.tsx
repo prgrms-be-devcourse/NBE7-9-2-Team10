@@ -4,7 +4,7 @@ import { useState, useEffect, FC } from 'react';
 import { AdminService } from '@/lib/services/adminService';
 import { ReportDetail } from '@/types/admin';
 import { getErrorMessage } from '@/lib/utils/helpers';
-import { Modal, ModalHeader, ModalTitle, ModalDescription, ModalContent, ModalFooter } from '@/components/ui/Modal';
+import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
@@ -24,8 +24,7 @@ const ReportDetailModal: FC<ReportDetailModalProps> = ({ reportId, onClose }) =>
       setError(null);
       try {
         const response = await AdminService.getReportDetail(reportId);
-        // TODO: 백엔드 응답 구조에 맞춰 데이터 추출 로직 수정 필요
-        setReport(response.data || null);
+        setReport((response as any).data || response || null);
       } catch (err) {
         setError(getErrorMessage(err));
       } finally {
@@ -36,33 +35,33 @@ const ReportDetailModal: FC<ReportDetailModalProps> = ({ reportId, onClose }) =>
   }, [reportId]);
 
   return (
-    <Modal open={true} onOpenChange={onClose}>
-      <ModalContent className="max-w-2xl">
-        <ModalHeader>
-          <ModalTitle>신고 상세 정보</ModalTitle>
-          <ModalDescription>신고 ID: {reportId}</ModalDescription>
-        </ModalHeader>
+    <Modal isOpen={true} onClose={onClose} size="lg">
+      <div className="p-6">
+        <div className="border-b pb-4 mb-4">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">신고 상세 정보</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">신고 ID: {reportId}</p>
+        </div>
         
         {isLoading && <div className="flex justify-center p-8"><LoadingSpinner /></div>}
         {error && <p className="text-red-500 p-4 text-center">{error}</p>}
         
         {report && (
-          <div className="space-y-4 p-4">
+          <div className="space-y-4">
             <InfoSection title="신고 상태" data={report.status} />
             <InfoSection title="신고 유형" data={report.category} />
             <InfoSection title="신고 내용" data={report.content} preWrap />
-            <hr/>
+            <hr className="dark:border-gray-700"/>
             <UserInfo title="신고자 정보" user={report.reporterInfo} />
-            <hr/>
+            <hr className="dark:border-gray-700"/>
             <UserInfo title="피신고자 정보" user={report.reportedInfo} />
           </div>
         )}
 
-        <ModalFooter>
+        <div className="flex justify-end pt-6 mt-4 border-t">
           <Button variant="outline" onClick={onClose}>닫기</Button>
           {/* TODO: 신고 처리 로직 (예: 상태 변경) 버튼 추가 */}
-        </ModalFooter>
-      </ModalContent>
+        </div>
+      </div>
     </Modal>
   );
 };

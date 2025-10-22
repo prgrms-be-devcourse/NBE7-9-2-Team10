@@ -22,9 +22,13 @@ export const useReports = (initialPage = 0, initialSize = 10) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await AdminService.getReports(page, initialSize, filters.status, filters.keyword);
-      // TODO: 백엔드 응답 구조에 맞춰 데이터 추출 로직 수정 필요
-      const data = response.data;
+      const response = await AdminService.getReports({
+        page,
+        size: initialSize,
+        status: filters.status,
+        keyword: filters.keyword,
+      });
+      const data = response; // `apiRequest`가 이미 `response.data`를 반환하므로 response 자체가 데이터임
       if (data && data.content) {
         setReports(data.content);
         setTotalPages(data.totalPages);

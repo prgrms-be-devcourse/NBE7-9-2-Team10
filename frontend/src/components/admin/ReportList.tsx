@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FC } from 'react';
+import { useState, FC, useCallback } from 'react';
 import { useReports } from '@/hooks/useReports';
 import ReportCard from './ReportCard';
 import ReportFilters from './ReportFilters';
@@ -26,9 +26,9 @@ const ReportList: FC = () => {
     setSelectedReportId(reportId);
   };
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setSelectedReportId(null);
-  };
+  }, []);
 
   if (isLoading) {
     return <div className="flex justify-center p-10"><LoadingSpinner /></div>;

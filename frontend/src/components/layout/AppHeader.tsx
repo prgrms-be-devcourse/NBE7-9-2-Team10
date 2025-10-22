@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Home, Users, MessageCircle, User, Star, Bell, LogOut } from 'lucide-react'
+import { Home, Users, MessageCircle, User, Star, Bell, LogOut, Shield } from 'lucide-react'
 import { useNotifications } from '@/hooks/useNotifications'
 import NotificationModal from '@/components/notification/NotificationModal'
 import { useToast } from '@/components/ui/Toast'
@@ -23,6 +23,7 @@ export default function AppHeader() {
     { key: '/matches', label: '매칭', icon: Users },
     { key: '/chat', label: '채팅', icon: MessageCircle },
     { key: '/profile', label: '프로필', icon: User },
+    { key: '/admin/reports', label: '관리자', icon: Shield },
   ]
 
   const handleLogout = async () => {
