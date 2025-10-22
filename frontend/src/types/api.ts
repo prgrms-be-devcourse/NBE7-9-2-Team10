@@ -39,7 +39,7 @@ export const API_ENDPOINTS = {
   PROFILE_UPDATE: '/api/v1/profile',
   
   // 사용자 관련
-  USER: '/api/v1/auth',
+  USER: '/api/v1/user',
   USER_DELETE_MATCHING_STATUS: "/api/v1/users/me/matching-status"
 } as const;
 
