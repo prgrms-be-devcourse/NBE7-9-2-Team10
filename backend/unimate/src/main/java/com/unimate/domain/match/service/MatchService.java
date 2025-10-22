@@ -176,7 +176,7 @@ public class MatchService {
                 .noiseSensitivity(receiverProfile.getNoiseSensitivity())
                 .drinkingFrequency(receiverProfile.getDrinkingFrequency())
                 .guestFrequency(receiverProfile.getGuestFrequency())
-                .preferredAgeGap(receiverProfile.getPreferredAgeGap())
+                .preferredAgeRange(receiverProfile.getPreferredAgeRange())
                 .birthDate(receiver.getBirthDate())
                 .startUseDate(receiverProfile.getStartUseDate())
                 .endUseDate(receiverProfile.getEndUseDate())

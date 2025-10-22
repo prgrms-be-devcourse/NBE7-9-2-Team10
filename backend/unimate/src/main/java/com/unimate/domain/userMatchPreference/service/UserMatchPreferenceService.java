@@ -29,7 +29,7 @@ public class UserMatchPreferenceService {
     public MatchPreferenceResponse updateMyMatchPreferences(Long userId, MatchPreferenceRequest requestDto) {
         // 사용자 조회
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+                .orElseThrow(() -> ServiceException.notFound("사용자를 찾을 수 없습니다."));
 
         // 기존 선호도 정보 조회(없으면 새로 생성)
         UserMatchPreference preference = userMatchPreferenceRepository.findByUserId(userId)
@@ -44,7 +44,7 @@ public class UserMatchPreferenceService {
 
         /* matchingEnabled 필드 true로 켜는 메서드가 들어갈 자리 */
         UserProfile userProfile = userProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("UserProfile not found for user id: " + userId));
+                .orElseThrow(() -> ServiceException.notFound("해당 사용자의 프로필을 찾을 수 없습니다."));
 
         userProfile.updateMatchingStatus(true);
 
