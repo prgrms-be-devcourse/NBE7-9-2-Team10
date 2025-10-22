@@ -21,7 +21,7 @@ const AdminLoginForm = () => {
     try {
       await AdminAuthService.login({ email, password });
       alert('관리자 로그인 성공!');
-      router.push('/'); // ← 홈페이지로 이동
+      router.push('/admin/dashboard');
     } catch (err: any) {
       setError(err.message || '로그인에 실패했습니다.');
     } finally {
