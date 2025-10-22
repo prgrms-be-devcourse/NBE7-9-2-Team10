@@ -6,16 +6,12 @@ export enum Gender {
 
 // User 엔티티 타입 (백엔드 User.java와 매칭)
 export interface User {
-  id: number;
-  name: string;
+  userId?: number;
   email: string;
-  password: string;
-  gender: Gender;
-  birthDate: string; // LocalDate는 ISO string으로 변환
-  studentVerified: boolean;
+  name: string;
+  gender: 'MALE' | 'FEMALE';
+  birthDate: string;
   university: string;
-  createdAt: string; // LocalDateTime은 ISO string으로 변환
-  updatedAt: string;
 }
 
 // 인증 관련 타입

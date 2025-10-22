@@ -23,27 +23,28 @@ const ProfileView: React.FC<ProfileViewProps> = ({ onEdit, onCreate }) => {
   const [error, setError] = useState<string>('');
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const profileData = await ProfileService.getMyProfile();
-        setProfile(profileData);
-        setHasProfile(true);
-      } catch (err) {
-        const errorMessage = getErrorMessage(err);
-        // 404 에러인 경우 프로필이 없는 것으로 간주
-        if (errorMessage.includes('404') || errorMessage.includes('not found')) {
-          setHasProfile(false);
-        } else {
-          setError(errorMessage);
-        }
-      } finally {
-        setIsLoading(false);
+  // ProfileView.tsx 의 fetchProfile 함수 부분
+useEffect(() => {
+  const fetchProfile = async () => {
+    try {
+      const profileData = await ProfileService.getMyProfile();
+      setProfile(profileData);
+      setHasProfile(true);
+    } catch (err: any) {
+      const errorMessage = getErrorMessage(err);
+      // 404 에러인 경우 프로필이 없는 것으로 간주
+      if (err?.status === 404 || errorMessage.includes('404') || errorMessage.includes('not found')) {
+        setHasProfile(false);
+      } else {
+        setError(errorMessage);
       }
-    };
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchProfile();
-  }, []);
+  fetchProfile();
+}, []);
 
   const toggleMatchingStatus = async () => {
     if (!profile) return;
