@@ -57,39 +57,8 @@ export default function ChatListPage() {
             // 백엔드에서 이미 올바른 unreadCount를 계산해서 보내주므로 그대로 사용
             const unreadCount = chat.unreadCount || 0
             
-            // 상대방 이름 가져오기
-            const currentUserId = Number(localStorage.getItem('userId'))
-            console.log(`[Chat List] 채팅방 데이터:`, chat)
-            console.log(`[Chat List] 현재 사용자 ID:`, currentUserId)
-            
-            // 채팅방 데이터 구조에 따라 partnerId 계산
-            const partnerId = chat.partnerId || 
-                              (chat.user1Id === currentUserId ? chat.user2Id : chat.user1Id)
-            
-            if (!partnerId || !currentUserId) {
-              console.log(`[Chat List] 데이터 누락: partnerId=${partnerId}, currentUserId=${currentUserId}`)
-              return {
-                ...chat,
-                lastMessage: '상호 좋아요로 매칭되었습니다!',
-                lastMessageTime: chat.createdAt,
-                partnerName: '알 수 없는 사용자',
-                unreadCount: unreadCount
-              }
-            }
-            
-            let partnerName = `사용자 ${partnerId}`
-            
-            try {
-              console.log(`[Chat List] 상대방 이름 조회: partnerId=${partnerId}`)
-              const userResponse = await apiClient.get(`/api/v1/user/${partnerId}`)
-              const user = userResponse.data
-              console.log(`[Chat List] 사용자 정보:`, user)
-              partnerName = user.name || `사용자 ${partnerId}`
-              console.log(`[Chat List] 최종 이름: ${partnerName}`)
-            } catch (error) {
-              console.error(`[Chat List] 사용자 정보 조회 실패:`, error)
-              // 사용자 정보 조회 실패 시 기본값 사용
-            }
+            // 백엔드에서 이미 partnerName을 보내주므로 별도 조회 불필요
+            const partnerName = chat.partnerName || '알 수 없는 사용자'
             
             return {
               ...chat,
@@ -104,7 +73,7 @@ export default function ChatListPage() {
               ...chat,
               lastMessage: '상호 좋아요로 매칭되었습니다!',
               lastMessageTime: chat.createdAt,
-              partnerName: `사용자 ${chat.user1Id === Number(localStorage.getItem('userId')) ? chat.user2Id : chat.user1Id}`,
+              partnerName: chat.partnerName || '알 수 없는 사용자',
               unreadCount: 0
             }
           }

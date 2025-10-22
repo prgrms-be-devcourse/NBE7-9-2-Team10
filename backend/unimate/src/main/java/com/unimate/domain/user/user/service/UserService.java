@@ -56,9 +56,4 @@ public class UserService {
 
         return user;
     }
-    @Transactional
-    public User findById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> ServiceException.notFound("사용자를 찾을 수 없습니다."));
-    }
 }

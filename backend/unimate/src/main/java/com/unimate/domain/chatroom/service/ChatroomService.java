@@ -26,6 +26,7 @@ public class ChatroomService {
 
     private final ChatroomRepository chatroomRepository;
     private final MessageRepository messageRepository;
+    private final com.unimate.domain.user.user.repository.UserRepository userRepository;
 
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
@@ -130,6 +131,11 @@ public class ChatroomService {
             }
 
             Long partnerId = partnerIdOf(me, r);
+            
+            // 상대방 이름 조회
+            String partnerName = userRepository.findById(partnerId)
+                    .map(com.unimate.domain.user.user.entity.User::getName)
+                    .orElse("알 수 없는 사용자");
 
             // 내 읽음 기준 이후의 안읽은 메시지 수 집계 (상대방이 보낸 것만)
             Long myLastRead = me.equals(r.getUser1Id()) ? r.getLastReadMessageIdUser1() : r.getLastReadMessageIdUser2();
@@ -145,6 +151,7 @@ public class ChatroomService {
             return new ChatRoomListResponse.ChatRoomListItem(
                     r.getId(),
                     partnerId,
+                    partnerName,
                     last,
                     unread,
                     r.getStatus().name(),
