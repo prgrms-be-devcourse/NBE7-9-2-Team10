@@ -255,168 +255,169 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       </div>
 
       {/* 기본 정보 카드 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            기본 정보
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* 이름 수정 */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">이름</label>
-              {isEditingName ? (
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400"
-                    placeholder="이름을 입력하세요"
-                    disabled={isUpdatingName}
-                  />
-                  {nameError && <p className="text-red-500 text-sm">{nameError}</p>}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleNameUpdate}
-                      disabled={isUpdatingName}
-                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:bg-gray-400"
-                    >
-                      {isUpdatingName ? '저장 중...' : '저장'}
-                    </button>
-                    <button
-                      onClick={handleCancelNameEdit}
-                      disabled={isUpdatingName}
-                      className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 disabled:bg-gray-100"
-                    >
-                      취소
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <p className="text-gray-900">{user.name}</p>
-                  <button
-                    onClick={() => setIsEditingName(true)}
-                    className="text-blue-600 hover:text-blue-700 text-sm"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                  </button>
-                </div>
-              )}
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">나이</label>
-              <p className="text-gray-900">{calculateAge(user.birthDate)}세</p>
+<Card>
+  <CardHeader>
+    <CardTitle className="flex items-center gap-2">
+      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+      기본 정보
+    </CardTitle>
+  </CardHeader>
+  <CardContent className="space-y-4">
+    {/* 첫 번째 줄: 이름, 나이 */}
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <label className="text-sm font-medium text-gray-500 block mb-1">이름</label>
+        {isEditingName ? (
+          <div className="space-y-2">
+            <input
+              type="text"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400"
+              placeholder="이름을 입력하세요"
+              disabled={isUpdatingName}
+            />
+            {nameError && <p className="text-red-500 text-sm">{nameError}</p>}
+            <div className="flex gap-2">
+              <button
+                onClick={handleNameUpdate}
+                disabled={isUpdatingName}
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:bg-gray-400"
+              >
+                {isUpdatingName ? '저장 중...' : '저장'}
+              </button>
+              <button
+                onClick={handleCancelNameEdit}
+                disabled={isUpdatingName}
+                className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 disabled:bg-gray-100"
+              >
+                취소
+              </button>
             </div>
           </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <p className="text-gray-900">{user.name}</p>
+            <button
+              onClick={() => setIsEditingName(true)}
+              className="text-blue-600 hover:text-blue-700 text-sm"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
+      <div>
+        <label className="text-sm font-medium text-gray-500 block mb-1">나이</label>
+        <p className="text-gray-900">{calculateAge(user.birthDate)}세</p>
+      </div>
+    </div>
 
-          {/* 이메일 수정 */}
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">이메일</label>
-              {isEditingEmail ? (
-                <div className="space-y-3">
-                  {/* 새 이메일 입력 */}
-                  <div className="flex gap-2">
-                    <input
-                      type="email"
-                      value={newEmail}
-                      onChange={(e) => setNewEmail(e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400"
-                      placeholder="new.email@uni.ac.kr"
-                      disabled={isEmailVerified}
-                    />
-                    <button
-                      onClick={handleSendEmailCode}
-                      disabled={isUpdatingEmail || isEmailVerified}
-                      className={`px-4 py-2 rounded-md text-white text-sm whitespace-nowrap ${
-                        isEmailVerified
-                          ? 'bg-green-500 cursor-default'
-                          : 'bg-blue-600 hover:bg-blue-700'
-                      }`}
-                    >
-                      {isEmailVerified ? '인증 완료' : '인증번호 전송'}
-                    </button>
-                  </div>
+    {/* 두 번째 줄: 대학교, 성별 */}
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <label className="text-sm font-medium text-gray-500 block mb-1">대학교</label>
+        <p className="text-gray-900">{user.university}</p>
+      </div>
+      <div>
+        <label className="text-sm font-medium text-gray-500 block mb-1">성별</label>
+        <p className="text-gray-900">{getGenderText(user.gender)}</p>
+      </div>
+    </div>
 
-                  {/* 인증번호 입력 */}
-                  {isEmailCodeSent && !isEmailVerified && (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={emailCode}
-                        onChange={handleEmailCodeInput}
-                        maxLength={6}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400"
-                        placeholder="인증번호 6자리"
-                      />
-                      <button
-                        onClick={handleVerifyEmailCode}
-                        disabled={isUpdatingEmail}
-                        className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 whitespace-nowrap"
-                      >
-                        확인
-                      </button>
-                    </div>
-                  )}
+    {/* 세 번째 줄: 이메일 (전체 너비) */}
+    <div className="grid grid-cols-1 gap-4">
+      <div>
+        <label className="text-sm font-medium text-gray-500 block mb-1">이메일</label>
+        {isEditingEmail ? (
+          <div className="space-y-3">
+            {/* 새 이메일 입력 */}
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400"
+                placeholder="new.email@uni.ac.kr"
+                disabled={isEmailVerified}
+              />
+              <button
+                onClick={handleSendEmailCode}
+                disabled={isUpdatingEmail || isEmailVerified}
+                className={`px-4 py-2 rounded-md text-white text-sm whitespace-nowrap ${
+                  isEmailVerified
+                    ? 'bg-green-500 cursor-default'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+              >
+                {isEmailVerified ? '인증 완료' : '인증번호 전송'}
+              </button>
+            </div>
 
-                  {/* 에러/성공 메시지 */}
-                  {emailError && <p className="text-red-500 text-sm">{emailError}</p>}
-                  {emailMessage && <p className="text-blue-600 text-sm">{emailMessage}</p>}
+            {/* 인증번호 입력 */}
+            {isEmailCodeSent && !isEmailVerified && (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={emailCode}
+                  onChange={handleEmailCodeInput}
+                  maxLength={6}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400"
+                  placeholder="인증번호 6자리"
+                />
+                <button
+                  onClick={handleVerifyEmailCode}
+                  disabled={isUpdatingEmail}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 whitespace-nowrap"
+                >
+                  확인
+                </button>
+              </div>
+            )}
 
-                  {/* 저장/취소 버튼 */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleEmailUpdate}
-                      disabled={!isEmailVerified || isUpdatingEmail}
-                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:bg-gray-400"
-                    >
-                      {isUpdatingEmail ? '변경 중...' : '이메일 변경'}
-                    </button>
-                    <button
-                      onClick={handleCancelEmailEdit}
-                      disabled={isUpdatingEmail}
-                      className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 disabled:bg-gray-100"
-                    >
-                      취소
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <p className="text-gray-900">{user.email}</p>
-                  <button
-                    onClick={() => setIsEditingEmail(true)}
-                    className="text-blue-600 hover:text-blue-700 text-sm"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                  </button>
-                </div>
-              )}
+            {/* 에러/성공 메시지 */}
+            {emailError && <p className="text-red-500 text-sm">{emailError}</p>}
+            {emailMessage && <p className="text-blue-600 text-sm">{emailMessage}</p>}
+
+            {/* 저장/취소 버튼 */}
+            <div className="flex gap-2">
+              <button
+                onClick={handleEmailUpdate}
+                disabled={!isEmailVerified || isUpdatingEmail}
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:bg-gray-400"
+              >
+                {isUpdatingEmail ? '변경 중...' : '이메일 변경'}
+              </button>
+              <button
+                onClick={handleCancelEmailEdit}
+                disabled={isUpdatingEmail}
+                className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 disabled:bg-gray-100"
+              >
+                취소
+              </button>
             </div>
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">대학교</label>
-              <p className="text-gray-900">{user.university}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">성별</label>
-              <p className="text-gray-900">{getGenderText(user.gender)}</p>
-            </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <p className="text-gray-900">{user.email}</p>
+            <button
+              onClick={() => setIsEditingEmail(true)}
+              className="text-blue-600 hover:text-blue-700 text-sm"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
+    </div>
+  </CardContent>
+</Card>
 
       {/* 생활 습관 정보 카드 */}
       <Card>
