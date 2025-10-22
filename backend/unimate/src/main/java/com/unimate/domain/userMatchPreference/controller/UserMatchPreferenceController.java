@@ -24,7 +24,7 @@ public class UserMatchPreferenceController {
     @PutMapping("/me/preferences")
     public ResponseEntity<MatchPreferenceResponse> updateMyMatchPreference(
              @AuthenticationPrincipal CustomUserPrincipal user,
-             @RequestBody MatchPreferenceRequest requestDto
+             @Valid @RequestBody MatchPreferenceRequest requestDto
               ) {
 
          Long userId = user.getUserId();
