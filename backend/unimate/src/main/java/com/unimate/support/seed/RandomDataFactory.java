@@ -12,7 +12,7 @@ public class RandomDataFactory {
     private final Random r = new Random();
 
     public String email(int idx) {
-        return "user" + idx + "@unimate.ar.kr";
+        return "user" + idx + "@unimate.ac.kr";
     }
 
     public String name() {
