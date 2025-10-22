@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   createContext,
@@ -8,6 +8,7 @@ import {
   ReactNode,
 } from "react";
 import AuthService from "@/lib/services/authService";
+import { UserService } from "@/lib/services/UserService";
 
 // ✅ User 타입 정의 (ProfileCard에서 필요한 모든 필드 포함)
 interface User {
@@ -24,8 +25,6 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
-  signup?: (userData: any) => Promise<void>;
-  refreshUser?: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,21 +38,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const initAuth = async () => {
       if (AuthService.isAuthenticated()) {
         try {
-          // localStorage에서 기본 정보 가져오기 (API 호출 대신)
+          const userInfo = await UserService.getUserInfo();
           const userId = localStorage.getItem('userId');
-          const email = localStorage.getItem('userEmail');
           
-          if (userId && email) {
-            setUser({
-              userId: userId ? parseInt(userId) : 0,
-              email: email,
-              name: '',
-              gender: 'MALE',
-              birthDate: '',
-              university: ''
-            });
-            setIsAuthenticated(true);
-          }
+          setUser({
+            userId: userId ? parseInt(userId) : 0,
+            email: userInfo.email,
+            name: userInfo.name,
+            gender: userInfo.gender,
+            birthDate: userInfo.birthDate,
+            university: userInfo.university
+          });
+          setIsAuthenticated(true);
         } catch (error) {
           console.error('Failed to fetch user info:', error);
           AuthService.clearTokens();
@@ -69,13 +65,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string) => {
     const result = await AuthService.login({ email, password });
     
+    // 로그인 성공 후 전체 유저 정보 가져오기
+    const userInfo = await UserService.getUserInfo();
+    
     setUser({
       userId: result.userId,
-      email: result.email,
-      name: '',
-      gender: 'MALE',
-      birthDate: '',
-      university: ''
+      email: userInfo.email,
+      name: userInfo.name,
+      gender: userInfo.gender,
+      birthDate: userInfo.birthDate,
+      university: userInfo.university
     });
     setIsAuthenticated(true);
   };
@@ -88,33 +87,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false);
   };
 
-  // 회원가입 (선택적 - 기존 코드와의 호환성)
-  const signup = async (userData: any) => {
-    await AuthService.signup(userData);
-  };
-
-  // refreshUser (선택적 - 기존 코드와의 호환성)
-  const refreshUser = async () => {
-    if (AuthService.isAuthenticated()) {
-      const userId = localStorage.getItem('userId');
-      const email = localStorage.getItem('userEmail');
-      
-      if (userId && email) {
-        setUser({
-          userId: parseInt(userId),
-          email: email,
-          name: '',
-          gender: 'MALE',
-          birthDate: '',
-          university: ''
-        });
-        setIsAuthenticated(true);
-      }
-    }
-  };
-
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated, signup, refreshUser }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );
