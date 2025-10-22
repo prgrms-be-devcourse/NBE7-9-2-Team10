@@ -44,3 +44,21 @@ export interface ReportDetail {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface Admin {
+  adminId: number;
+  email: string;
+  name?: string;
+}
+
+export interface AdminSignupRequest {
+  email: string;
+  password: string;
+  name: string;
+}
+
+export interface AdminSignupResponse {
+  adminId: number;
+  email: string;
+  name: string;
+}

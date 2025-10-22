@@ -52,6 +52,11 @@ export const API_ENDPOINTS = {
   // 관리자 관련
   ADMIN_REPORTS: '/api/v1/admin/reports',
   ADMIN_REPORT_DETAIL: '/api/v1/admin/reports', // 상세 조회를 위해 /:id가 추가되어야 함
+
+  // 관리자 인증 관련
+  ADMIN_SIGNUP: '/api/v1/admin/auth/signup',
+  ADMIN_LOGIN: '/api/v1/admin/auth/login',
+  ADMIN_LOGOUT: '/api/v1/admin/auth/logout'
 } as const;
 
 // API 기본 설정
