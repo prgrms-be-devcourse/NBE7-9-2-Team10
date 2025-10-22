@@ -18,6 +18,7 @@ interface ChatRoom {
   lastMessageTime?: string
   partnerName?: string
   unreadCount?: number
+  isNew?: boolean
 }
 
 export default function ChatListPage() {
@@ -65,7 +66,8 @@ export default function ChatListPage() {
               lastMessage: lastMsg ? lastMsg.content : '상호 좋아요로 매칭되었습니다!',
               lastMessageTime: lastMsg ? lastMsg.createdAt : chat.createdAt,
               partnerName: partnerName,
-              unreadCount: unreadCount
+              unreadCount: unreadCount,
+              isNew: !lastMsg // 메시지가 없으면 새로 매칭된 채팅방
             }
           } catch (error) {
             console.error(`채팅방 ${chat.chatroomId} 메시지 로드 실패:`, error)
@@ -74,7 +76,8 @@ export default function ChatListPage() {
               lastMessage: '상호 좋아요로 매칭되었습니다!',
               lastMessageTime: chat.createdAt,
               partnerName: chat.partnerName || '알 수 없는 사용자',
-              unreadCount: 0
+              unreadCount: 0,
+              isNew: true // 에러가 발생한 경우도 새로 매칭된 것으로 간주
             }
           }
         })
@@ -110,10 +113,10 @@ export default function ChatListPage() {
   }, [])
 
   const handleChatClick = (chatId: number) => {
-    // 채팅방에 들어갈 때 안 읽음 개수를 0으로 업데이트
+    // 채팅방에 들어갈 때 안 읽음 개수를 0으로 업데이트하고 NEW 태그 제거
     setChats(chats.map(chat => 
       chat.chatroomId === chatId 
-        ? { ...chat, unreadCount: 0 }
+        ? { ...chat, unreadCount: 0, isNew: false }
         : chat
     ))
     router.push(`/chat/${chatId}`)
@@ -140,8 +143,9 @@ export default function ChatListPage() {
 
         {/* Main Content */}
         <div className="px-4 py-8">
-          {/* Description */}
+          {/* Header */}
           <div className="mb-8">
+            <h1 className="text-3xl font-bold text-[#111827] mb-2">채팅</h1>
             <p className="text-[#6B7280]">매칭된 룸메이트와 대화를 나눠보세요</p>
           </div>
 
@@ -173,40 +177,48 @@ export default function ChatListPage() {
               {chats.map((chat) => (
                 <div
                   key={chat.chatroomId}
-                  className="bg-white rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer relative"
-                  onClick={() => handleChatClick(chat.chatroomId)}
+                  className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all duration-200 cursor-pointer relative group"
+                  onClick={(e) => {
+                    // 메뉴가 열려있지 않을 때만 채팅방으로 이동
+                    if (showMenu !== chat.chatroomId) {
+                      handleChatClick(chat.chatroomId)
+                    }
+                  }}
                 >
-                  <div className="flex items-start gap-4">
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-[#111827]">{chat.partnerName || `사용자 ${chat.partnerId || chat.user1Id || chat.user2Id}`}</h3>
-                        </div>
-                        <div className="flex flex-col items-end gap-1">
-                          <span className="text-sm text-[#9CA3AF]">
-                            {chat.lastMessageTime 
-                              ? new Date(chat.lastMessageTime).toLocaleTimeString('ko-KR', { 
-                                  hour: '2-digit', 
-                                  minute: '2-digit' 
-                                })
-                              : new Date(chat.createdAt).toLocaleDateString('ko-KR')
-                            }
-                          </span>
-                          {chat.unreadCount && chat.unreadCount > 0 ? (
-                            <span className="bg-[#EF4444] text-white text-xs px-2 py-1 rounded-full min-w-[20px] text-center font-semibold">
-                              {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                      <p className="text-[#6B7280] truncate">
-                        {chat.lastMessage || '상호 좋아요로 매칭되었습니다!'}
-                      </p>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-[#111827] text-lg">{chat.partnerName || `사용자 ${chat.partnerId || chat.user1Id || chat.user2Id}`}</h3>
+                      {chat.isNew && (
+                        <span className="bg-[#EF4444] text-white text-xs px-2 py-1 rounded-full font-semibold">
+                          NEW
+                        </span>
+                      )}
                     </div>
-
-                    {/* Menu Button */}
-                    <div className="relative">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-[#9CA3AF]">
+                        {chat.lastMessageTime 
+                          ? (() => {
+                              const now = new Date()
+                              const messageTime = new Date(chat.lastMessageTime)
+                              const diff = now.getTime() - messageTime.getTime()
+                              const minutes = Math.floor(diff / 60000)
+                              const hours = Math.floor(diff / 3600000)
+                              const days = Math.floor(diff / 86400000)
+                              
+                              if (minutes < 1) return '방금 전'
+                              if (minutes < 60) return `${minutes}분 전`
+                              if (hours < 24) return `${hours}시간 전`
+                              if (days < 7) return `${days}일 전`
+                              return messageTime.toLocaleDateString('ko-KR')
+                            })()
+                          : '방금 전'
+                        }
+                      </span>
+                      {chat.unreadCount && chat.unreadCount > 0 ? (
+                        <div className="w-6 h-6 bg-[#4F46E5] text-white text-xs rounded-full flex items-center justify-center font-semibold">
+                          {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
+                        </div>
+                      ) : null}
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
@@ -216,31 +228,35 @@ export default function ChatListPage() {
                       >
                         <MoreVertical className="w-5 h-5 text-[#6B7280]" />
                       </button>
-
-                      {/* Dropdown Menu */}
-                      {showMenu === chat.chatroomId && (
-                        <>
-                          <div 
-                            className="fixed inset-0 z-10" 
-                            onClick={() => setShowMenu(null)}
-                          />
-                          <div className="absolute right-0 top-10 w-48 bg-white border border-[#E5E7EB] rounded-xl shadow-lg z-20 overflow-hidden">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setShowDeleteModal(chat.chatroomId)
-                                setShowMenu(null)
-                              }}
-                              className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-[#FEE2E2] transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4 text-[#EF4444]" />
-                              <span className="text-sm text-[#EF4444]">채팅방 나가기</span>
-                            </button>
-                          </div>
-                        </>
-                      )}
                     </div>
                   </div>
+                  
+                  <p className="text-[#6B7280] text-sm leading-relaxed">
+                    {chat.lastMessage || '상호 좋아요로 매칭되었습니다👋'}
+                  </p>
+
+                  {/* Dropdown Menu */}
+                  {showMenu === chat.chatroomId && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-10" 
+                        onClick={() => setShowMenu(null)}
+                      />
+                      <div className="absolute right-4 top-16 w-48 bg-white border border-[#E5E7EB] rounded-xl shadow-lg z-20 overflow-hidden">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setShowDeleteModal(chat.chatroomId)
+                            setShowMenu(null)
+                          }}
+                          className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-[#FEE2E2] transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4 text-[#EF4444]" />
+                          <span className="text-sm text-[#EF4444]">채팅방 나가기</span>
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
