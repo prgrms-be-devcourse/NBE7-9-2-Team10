@@ -40,7 +40,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ onSuccess }) => {
       try {
         const profileData = await ProfileService.getMyProfile();
         setProfile(profileData);
-        
+
         // 폼에 기존 데이터 설정
         reset({
           sleepTime: profileData.sleepTime,
@@ -74,7 +74,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ onSuccess }) => {
 
     try {
       await ProfileService.updateProfile(data);
-      
+
       if (onSuccess) {
         onSuccess();
       } else {
@@ -170,7 +170,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ onSuccess }) => {
             프로필 정보를 수정하고 업데이트할 수 있습니다.
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
             {submitError && (
@@ -265,13 +265,13 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ onSuccess }) => {
                     {...register('isPetAllowed')}
                     error={errors.isPetAllowed?.message}
                   />
-                  
+
                   <Checkbox
                     label="흡연자"
                     {...register('isSmoker')}
                     error={errors.isSmoker?.message}
                   />
-                  
+
                   <Checkbox
                     label="코골이"
                     {...register('isSnoring')}
@@ -302,14 +302,14 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ onSuccess }) => {
             </section>
 
             {/* 매칭 설정 */}
-            {/* <section>
+            <section>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">매칭 설정</h3>
               <Checkbox
                 label="매칭 활성화 (다른 사용자들이 나를 찾을 수 있습니다)"
                 {...register('matchingEnabled')}
                 error={errors.matchingEnabled?.message}
               />
-            </section> */}
+            </section>
 
             {/* 제출 버튼 */}
             <div className="flex justify-end space-x-4 pt-6 border-t">
