@@ -16,6 +16,18 @@ const createApiInstance = (): AxiosInstance => {
     (config) => {
       // 클라이언트 사이드에서만 토큰 처리
       if (typeof window !== 'undefined') {
+        // ==================================================================
+        // <<< 임시 관리자 권한 상승 코드 시작 >>>
+        // 나중에 관리자 로그인 UI가 구현되면 이 블록을 주석 처리하거나 삭제하세요.
+        const adminOverrideToken = localStorage.getItem('admin_override_token');
+        // 관리자 API 경로에만 임시 토큰을 적용합니다.
+        if (adminOverrideToken && config.url?.includes('/api/v1/admin/')) {
+          config.headers.Authorization = `Bearer ${adminOverrideToken}`;
+          return config;
+        }
+        // <<< 임시 관리자 권한 상승 코드 종료 >>>
+        // ==================================================================
+
         const token = localStorage.getItem('accessToken');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;

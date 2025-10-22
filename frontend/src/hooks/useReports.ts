@@ -65,5 +65,6 @@ export const useReports = (initialPage = 0, initialSize = 10) => {
     handlePageChange,
     handleFilterChange,
     filters,
+    fetchReports, // 새로고침을 위해 fetch 함수 반환
   };
 };
