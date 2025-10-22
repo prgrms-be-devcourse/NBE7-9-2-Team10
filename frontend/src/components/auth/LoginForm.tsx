@@ -1,114 +1,118 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LoginRequest } from '@/types/user';
-import { loginSchema } from '@/lib/utils/validation';
+import Link from 'next/link';
+import { ApiError, ERROR_CODES } from '@/types/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { getErrorMessage } from '@/lib/utils/helpers';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
 
-interface LoginFormProps {
-  onSuccess?: () => void;
-}
-
-const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
+const LoginForm = () => {
   const router = useRouter();
   const { login } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string>('');
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginRequest>({
-    resolver: zodResolver(loginSchema),
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const onSubmit = async (data: LoginRequest) => {
-    setIsSubmitting(true);
-    setSubmitError('');
+  /** ------------------ 로그인 제출 ------------------ */
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const newErrors: Record<string, string> = {};
+    if (!email) newErrors.email = '이메일을 입력해주세요.';
+    if (!password) newErrors.password = '비밀번호를 입력해주세요.';
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
+    setErrors({});
+    setLoading(true);
 
     try {
-      await login(data.email, data.password);
-      
-      if (onSuccess) {
-        onSuccess();
+      await login(email, password);
+      router.push('/');
+    } catch (err) {
+      const apiError = err as any;
+
+      // ✅ 백엔드에서 온 message를 우선적으로 사용
+      const backendMessage =
+        apiError.response?.data?.message ||
+        apiError.message ||
+        '로그인 중 오류가 발생했습니다.';
+
+      if (apiError.response?.status === 404) {
+        setErrors({ email: backendMessage });
+      } else if (apiError.response?.status === 401) {
+        setErrors({ password: backendMessage });
       } else {
-        router.push('/');
+        setErrors({ form: backendMessage });
       }
-    } catch (error) {
-      setSubmitError(getErrorMessage(error));
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-blue-600 mb-2">Unimate</h1>
-          <h2 className="text-2xl font-bold text-gray-900">로그인</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            계정이 없으신가요?{' '}
-            <a href="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              회원가입
-            </a>
-          </p>
+    <div className="w-full max-w-md bg-white rounded-2xl shadow p-8">
+      <div className="flex flex-col items-center mb-6">
+        <div className="bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl mb-3">
+          U
+        </div>
+        <h2 className="text-xl font-semibold mb-1">로그인</h2>
+        <p className="text-sm text-gray-500 text-center">
+          UniMate에 로그인하여 룸메이트를 찾아보세요
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* 이메일 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="email@uni.ac.kr"
+            className={`w-full border rounded-lg px-3 py-2 placeholder:text-gray-400 ${errors.email ? 'border-red-500' : 'border-gray-300'
+              } focus:ring-2 focus:ring-blue-500`}
+          />
+          {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>계정에 로그인</CardTitle>
-            <CardDescription>
-              이메일과 비밀번호를 입력해주세요.
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {submitError && (
-                <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                  <p className="text-red-600 text-sm">{submitError}</p>
-                </div>
-              )}
+        {/* 비밀번호 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="비밀번호를 입력하세요"
+            className={`w-full border rounded-lg px-3 py-2 placeholder:text-gray-400 ${errors.password ? 'border-red-500' : 'border-gray-300'
+              } focus:ring-2 focus:ring-blue-500`}
+          />
+          {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+        </div>
 
-              <Input
-                label="이메일"
-                type="email"
-                placeholder="이메일을 입력하세요"
-                error={errors.email?.message}
-                {...register('email')}
-                required
-              />
+        {/* 에러 메시지 */}
+        {errors.form && <p className="text-red-500 text-sm">{errors.form}</p>}
 
-              <Input
-                label="비밀번호"
-                type="password"
-                placeholder="비밀번호를 입력하세요"
-                error={errors.password?.message}
-                {...register('password')}
-                required
-              />
+        {/* 로그인 버튼 */}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white py-2 rounded-lg mt-2 hover:bg-blue-700 disabled:bg-gray-400"
+        >
+          {loading ? '로그인 중...' : '로그인'}
+        </button>
 
-              <Button
-                type="submit"
-                className="w-full"
-                loading={isSubmitting}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? '로그인 중...' : '로그인'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+        {/* 회원가입 링크 */}
+        <div className="text-center text-sm text-gray-600 mt-6">
+          계정이 없으신가요?{' '}
+          <Link href="/register" className="text-blue-600 hover:underline font-medium">
+            회원가입
+          </Link>
+        </div>
+      </form>
     </div>
   );
 };

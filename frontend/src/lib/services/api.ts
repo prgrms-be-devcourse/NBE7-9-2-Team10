@@ -40,6 +40,11 @@ const createApiInstance = (): AxiosInstance => {
       if (error.response?.status === 401 && !originalRequest._retry) {
         originalRequest._retry = true;
 
+      // 현재 페이지가 로그인 페이지라면 리다이렉트하지 않음
+      if (typeof window !== 'undefined' && window.location.pathname.includes('/login')) {
+        return Promise.reject(error);
+      }
+
         // 토큰 갱신 로직 (필요시 구현)
         // const refreshToken = localStorage.getItem('refreshToken');
         // if (refreshToken) {
