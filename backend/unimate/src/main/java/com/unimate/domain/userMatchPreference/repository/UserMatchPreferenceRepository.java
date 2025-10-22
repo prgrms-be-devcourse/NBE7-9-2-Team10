@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface UserMatchPreferenceRepository extends JpaRepository<UserMatchPreference, Long> {
     Optional<UserMatchPreference> findByUserId(Long userId);
+    void deleteByUserId(Long userId);
 }

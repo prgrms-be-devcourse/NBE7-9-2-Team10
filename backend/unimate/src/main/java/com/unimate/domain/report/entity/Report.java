@@ -15,11 +15,11 @@ import lombok.NoArgsConstructor;
 public class Report extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reporterId")
+    @JoinColumn(name = "reporterId", nullable = true)
     private User reporter;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reportedId")
+    @JoinColumn(name = "reportedId", nullable = true)
     private User reported;
 
     private String  category;
@@ -43,12 +43,15 @@ public class Report extends BaseEntity {
                 : ReportStatus.RECEIVED;
     }
 
-//    public void updateStatus(ReportStatus status) {
-//        this.reportStatus = status;
-//    }
-//
-//    public void update(String category, String content) {
-//        this.category = category;
-//        this.content  = content;
-//    }
+    public void updateStatus(ReportStatus status) {
+        this.reportStatus = status;
+    }
+
+    public void setReporter(User reporter) {
+        this.reporter = reporter;
+    }
+
+    public void setReported(User reported) {
+        this.reported = reported;
+    }
 }
