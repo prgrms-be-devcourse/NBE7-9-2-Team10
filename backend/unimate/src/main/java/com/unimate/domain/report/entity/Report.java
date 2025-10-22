@@ -43,10 +43,10 @@ public class Report extends BaseEntity {
                 : ReportStatus.RECEIVED;
     }
 
-//    public void updateStatus(ReportStatus status) {
-//        this.reportStatus = status;
-//    }
-//
+    public void updateStatus(ReportStatus status) {
+        this.reportStatus = status;
+    }
+
 //    public void update(String category, String content) {
 //        this.category = category;
 //        this.content  = content;
