@@ -16,21 +16,20 @@ const createApiInstance = (): AxiosInstance => {
     (config) => {
       // 클라이언트 사이드에서만 토큰 처리
       if (typeof window !== 'undefined') {
-        // ==================================================================
-        // <<< 임시 관리자 권한 상승 코드 시작 >>>
-        // 나중에 관리자 로그인 UI가 구현되면 이 블록을 주석 처리하거나 삭제하세요.
-        const adminOverrideToken = localStorage.getItem('admin_override_token');
-        // 관리자 API 경로에만 임시 토큰을 적용합니다.
-        if (adminOverrideToken && config.url?.includes('/api/v1/admin/')) {
-          config.headers.Authorization = `Bearer ${adminOverrideToken}`;
-          return config;
-        }
-        // <<< 임시 관리자 권한 상승 코드 종료 >>>
-        // ==================================================================
-
-        const token = localStorage.getItem('accessToken');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+        // 관리자 토큰 확인
+        const adminToken = localStorage.getItem('adminAccessToken');
+        const isAdmin = localStorage.getItem('isAdmin');
+        
+        // 일반 사용자 토큰 확인
+        const userToken = localStorage.getItem('accessToken');
+        
+        // 관리자로 로그인된 경우 관리자 토큰 사용
+        if (isAdmin === 'true' && adminToken) {
+          config.headers.Authorization = `Bearer ${adminToken}`;
+        } 
+        // 일반 사용자로 로그인된 경우 사용자 토큰 사용
+        else if (userToken) {
+          config.headers.Authorization = `Bearer ${userToken}`;
         }
       }
       return config;
@@ -52,27 +51,23 @@ const createApiInstance = (): AxiosInstance => {
       if (error.response?.status === 401 && !originalRequest._retry) {
         originalRequest._retry = true;
 
-      // 현재 페이지가 로그인 페이지라면 리다이렉트하지 않음
-      if (typeof window !== 'undefined' && window.location.pathname.includes('/login')) {
-        return Promise.reject(error);
-      }
+        // 현재 페이지가 로그인 페이지라면 리다이렉트하지 않음
+        if (typeof window !== 'undefined' && 
+            (window.location.pathname.includes('/login') || 
+             window.location.pathname.includes('/admin/login'))) {
+          return Promise.reject(error);
+        }
 
-        // 토큰 갱신 로직 (필요시 구현)
-        // const refreshToken = localStorage.getItem('refreshToken');
-        // if (refreshToken) {
-        //   try {
-        //     const response = await instance.post('/auth/refresh', { refreshToken });
-        //     localStorage.setItem('accessToken', response.data.accessToken);
-        //     return instance(originalRequest);
-        //   } catch (refreshError) {
-        //     // 리프레시 실패 시 로그인 페이지로 리다이렉트
-        //     localStorage.removeItem('accessToken');
-        //     window.location.href = '/login';
-        //   }
-        // }
-
-        // 현재는 토큰 제거 후 로그인 페이지로 리다이렉트
-        if (typeof window !== 'undefined') {
+        // 관리자인 경우
+        const isAdmin = localStorage.getItem('isAdmin');
+        if (isAdmin === 'true') {
+          localStorage.removeItem('adminAccessToken');
+          localStorage.removeItem('adminId');
+          localStorage.removeItem('adminEmail');
+          localStorage.removeItem('isAdmin');
+          window.location.href = '/admin/login';
+        } else {
+          // 일반 사용자인 경우
           localStorage.removeItem('accessToken');
           window.location.href = '/login';
         }
@@ -96,13 +91,12 @@ const createApiInstance = (): AxiosInstance => {
 // API 인스턴스 생성
 export const apiClient = createApiInstance();
 
-// API 응답 래퍼 함수 - 수정됨
+// API 응답 래퍼 함수
 export const apiRequest = async <T>(
   requestConfig: AxiosRequestConfig
 ): Promise<T> => {
   try {
     const response = await apiClient.request<T>(requestConfig);
-    // response.data를 직접 반환 (이미 T 타입)
     return response.data;
   } catch (error: unknown) {
     throw error;

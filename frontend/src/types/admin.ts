@@ -62,3 +62,14 @@ export interface AdminSignupResponse {
   email: string;
   name: string;
 }
+
+export interface AdminLoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface AdminLoginResponse {
+  adminId: number;
+  email: string;
+  accessToken: string;
+}
