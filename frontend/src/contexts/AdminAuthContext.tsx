@@ -6,7 +6,7 @@ import AdminAuthService from "@/lib/services/AdminAuthService";
 interface AdminUser {
   adminId: number;
   email: string;
-  name: string;
+  name: string; // email을 name으로 사용
 }
 
 interface AdminAuthContextType {
@@ -27,25 +27,27 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const initAdminAuth = async () => {
       try {
+        console.log('🔍 AdminAuthContext: Initializing...');
+        
         if (AdminAuthService.isAuthenticated()) {
-          // localStorage에서 관리자 정보 직접 가져오기
           const adminId = localStorage.getItem('adminId');
           const email = localStorage.getItem('adminEmail');
-          // 'name'은 login 응답에 없으므로 email을 임시로 사용하거나,
-          // API 응답에 추가해야 합니다. 여기서는 email을 이름으로 가정합니다.
-          const name = localStorage.getItem('adminEmail'); 
 
-          if (adminId && email && name) {
+          console.log('📦 Stored admin info:', { adminId, email });
+
+          if (adminId && email) {
             setAdmin({
               adminId: parseInt(adminId, 10),
               email,
-              name,
+              name: email, // ✅ email을 name으로 사용
             });
             setIsAuthenticated(true);
+            console.log('✅ Admin authenticated');
           } else {
             throw new Error("Admin information is missing in localStorage.");
           }
         } else {
+          console.log('❌ Not authenticated');
           setIsAuthenticated(false);
         }
       } catch (error) {
@@ -61,12 +63,27 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const adminInfo = await AdminAuthService.login({ email, password });
-    setAdmin(adminInfo);
+    console.log('🔑 AdminAuthContext: Logging in...');
+    
+    const loginResponse = await AdminAuthService.login({ email, password });
+    
+    console.log('✅ Login response:', loginResponse);
+    
+    // ✅ email을 name으로 사용
+    const adminUser: AdminUser = {
+      adminId: loginResponse.adminId,
+      email: loginResponse.email,
+      name: loginResponse.email, // ✅ email을 name으로 사용
+    };
+    
+    setAdmin(adminUser);
     setIsAuthenticated(true);
+    
+    console.log('✅ Admin state updated:', adminUser);
   };
 
   const logout = async () => {
+    console.log('🚪 AdminAuthContext: Logging out...');
     await AdminAuthService.logout();
     setAdmin(null);
     setIsAuthenticated(false);
