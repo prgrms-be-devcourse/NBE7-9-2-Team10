@@ -28,19 +28,14 @@ const AdminLoginForm = () => {
 
     try {
       await AdminAuthService.login({ email, password });
-      router.push('/admin/dashboard'); // ✅ 관리자 대시보드로 이동 유지
-    } catch (err) {
-      const apiError = err as any;
+      router.push('/admin/dashboard');
+    } catch (err: any) {
+      const backendMessage = err?.message || '로그인 중 오류가 발생했습니다.';
+      const status = err?.status;
 
-      // ✅ 백엔드에서 온 message를 우선적으로 사용 (일반 사용자와 동일)
-      const backendMessage =
-        apiError.response?.data?.message ||
-        apiError.message ||
-        '로그인 중 오류가 발생했습니다.';
-
-      if (apiError.response?.status === 404) {
+      if (status === 404) {
         setErrors({ email: backendMessage });
-      } else if (apiError.response?.status === 401) {
+      } else if (status === 401) {
         setErrors({ password: backendMessage });
       } else {
         setErrors({ form: backendMessage });
