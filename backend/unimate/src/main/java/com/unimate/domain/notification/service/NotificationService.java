@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
+
 import java.util.Map;
 
 
@@ -128,5 +129,24 @@ public class NotificationService {
         }
 
         notificationRepository.delete(notification);
+    }
+
+    /**
+     * 발신자 ID를 기준으로 특정 알림을 삭제하는 메서드
+     */
+    @Transactional
+    public void deleteNotificationBySender(Long receiverId, NotificationType type, Long senderId) {
+        User receiver = userRepository.findById(receiverId)
+                .orElseThrow(() -> ServiceException.notFound("알림 수신자를 찾을 수 없습니다."));
+        notificationRepository.deleteByUserAndTypeAndSenderId(receiver, type, senderId);
+    }
+
+    /**
+     * 발신자 ID를 기준으로 특정 알림이 존재하는지 확인하는 메서드
+     */
+    public boolean notificationExistsBySender(Long receiverId, NotificationType type, Long senderId) {
+        User receiver = userRepository.findById(receiverId)
+                .orElseThrow(() -> ServiceException.notFound("알림 수신자를 찾을 수 없습니다."));
+        return notificationRepository.findByUserAndTypeAndSenderId(receiver, type, senderId).isPresent();
     }
 }
