@@ -183,12 +183,7 @@ export default function ChatListPage() {
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-3">
-                          {chat.unreadCount && chat.unreadCount > 0 && (
-                            <span className="bg-[#EF4444] text-white text-xs px-2 py-1 rounded-full min-w-[20px] text-center font-semibold">
-                              {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
-                            </span>
-                          )}
+                        <div className="flex flex-col items-end gap-1">
                           <span className="text-sm text-[#9CA3AF]">
                             {chat.lastMessageTime 
                               ? new Date(chat.lastMessageTime).toLocaleTimeString('ko-KR', { 
@@ -198,6 +193,11 @@ export default function ChatListPage() {
                               : new Date(chat.createdAt).toLocaleDateString('ko-KR')
                             }
                           </span>
+                          {chat.unreadCount && chat.unreadCount > 0 ? (
+                            <span className="bg-[#EF4444] text-white text-xs px-2 py-1 rounded-full min-w-[20px] text-center font-semibold">
+                              {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                       <p className="text-[#6B7280] truncate">

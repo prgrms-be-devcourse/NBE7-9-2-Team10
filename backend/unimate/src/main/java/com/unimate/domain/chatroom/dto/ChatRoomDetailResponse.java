@@ -8,7 +8,8 @@ public class ChatRoomDetailResponse {
     private Long user1Id;
     private Long user2Id;
     private String partnerName;        // 상대방 이름
-    private String partnerUniversity;  // 상대방 대학교
+    private String partnerUniversity;// 상대방 대학교
+    private Boolean isPartnerDeleted;  // 상대방이 탈퇴한 사용자인지 여부
     private String status; // ACTIVE | CLOSED
     private String createdAt;
     private String updatedAt;

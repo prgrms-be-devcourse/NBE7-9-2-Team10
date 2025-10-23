@@ -24,6 +24,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
+  isLoading: boolean;
   updateUser: (updatedUser: User) => void;
 }
 
@@ -32,11 +33,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const initAuth = async () => {
-      if (AuthService.isAuthenticated()) {
-        try {
+      try {
+        if (AuthService.isAuthenticated()) {
           const userInfo = await UserService.getUserInfo();
           const userId = localStorage.getItem('userId');
           
@@ -49,11 +51,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             university: userInfo.university
           });
           setIsAuthenticated(true);
-        } catch (error) {
-          console.error('Failed to fetch user info:', error);
-          AuthService.clearTokens();
+        } else {
           setIsAuthenticated(false);
         }
+      } catch (error) {
+        console.error('Failed to fetch user info:', error);
+        AuthService.clearTokens();
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -87,7 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated, updateUser }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated, isLoading, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
