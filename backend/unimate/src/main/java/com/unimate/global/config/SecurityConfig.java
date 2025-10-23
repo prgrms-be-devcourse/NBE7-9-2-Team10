@@ -49,6 +49,9 @@ public class SecurityConfig {
                                 "/h2-console/**",
                                 "/ws-stomp/**",//WS 핸드셰이크 허용
                                 "/ws-test.html", //임시용
+                                "/v3/api-docs/**",       // <- JSON 문서
+                                "/swagger-ui/**",        // <- UI
+                                "/swagger-ui.html",      // <- 직접 접근 시
                                 "/css/**", "/js/**", "/images/**", "/webjars/**"  // 임시용
                         ).permitAll()
                         .anyRequest().authenticated()
