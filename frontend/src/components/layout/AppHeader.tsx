@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
@@ -34,7 +34,6 @@ export default function AppHeader() {
       // 로그아웃 후 홈화면으로 강제 이동
       window.location.href = '/'
     } catch (error) {
-      console.error('Logout error:', error)
       success('로그아웃되었습니다.', '로그아웃 완료')
       // 에러가 발생해도 홈화면으로 강제 이동
       window.location.href = '/'
@@ -57,17 +56,11 @@ export default function AppHeader() {
 
   const handleSendTestNotification = async () => {
     try {
-      // 실제로는 다른 사용자로 로그인해서 알림을 생성해야 함
-      console.log('🔔 테스트 알림을 생성하려면:')
-      console.log('1. 다른 브라우저나 시크릿 모드에서 다른 계정으로 로그인')
-      console.log('2. 매칭이나 좋아요를 보내서 알림 생성')
-      console.log('3. 이 창에서 실시간 알림 수신 확인')
-      
       // 현재 알림 목록 새로고침
       await NotificationService.getNotifications(0, 5)
       success('알림 목록을 새로고침했습니다. 다른 계정으로 알림을 생성해보세요.', '테스트 안내')
     } catch (error) {
-      console.error('테스트 알림 전송 실패:', error)
+      // 테스트 알림 전송 실패는 무시
     }
   }
 
