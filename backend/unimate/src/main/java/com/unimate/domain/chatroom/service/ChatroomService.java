@@ -66,6 +66,13 @@ public class ChatroomService {
         long b = Math.max(me, partnerId);
 
         Chatroom room = chatroomRepository.findBySmallerUserIdAndLargerUserId(a, b)
+                .map(existingRoom -> {
+                    // 기존 채팅방이 닫힌 상태면 재활성화
+                    if (existingRoom.getStatus() == ChatroomStatus.CLOSED) {
+                        existingRoom.reactivate();
+                    }
+                    return existingRoom;
+                })
                 .orElseGet(() -> chatroomRepository.save(Chatroom.create(me, partnerId)));
 
         return new ChatRoomCreateResponse(
