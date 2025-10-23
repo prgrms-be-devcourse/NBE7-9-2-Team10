@@ -36,6 +36,24 @@ out/
 ### VS Code ###
 .vscode/
 
-### custom ###
+# === Ignore backend config & local DB ===
+backend/unimate/src/main/resources/application*.yml
 db_dev.mv.db
 db_dev.trace.db
+
+# === Common build and IDE ===
+.idea/
+.vscode/
+.gradle/
+out/
+build/
+
+# === Frontend ===
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# === System files ===
+.DS_Store
+*.log
