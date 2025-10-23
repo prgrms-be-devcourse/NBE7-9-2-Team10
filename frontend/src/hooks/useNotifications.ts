@@ -132,7 +132,7 @@ export function useNotifications() {
             
             const newNotification: Notification = {
               id: notification.id?.toString() || Date.now().toString(),
-              type: notification.type?.toLowerCase() as 'like' | 'chat' | 'match',
+              type: notification.type?.toLowerCase() as 'like' | 'chat' | 'match' | 'like_canceled',
               message: notification.message || '새 알림이 도착했습니다',
               senderName: notification.senderName,
               senderId: notification.senderId,
@@ -142,8 +142,22 @@ export function useNotifications() {
               timestamp: notification.createdAt || new Date().toISOString()
             }
             
-            setNotifications(prev => [newNotification, ...prev])
-            setUnreadCount(prev => prev + 1)
+            setNotifications(prev => {
+              const senderId = newNotification.senderId;
+              let filtered = prev;
+
+              if (newNotification.type === 'like') {
+                // '좋아요' 알림 수신 시, 동일 발신자의 '좋아요 취소' 알림은 제거
+                filtered = prev.filter(n => !(n.type === 'like_canceled' && n.senderId === senderId));
+              } else if (newNotification.type === 'like_canceled') {
+                // '좋아요 취소' 알림 수신 시, 동일 발신자의 '좋아요' 알림을 제거
+                filtered = prev.filter(n => !(n.type === 'like' && n.senderId === senderId));
+              }
+              
+              // 새 알림 추가 및 읽지 않은 카운트 증가
+              setUnreadCount(prevCount => prevCount + 1);
+              return [newNotification, ...filtered];
+            });
             
             // 브라우저 데스크톱 알림
             if (typeof window !== 'undefined' && 'Notification' in window && window.Notification && window.Notification.permission === 'granted') {

@@ -1,6 +1,6 @@
 export interface Notification {
   id: string
-  type: 'like' | 'chat' | 'match'
+  type: 'like' | 'chat' | 'match' | 'like_canceled'
   message: string
   timestamp: string
   isRead: boolean
