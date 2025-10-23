@@ -1,5 +1,5 @@
 HELP.md
-.gradle
+backend/unimate/.gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
@@ -49,11 +49,11 @@ out/
 build/
 
 # === Frontend ===
-frontend/node_modules/
-frontend/.next/
-frontend/out/
-frontend/build/
-
+/frontend/next-env.d.ts
+/frontend/.next/
+/frontend/out/
+/frontend/build/
+/frontend/node_modules
 # === System files ===
 .DS_Store
 *.log
