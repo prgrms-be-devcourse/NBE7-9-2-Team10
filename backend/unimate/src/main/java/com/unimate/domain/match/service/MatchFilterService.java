@@ -35,11 +35,11 @@ public class MatchFilterService {
         Integer sleepTime = profile.getSleepTime();
 
         return switch (sleepPatternFilter.toLowerCase()) {
-            case "very_early" -> sleepTime >= 18 && sleepTime < 22; // 22시 이전 
-            case "early" -> sleepTime >= 22 && sleepTime < 24; // 22시 ~ 00시 
-            case "normal" -> sleepTime >= 0 && sleepTime < 2; // 00시 ~ 02시 
-            case "late" -> sleepTime >= 2 && sleepTime < 4; // 02시 ~ 04시 
-            case "very_late" -> sleepTime >= 4 ; // 04시 이후 
+            case "very_early" -> sleepTime == 5; // 22시 이전 
+            case "early" -> sleepTime == 4; // 22시 ~ 00시 
+            case "normal" -> sleepTime == 3; // 00시 ~ 02시 
+            case "late" -> sleepTime == 2; // 02시 ~ 04시 
+            case "very_late" -> sleepTime == 1; // 04시 이후 
             default -> false;
         };
     }
@@ -57,14 +57,15 @@ public class MatchFilterService {
             case "20-22" -> age >= 20 && age <= 22;
             case "23-25" -> age >= 23 && age <= 25;
             case "26-28" -> age >= 26 && age <= 28;
-            case "28-30" -> age >= 28 && age <= 30;
-            case "30+" -> age >= 30;
+            case "29-30" -> age >= 29 && age <= 30;
+            case "31+" -> age >= 31;
             default -> false;
         };
     }
 
     /**
      * 청결도 필터 적용
+     * cleaningFrequency 스케일: 5(매일), 4(주 2-3회), 3(주 1회), 2(월 1-2회), 1(거의 안함)
      */
     public boolean applyCleaningFrequencyFilter(UserProfile profile, String cleaningFrequencyFilter) {
         if (cleaningFrequencyFilter == null || cleaningFrequencyFilter.trim().isEmpty()) {
@@ -75,10 +76,10 @@ public class MatchFilterService {
     
         return switch (cleaningFrequencyFilter.toLowerCase()) {
             case "daily" -> cleaningFrequency == 5; // 매일 청소
-            case "several_times_weekly" -> cleaningFrequency >= 3 && cleaningFrequency <= 4; // 주 2-3회
-            case "weekly" -> cleaningFrequency == 2; // 주 1회
-            case "monthly" -> cleaningFrequency == 1; // 월 1회
-            case "rarely" -> cleaningFrequency <= 1; // 거의 안함
+            case "several_times_weekly" -> cleaningFrequency == 4; // 주 2-3회
+            case "weekly" -> cleaningFrequency == 3; // 주 1회
+            case "monthly" -> cleaningFrequency == 2; // 월 1-2회
+            case "rarely" -> cleaningFrequency == 1; // 거의 안함
             default -> false;
         };
     }

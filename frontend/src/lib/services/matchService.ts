@@ -46,4 +46,33 @@ export class MatchService {
   static async cancelLike(receiverId: number): Promise<ApiResponse<void>> {
     return api.delete<ApiResponse<void>>(`${API_ENDPOINTS.MATCHES}/${receiverId}`);
   }
+
+  /**
+   * 특정 사용자의 상세 정보를 조회합니다.
+   */
+  static async getMatchDetail(receiverId: number): Promise<any> {
+    const response = await api.get<ApiResponse<any>>(`${API_ENDPOINTS.MATCHES}/candidates/${receiverId}`);
+    return response.data?.data || response.data || response;
+  }
+
+  /**
+   * 성사된 매칭 결과를 조회합니다.
+   */
+  static async getMatchResults(): Promise<ApiResponse<any>> {
+    return api.get<ApiResponse<any>>(API_ENDPOINTS.MATCH_RESULTS);
+  }
+
+  /**
+   * 매칭 요청을 최종 확정합니다.
+   */
+  static async confirmMatch(matchId: number): Promise<ApiResponse<void>> {
+    return api.put<ApiResponse<void>>(`${API_ENDPOINTS.MATCHES}/${matchId}/confirm`);
+  }
+
+  /**
+   * 매칭 요청을 거절합니다.
+   */
+  static async rejectMatch(matchId: number): Promise<ApiResponse<void>> {
+    return api.put<ApiResponse<void>>(`${API_ENDPOINTS.MATCHES}/${matchId}/reject`);
+  }
 }
