@@ -1,6 +1,7 @@
 package com.unimate.domain.match.service;
 
 import com.unimate.domain.userProfile.entity.UserProfile;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -23,6 +24,7 @@ public class SimilarityCalculator {
     private static final double WEIGHT_PET = 0.10;
     private static final double WEIGHT_LIFESTYLE = 0.10;
 
+    @Cacheable(value = "similarityScores", key = "T(java.lang.Math).min(#userA.id, #userB.id) + ':' + T(java.lang.Math).max(#userA.id, #userB.id)")
     public double calculateSimilarity(UserProfile userA, UserProfile userB) {
         // Null 체크 : 프로필 또는 필수 정보가 없으면 0점 반환
         if (userA == null || userB == null || userA.getUser() == null || userB.getUser() == null) return 0.0;
