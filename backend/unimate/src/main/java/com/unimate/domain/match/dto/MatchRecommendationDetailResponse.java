@@ -1,15 +1,16 @@
 package com.unimate.domain.match.dto;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 import com.unimate.domain.match.entity.MatchStatus;
 import com.unimate.domain.match.entity.MatchType;
 import com.unimate.domain.user.user.entity.Gender;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
 
 @Getter
 @NoArgsConstructor
@@ -17,6 +18,7 @@ import java.time.LocalDate;
 @Builder
 public class MatchRecommendationDetailResponse {
     private Long receiverId;
+    private String email;  // 신고 기능을 위한 이메일 추가
     private String name;
     private String university;
     private Boolean studentVerified;

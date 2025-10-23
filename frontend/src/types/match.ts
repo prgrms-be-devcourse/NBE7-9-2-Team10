@@ -25,6 +25,7 @@ export interface MatchRecommendationResponse {
 
 export interface MatchRecommendationDetailResponse {
   receiverId: number;
+  email: string;  // 신고 기능을 위한 이메일 추가
   name: string;
   age: number;
   university: string;
