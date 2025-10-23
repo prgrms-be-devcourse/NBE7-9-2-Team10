@@ -47,4 +47,11 @@ export const options = {
     { label: '예', value: true },
     { label: '아니오', value: false },
   ],
+  preferredAgeRange: [
+    { label: '20-22', value: 1 },
+    { label: '23-25', value: 2 },
+    { label: '26-28', value: 3 },
+    { label: '29-30', value: 4 },
+    { label: '31+', value: 5 },
+  ],
 };
