@@ -10,20 +10,41 @@ const AdminLoginForm = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
+  /** ------------------ 로그인 제출 ------------------ */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+
+    const newErrors: Record<string, string> = {};
+    if (!email) newErrors.email = '이메일을 입력해주세요.';
+    if (!password) newErrors.password = '비밀번호를 입력해주세요.';
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
+    setErrors({});
     setLoading(true);
 
     try {
       await AdminAuthService.login({ email, password });
-      alert('관리자 로그인 성공!');
-      router.push('/admin/dashboard');
-    } catch (err: any) {
-      setError(err.message || '로그인에 실패했습니다.');
+      router.push('/admin/dashboard'); // ✅ 관리자 대시보드로 이동 유지
+    } catch (err) {
+      const apiError = err as any;
+
+      // ✅ 백엔드에서 온 message를 우선적으로 사용 (일반 사용자와 동일)
+      const backendMessage =
+        apiError.response?.data?.message ||
+        apiError.message ||
+        '로그인 중 오류가 발생했습니다.';
+
+      if (apiError.response?.status === 404) {
+        setErrors({ email: backendMessage });
+      } else if (apiError.response?.status === 401) {
+        setErrors({ password: backendMessage });
+      } else {
+        setErrors({ form: backendMessage });
+      }
     } finally {
       setLoading(false);
     }
@@ -42,6 +63,7 @@ const AdminLoginForm = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* 이메일 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             관리자 이메일
@@ -51,11 +73,14 @@ const AdminLoginForm = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="admin@unimate.com"
-            className="w-full border rounded-lg px-3 py-2 placeholder:text-gray-400 border-gray-300 focus:ring-2 focus:ring-red-500"
-            required
+            className={`w-full border rounded-lg px-3 py-2 placeholder:text-gray-400 ${
+              errors.email ? 'border-red-500' : 'border-gray-300'
+            } focus:ring-2 focus:ring-red-500`}
           />
+          {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
         </div>
 
+        {/* 비밀번호 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             비밀번호
@@ -65,21 +90,26 @@ const AdminLoginForm = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="비밀번호를 입력하세요"
-            className="w-full border rounded-lg px-3 py-2 placeholder:text-gray-400 border-gray-300 focus:ring-2 focus:ring-red-500"
-            required
+            className={`w-full border rounded-lg px-3 py-2 placeholder:text-gray-400 ${
+              errors.password ? 'border-red-500' : 'border-gray-300'
+            } focus:ring-2 focus:ring-red-500`}
           />
+          {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
         </div>
 
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+        {/* 에러 메시지 */}
+        {errors.form && <p className="text-red-500 text-sm">{errors.form}</p>}
 
+        {/* 로그인 버튼 */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-red-600 text-white py-2 rounded-lg mt-4 hover:bg-red-700 disabled:bg-gray-400"
+          className="w-full bg-red-600 text-white py-2 rounded-lg mt-2 hover:bg-red-700 disabled:bg-gray-400"
         >
           {loading ? '로그인 중...' : '관리자 로그인'}
         </button>
 
+        {/* 회원가입 링크 */}
         <div className="text-center text-sm text-gray-600 mt-6">
           관리자 계정이 없으신가요?{' '}
           <Link href="/admin/signup" className="text-red-600 hover:underline font-medium">
