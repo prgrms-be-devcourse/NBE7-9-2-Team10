@@ -140,20 +140,23 @@ const MatchPreferenceModal: FC<MatchPreferenceModalProps> = ({ isOpen, onClose, 
             {step === 2 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">생활 습관</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="startUseDate" className="block font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">시작 기간</label>
-                    <input type="date" id="startUseDate" name="startUseDate" value={preferences.startUseDate} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600"/>
-                  </div>
-                  <div>
-                    <label htmlFor="endUseDate" className="block font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">종료 기간</label>
-                    <input type="date" id="endUseDate" name="endUseDate" value={preferences.endUseDate} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600"/>
+                <div>
+                  <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">룸쉐어 기간</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="startUseDate" className="block text-gray-700 dark:text-gray-300 mb-1 text-sm">시작일</label>
+                      <input type="date" id="startUseDate" name="startUseDate" value={preferences.startUseDate} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600"/>
+                    </div>
+                    <div>
+                      <label htmlFor="endUseDate" className="block text-gray-700 dark:text-gray-300 mb-1 text-sm">종료일</label>
+                      <input type="date" id="endUseDate" name="endUseDate" value={preferences.endUseDate} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600"/>
+                    </div>
                   </div>
                 </div>
                 <PreferenceQuestion question="수면 시간대" name="sleepTime" selectedValue={preferences.sleepTime} onChange={handleChange} optionSet={options.sleepTime} />
                 <PreferenceQuestion question="음주 빈도" name="drinkingFrequency" selectedValue={preferences.drinkingFrequency} onChange={handleChange} optionSet={options.drinkingFrequency} />
                 <PreferenceQuestion question="청소 빈도" name="cleaningFrequency" selectedValue={preferences.cleaningFrequency} onChange={handleChange} optionSet={options.cleaningFrequency} />
-                <PreferenceQuestion question="방문자 빈도" name="guestFrequency" selectedValue={preferences.guestFrequency} onChange={handleChange} optionSet={options.guestFrequency} />
+                <PreferenceQuestion question="손님 초대 빈도" name="guestFrequency" selectedValue={preferences.guestFrequency} onChange={handleChange} optionSet={options.guestFrequency} />
                 <PreferenceQuestion question="위생 수준" name="hygieneLevel" selectedValue={preferences.hygieneLevel} onChange={handleChange} optionSet={options.hygieneLevel} />
                 <PreferenceQuestion question="소음 민감도" name="noiseSensitivity" selectedValue={preferences.noiseSensitivity} onChange={handleChange} optionSet={options.noiseSensitivity} />
               </div>
