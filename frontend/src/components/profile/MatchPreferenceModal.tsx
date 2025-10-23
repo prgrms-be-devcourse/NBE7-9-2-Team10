@@ -25,7 +25,7 @@ const PreferenceQuestion: FC<{
   optionSet: { label: string; value: string | number | boolean }[];
 }> = ({ question, name, selectedValue, onChange, optionSet }) => (
   <div className="mb-4">
-    <h4 className="font-semibold text-gray-800 mb-2">{question}</h4>
+    <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">{question}</h4>
     <div className="flex flex-wrap gap-2">
       {optionSet.map((option) => (
         <label
@@ -33,7 +33,7 @@ const PreferenceQuestion: FC<{
           className={`cursor-pointer px-3 py-1.5 border rounded-full text-sm transition-colors ${
             String(selectedValue) === String(option.value)
               ? 'bg-blue-600 text-white border-blue-600'
-              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
           }`}
         >
           <input
@@ -60,7 +60,7 @@ const MatchPreferenceModal: FC<MatchPreferenceModalProps> = ({ isOpen, onClose, 
     isPetAllowed: false,
     isSmoker: false,
     cleaningFrequency: 3,
-    preferredAgeGap: 5,
+    preferredAgeGap: 1,
     hygieneLevel: 3,
     isSnoring: false,
     drinkingFrequency: 1,
@@ -112,7 +112,7 @@ const MatchPreferenceModal: FC<MatchPreferenceModalProps> = ({ isOpen, onClose, 
     <Modal isOpen={isOpen} onClose={onClose} title="매칭 선호도 등록">
       <div className="max-w-lg max-h-[80vh] overflow-y-auto p-1">
         <div className="text-center mb-4">
-            <p className="text-sm text-gray-500">룸메이트 매칭을 위해 선호하는 생활 습관과 조건을 입력해주세요.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">룸메이트 매칭을 위해 선호하는 생활 습관과 조건을 입력해주세요.</p>
         </div>
         
         <div className="w-full bg-gray-200 rounded-full h-2 my-4">
@@ -129,31 +129,25 @@ const MatchPreferenceModal: FC<MatchPreferenceModalProps> = ({ isOpen, onClose, 
 
             {step === 1 && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">기본 조건</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">기본 조건</h3>
                 <PreferenceQuestion question="흡연 여부" name="isSmoker" selectedValue={preferences.isSmoker} onChange={handleChange} optionSet={options.boolean} />
                 <PreferenceQuestion question="코골이 허용 여부" name="isSnoring" selectedValue={preferences.isSnoring} onChange={handleChange} optionSet={options.boolean} />
                 <PreferenceQuestion question="반려동물 허용 여부" name="isPetAllowed" selectedValue={preferences.isPetAllowed} onChange={handleChange} optionSet={options.boolean} />
-                <div>
-                  <h4 className="font-semibold text-gray-800 mb-2">선호하는 나이 차이</h4>
-                  <div className="flex items-center gap-4">
-                    <input type="range" min="0" max="10" name="preferredAgeGap" value={preferences.preferredAgeGap} onChange={handleChange} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-                    <span className="font-bold text-blue-600 w-12 text-center">{preferences.preferredAgeGap}살</span>
-                  </div>
-                </div>
+                <PreferenceQuestion question="선호하는 연령대" name="preferredAgeGap" selectedValue={preferences.preferredAgeGap} onChange={handleChange} optionSet={options.preferredAgeRange} />
               </div>
             )}
 
             {step === 2 && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">생활 습관</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">생활 습관</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="startUseDate" className="block font-semibold text-gray-800 mb-1 text-sm">시작 기간</label>
-                    <input type="date" id="startUseDate" name="startUseDate" value={preferences.startUseDate} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md"/>
+                    <label htmlFor="startUseDate" className="block font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">시작 기간</label>
+                    <input type="date" id="startUseDate" name="startUseDate" value={preferences.startUseDate} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600"/>
                   </div>
                   <div>
-                    <label htmlFor="endUseDate" className="block font-semibold text-gray-800 mb-1 text-sm">종료 기간</label>
-                    <input type="date" id="endUseDate" name="endUseDate" value={preferences.endUseDate} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md"/>
+                    <label htmlFor="endUseDate" className="block font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">종료 기간</label>
+                    <input type="date" id="endUseDate" name="endUseDate" value={preferences.endUseDate} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600"/>
                   </div>
                 </div>
                 <PreferenceQuestion question="수면 시간대" name="sleepTime" selectedValue={preferences.sleepTime} onChange={handleChange} optionSet={options.sleepTime} />
