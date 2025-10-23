@@ -8,13 +8,14 @@ import NotificationModal from '@/components/notification/NotificationModal'
 import { useToast } from '@/components/ui/Toast'
 import { stopWs } from '@/lib/services/wsManager'
 import { useAuth } from '@/contexts/AuthContext'
+import { NotificationService } from '@/lib/services/notificationService'
 import Link from 'next/link'
 
 export default function AppHeader() {
   const router = useRouter()
   const pathname = usePathname()
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
-  const { notifications, unreadCount, markAsRead, deleteNotification } = useNotifications()
+  const { notifications, unreadCount, markAsRead, deleteNotification, checkWebSocketStatus } = useNotifications()
   const { success } = useToast()
   const { isAuthenticated, isLoading, logout } = useAuth()
 
@@ -48,6 +49,26 @@ export default function AppHeader() {
   const handleViewChat = (chatroomId: number) => {
     router.push(`/chat/${chatroomId}`)
     setIsNotificationOpen(false)
+  }
+
+  const handleCheckWebSocketStatus = async () => {
+    await checkWebSocketStatus()
+  }
+
+  const handleSendTestNotification = async () => {
+    try {
+      // 실제로는 다른 사용자로 로그인해서 알림을 생성해야 함
+      console.log('🔔 테스트 알림을 생성하려면:')
+      console.log('1. 다른 브라우저나 시크릿 모드에서 다른 계정으로 로그인')
+      console.log('2. 매칭이나 좋아요를 보내서 알림 생성')
+      console.log('3. 이 창에서 실시간 알림 수신 확인')
+      
+      // 현재 알림 목록 새로고침
+      await NotificationService.getNotifications(0, 5)
+      success('알림 목록을 새로고침했습니다. 다른 계정으로 알림을 생성해보세요.', '테스트 안내')
+    } catch (error) {
+      console.error('테스트 알림 전송 실패:', error)
+    }
   }
 
   if (isLoading) {
@@ -134,6 +155,7 @@ export default function AppHeader() {
             <button
               onClick={() => setIsNotificationOpen(true)}
               className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+              title="알림"
             >
               <Bell className="w-5 h-5 text-[#6B7280]" />
             </button>

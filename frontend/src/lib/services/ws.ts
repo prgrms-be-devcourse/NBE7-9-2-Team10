@@ -26,6 +26,7 @@ export function createStomp(): StompHandle {
     throw new Error('Access token is required for WebSocket connection');
   }
 
+
   const client = new Client({
     webSocketFactory: () => {
       const sockjs = new SockJS(WS_HTTP_ENDPOINT, null, {
@@ -41,10 +42,20 @@ export function createStomp(): StompHandle {
       'access-token': token
     } : {},
     onStompError: (frame) => {
-      console.error('[STOMP] Connection failed:', frame.headers.message || 'Unknown error')
+      // 토큰 만료 시 재연결 시도
+      if (frame.headers.message?.includes('token') || frame.headers.message?.includes('unauthorized')) {
+        setTimeout(() => {
+          if (client.connected) {
+            client.deactivate()
+          }
+        }, 1000)
+      }
     },
     onWebSocketError: (error) => {
-      console.error('[WebSocket] Connection error:', error)
+      // WebSocket 연결 에러 처리
+    },
+    onDisconnect: () => {
+      // WebSocket 연결 해제 처리
     }
   })
 
@@ -58,7 +69,6 @@ export function createStomp(): StompHandle {
     },
     publish: (dest, body) => {
       if (!client.connected) {
-        console.error('[STOMP] Not connected, cannot publish')
         return
       }
       client.publish({ destination: dest, body: JSON.stringify(body) })

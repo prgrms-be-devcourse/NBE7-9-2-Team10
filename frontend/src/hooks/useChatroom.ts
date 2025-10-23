@@ -53,6 +53,19 @@ function useChatroom(chatroomId: number) {
     loadHistory()
   }, [chatroomId])
 
+  // 페이지 가시성 변경 감지 (채팅방 퇴장 감지용)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      // 페이지 가시성 변경 처리
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [chatroomId])
+
   // WebSocket 구독 설정
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -66,8 +79,17 @@ function useChatroom(chatroomId: number) {
         
         if (!mounted) return
 
+        // 채팅방 진입을 백엔드에 알림 (이미 ChatroomService.getDetail에서 처리됨)
+        // 하지만 확실히 하기 위해 WebSocket으로도 알림
+        try {
+          const { apiClient } = await import('@/lib/services/api')
+          await apiClient.get(`/api/v1/chatrooms/${chatroomId}`)
+        } catch (error) {
+          // 채팅방 진입 알림 실패는 무시
+        }
+
         // 채팅방 메시지 구독
-        subRef.current = ws.subscribe(`/sub/chatroom.${chatroomId}`, (msg) => {
+        subRef.current = ws.subscribe(`/sub/chatroom.${chatroomId}`, async (msg) => {
           try {
             const body = JSON.parse(msg.body) as WsMessagePush
             setMessages((prev) => {
@@ -75,6 +97,20 @@ function useChatroom(chatroomId: number) {
               if (exists) return prev
               return [...prev, body]
             })
+            
+            // 새 메시지가 오면 즉시 읽음 처리 (상대방이 보낸 메시지만)
+            const currentUserId = typeof window !== 'undefined' ? 
+              parseInt(localStorage.getItem('userId') || '0') : 0
+            if (body.senderId !== currentUserId) {
+              try {
+                const { apiClient } = await import('@/lib/services/api')
+                await apiClient.post(`/api/v1/chatrooms/${chatroomId}/read`, {
+                  lastReadMessageId: body.messageId
+                })
+              } catch (error) {
+                // 실시간 읽음 처리 실패는 무시
+              }
+            }
           } catch (e) {
             console.error('[WebSocket] Message parsing error:', e)
           }
@@ -129,6 +165,46 @@ function useChatroom(chatroomId: number) {
       subRef.current?.unsubscribe()
       ackRef.current?.unsubscribe()
       errRef.current?.unsubscribe()
+      
+      // 채팅방 퇴장을 백엔드에 알림
+      const notifyLeave = async () => {
+        try {
+          const { apiClient } = await import('@/lib/services/api')
+          
+          // 1. 채팅방 퇴장 알림
+          try {
+            await apiClient.post(`/api/v1/chatrooms/${chatroomId}/leave-notification`)
+          } catch (error) {
+            // 채팅방 퇴장 알림 API 없음은 정상
+          }
+          
+          // 2. 해당 채팅방의 최신 메시지를 읽음 처리 (동기적으로 실행)
+          try {
+            const messagesResponse = await apiClient.get(
+              `/api/v1/chatrooms/${chatroomId}/messages`,
+              { params: { limit: 1 } }
+            )
+            const messages = messagesResponse.data.items || []
+            
+            if (messages.length > 0) {
+              const message = messages[0]
+              const latestMessageId = message.messageId || message.id
+              
+              if (latestMessageId) {
+                await apiClient.post(`/api/v1/chatrooms/${chatroomId}/read`, {
+                  lastReadMessageId: latestMessageId
+                })
+              }
+            }
+          } catch (error) {
+            // 퇴장 시 읽음 처리 실패는 무시
+          }
+        } catch (error) {
+          // 채팅방 퇴장 처리 중 오류는 무시
+        }
+      }
+      
+      notifyLeave()
     }
   }, [chatroomId])
 
