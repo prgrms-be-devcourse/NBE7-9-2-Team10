@@ -10,6 +10,7 @@ interface NotificationModalProps {
   notifications: Notification[]
   onMarkAsRead: (id: string) => void
   onDeleteNotification: (id: string) => void
+  onDeleteAllNotifications: () => void
   onViewProfile: (senderId: number) => void
   onViewChat: (chatroomId: number) => void
 }
@@ -20,6 +21,7 @@ export default function NotificationModal({
   notifications,
   onMarkAsRead,
   onDeleteNotification,
+  onDeleteAllNotifications,
   onViewProfile,
   onViewChat
 }: NotificationModalProps) {
@@ -152,7 +154,10 @@ export default function NotificationModal({
               </p>
             </div>
             <button
-              onClick={onClose}
+              onClick={() => {
+                onDeleteAllNotifications()
+                onClose()
+              }}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <X className="w-5 h-5 text-gray-500" />
