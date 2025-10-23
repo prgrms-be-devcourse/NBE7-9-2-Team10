@@ -7,9 +7,9 @@ import AdminHeader from '@/components/layout/AdminHeader';
 
 export default function AdminReportsPage() {
   return (
-    <AdminProtectedRoute>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <AdminHeader />
+            <AdminProtectedRoute>
         <main className="p-4 sm:p-6 lg:p-8">
           <div className="max-w-6xl mx-auto">
             <header className="mb-8">
@@ -30,7 +30,7 @@ export default function AdminReportsPage() {
             </Card>
           </div>
         </main>
+        </AdminProtectedRoute>
       </div>
-    </AdminProtectedRoute>
   );
 }
