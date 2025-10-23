@@ -21,7 +21,7 @@ public class MatchRecommendationRequest {
     )
     private String sleepPattern;
     
-    @Pattern(regexp = "^(20-22|23-25|26-28|28-30|30\\+)$", message = "나이대는 20-22, 23-25, 26-28, 28-30, 30+ 중 하나여야 합니다")
+    @Pattern(regexp = "^(20-22|23-25|26-28|29-30|31\\+)$", message = "나이대는 20-22, 23-25, 26-28, 29-30, 31+ 중 하나여야 합니다")
     private String ageRange;
 
     @Pattern(
