@@ -65,14 +65,39 @@ export class MatchService {
   /**
    * 매칭 요청을 최종 확정합니다.
    */
-  static async confirmMatch(matchId: number): Promise<ApiResponse<void>> {
-    return api.put<ApiResponse<void>>(`${API_ENDPOINTS.MATCHES}/${matchId}/confirm`);
+  static async confirmMatch(matchId: number): Promise<ApiResponse<any>> {
+    return api.put<ApiResponse<any>>(`${API_ENDPOINTS.MATCHES}/${matchId}/confirm`, {
+      action: 'accept'
+    });
   }
 
   /**
    * 매칭 요청을 거절합니다.
    */
-  static async rejectMatch(matchId: number): Promise<ApiResponse<void>> {
-    return api.put<ApiResponse<void>>(`${API_ENDPOINTS.MATCHES}/${matchId}/reject`);
+  static async rejectMatch(matchId: number): Promise<ApiResponse<any>> {
+    return api.put<ApiResponse<any>>(`${API_ENDPOINTS.MATCHES}/${matchId}/confirm`, {
+      action: 'reject'
+    });
+  }
+
+  /**
+   * 채팅방에 연결된 매칭 정보를 조회합니다.
+   */
+  static async getMatchByChatroom(chatroomId: number): Promise<ApiResponse<any>> {
+    // 채팅방 상세 정보에서 user1Id, user2Id를 가져온 후
+    // 매칭 상태 조회 API로 해당 매칭 정보를 찾습니다.
+    return api.get<ApiResponse<any>>(API_ENDPOINTS.MATCH_STATUS);
+  }
+
+  /**
+   * 사용자를 신고합니다.
+   */
+  static async reportUser(reportData: {
+    reportedEmail: string;
+    category: string;
+    content: string;
+  }): Promise<ApiResponse<any>> {
+    return api.post<ApiResponse<any>>('/api/v1/report', reportData);
   }
 }
+
