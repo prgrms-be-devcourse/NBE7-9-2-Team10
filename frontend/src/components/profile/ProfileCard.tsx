@@ -5,6 +5,7 @@ import { User } from '@/types/user';
 import { ProfileResponse } from '@/types/profile';
 import { UserService } from '@/lib/services/UserService';
 import { RegisterService } from '@/lib/services/registerService';
+import { options } from '@/lib/constants/preferenceOptions';
 import Button from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 
@@ -58,34 +59,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     return age;
   };
 
-  const formatFrequency = (frequency?: number) => {
-    if (frequency === undefined || frequency === null) return '미설정';
-    const frequencyMap: Record<number, string> = {
-      1: '매우 낮음',
-      2: '낮음',
-      3: '보통',
-      4: '높음',
-      5: '매우 높음',
-    };
-    return frequencyMap[frequency] || '미설정';
-  };
-
-  const formatAgeGap = (ageGap?: number) => {
-    if (ageGap === undefined || ageGap === null) return '미설정';
-    const ageGapMap: Record<number, string> = {
-      0: '상관없음',
-      1: '1살 차이',
-      2: '2살 차이',
-      3: '3살 차이',
-      5: '5살 차이',
-      10: '10살 차이',
-    };
-    return ageGapMap[ageGap] || '미설정';
-  };
-
-  const formatBoolean = (value?: boolean) => {
+  // preferenceOptions에서 값을 찾아 라벨로 변환
+  const formatValue = (value: number | boolean | string | undefined, optionSet: { label: string; value: any }[]) => {
     if (value === undefined || value === null) return '미설정';
-    return value ? '예' : '아니오';
+    return optionSet.find(opt => opt.value === value)?.label || '미설정';
   };
 
   // 이름 수정 핸들러
@@ -268,14 +245,14 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     {/* 첫 번째 줄: 이름, 나이 */}
     <div className="grid grid-cols-2 gap-4">
       <div>
-        <label className="text-sm font-medium text-gray-500 block mb-1">이름</label>
+        <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">이름</label>
         {isEditingName ? (
           <div className="space-y-2">
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 dark:placeholder:text-gray-500"
               placeholder="이름을 입력하세요"
               disabled={isUpdatingName}
             />
@@ -284,14 +261,14 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               <button
                 onClick={handleNameUpdate}
                 disabled={isUpdatingName}
-                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:bg-gray-400"
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600"
               >
                 {isUpdatingName ? '저장 중...' : '저장'}
               </button>
               <button
                 onClick={handleCancelNameEdit}
                 disabled={isUpdatingName}
-                className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 disabled:bg-gray-100"
+                className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:bg-gray-100 dark:disabled:bg-gray-800"
               >
                 취소
               </button>
@@ -299,7 +276,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <p className="text-gray-900">{user.name}</p>
+            <p className="text-gray-900 dark:text-white">{user.name}</p>
             <button
               onClick={() => setIsEditingName(true)}
               className="text-blue-600 hover:text-blue-700 text-sm"
@@ -312,27 +289,27 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         )}
       </div>
       <div>
-        <label className="text-sm font-medium text-gray-500 block mb-1">나이</label>
-        <p className="text-gray-900">{calculateAge(user.birthDate)}세</p>
+        <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">나이</label>
+        <p className="text-gray-900 dark:text-white">{calculateAge(user.birthDate)}세</p>
       </div>
     </div>
 
     {/* 두 번째 줄: 대학교, 성별 */}
     <div className="grid grid-cols-2 gap-4">
       <div>
-        <label className="text-sm font-medium text-gray-500 block mb-1">대학교</label>
-        <p className="text-gray-900">{user.university}</p>
+        <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">대학교</label>
+        <p className="text-gray-900 dark:text-white">{user.university}</p>
       </div>
       <div>
-        <label className="text-sm font-medium text-gray-500 block mb-1">성별</label>
-        <p className="text-gray-900">{getGenderText(user.gender)}</p>
+        <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">성별</label>
+        <p className="text-gray-900 dark:text-white">{getGenderText(user.gender)}</p>
       </div>
     </div>
 
     {/* 세 번째 줄: 이메일 (전체 너비) */}
     <div className="grid grid-cols-1 gap-4">
       <div>
-        <label className="text-sm font-medium text-gray-500 block mb-1">이메일</label>
+        <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">이메일</label>
         {isEditingEmail ? (
           <div className="space-y-3">
             {/* 새 이메일 입력 */}
@@ -341,7 +318,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 type="email"
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400"
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 placeholder="new.email@uni.ac.kr"
                 disabled={isEmailVerified}
               />
@@ -366,7 +343,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                   value={emailCode}
                   onChange={handleEmailCodeInput}
                   maxLength={6}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400"
+                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   placeholder="인증번호 6자리"
                 />
                 <button
@@ -388,14 +365,14 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               <button
                 onClick={handleEmailUpdate}
                 disabled={!isEmailVerified || isUpdatingEmail}
-                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:bg-gray-400"
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600"
               >
                 {isUpdatingEmail ? '변경 중...' : '이메일 변경'}
               </button>
               <button
                 onClick={handleCancelEmailEdit}
                 disabled={isUpdatingEmail}
-                className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 disabled:bg-gray-100"
+                className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:bg-gray-100 dark:disabled:bg-gray-800"
               >
                 취소
               </button>
@@ -403,7 +380,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <p className="text-gray-900">{user.email}</p>
+            <p className="text-gray-900 dark:text-white">{user.email}</p>
             <button
               onClick={() => setIsEditingEmail(true)}
               className="text-blue-600 hover:text-blue-700 text-sm"
@@ -432,32 +409,32 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">평균 수면 시간</label>
-              <p className="text-gray-900">{profile.sleepTime !== undefined ? `${profile.sleepTime}:00` : '미설정'}</p>
+              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">평균 수면 시간</label>
+              <p className="text-gray-900 dark:text-white">{formatValue(profile.sleepTime, options.sleepTime)}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">청소 빈도</label>
-              <p className="text-gray-900">{formatFrequency(profile.cleaningFrequency)}</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">위생 수준</label>
-              <p className="text-gray-900">{formatFrequency(profile.hygieneLevel)}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">음주 빈도</label>
-              <p className="text-gray-900">{formatFrequency(profile.drinkingFrequency)}</p>
+              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">청소 빈도</label>
+              <p className="text-gray-900 dark:text-white">{formatValue(profile.cleaningFrequency, options.cleaningFrequency)}</p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">손님 초대 빈도</label>
-              <p className="text-gray-900">{formatFrequency(profile.guestFrequency)}</p>
+              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">위생 수준</label>
+              <p className="text-gray-900 dark:text-white">{formatValue(profile.hygieneLevel, options.hygieneLevel)}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">소음 민감도</label>
-              <p className="text-gray-900">{formatFrequency(profile.noiseSensitivity)}</p>
+              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">음주 빈도</label>
+              <p className="text-gray-900 dark:text-white">{formatValue(profile.drinkingFrequency, options.drinkingFrequency)}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">손님 초대 빈도</label>
+              <p className="text-gray-900 dark:text-white">{formatValue(profile.guestFrequency, options.guestFrequency)}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">소음 민감도</label>
+              <p className="text-gray-900 dark:text-white">{formatValue(profile.noiseSensitivity, options.noiseSensitivity)}</p>
             </div>
           </div>
         </CardContent>
@@ -476,12 +453,12 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">MBTI</label>
-              <p className="text-gray-900">{profile.mbti || '미설정'}</p>
+              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">MBTI</label>
+              <p className="text-gray-900 dark:text-white">{profile.mbti || '미설정'}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">선호 연령대 차이</label>
-              <p className="text-gray-900">{formatAgeGap(profile.preferredAgeGap)}</p>
+              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">연령대</label>
+              <p className="text-gray-900 dark:text-white">{formatValue(profile.preferredAgeGap, options.preferredAgeRange)}</p>
             </div>
           </div>
         </CardContent>
@@ -500,16 +477,16 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">반려동물 허용</label>
-              <p className="text-gray-900">{formatBoolean(profile.isPetAllowed)}</p>
+              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">반려동물</label>
+              <p className="text-gray-900 dark:text-white">{formatValue(profile.isPetAllowed, options.boolean)}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">흡연자</label>
-              <p className="text-gray-900">{formatBoolean(profile.isSmoker)}</p>
+              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">흡연자</label>
+              <p className="text-gray-900 dark:text-white">{formatValue(profile.isSmoker, options.boolean)}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">코골이</label>
-              <p className="text-gray-900">{formatBoolean(profile.isSnoring)}</p>
+              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">코골이</label>
+              <p className="text-gray-900 dark:text-white">{formatValue(profile.isSnoring, options.boolean)}</p>
             </div>
           </div>
         </CardContent>
@@ -528,22 +505,22 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">사용 시작일</label>
-              <p className="text-gray-900">{profile.startUseDate ? new Date(profile.startUseDate).toLocaleDateString('ko-KR') : '미설정'}</p>
+              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">룸쉐어 시작일</label>
+              <p className="text-gray-900 dark:text-white">{profile.startUseDate ? new Date(profile.startUseDate).toLocaleDateString('ko-KR') : '미설정'}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">사용 종료일</label>
-              <p className="text-gray-900">{profile.endUseDate ? new Date(profile.endUseDate).toLocaleDateString('ko-KR') : '미설정'}</p>
+              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">룸쉐어 종료일</label>
+              <p className="text-gray-900 dark:text-white">{profile.endUseDate ? new Date(profile.endUseDate).toLocaleDateString('ko-KR') : '미설정'}</p>
             </div>
           </div>
           <div className="grid grid-cols-1 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">매칭 상태</label>
+              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">매칭 상태</label>
               <div className="flex items-center gap-2">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                   profile.matchingEnabled 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-gray-100 text-gray-800'
+                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' 
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
                 }`}>
                   {getMatchingStatusText(profile.matchingEnabled || false)}
                 </span>
@@ -568,3 +545,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
 };
 
 export default ProfileCard;
+
+
+

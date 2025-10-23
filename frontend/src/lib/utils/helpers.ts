@@ -129,3 +129,32 @@ export const getErrorMessage = (error: unknown): string => {
   
   return '알 수 없는 오류가 발생했습니다.';
 };
+
+/**
+ * 생년월일로부터 나이 계산
+ */
+export const calculateAge = (birthDate: string): number => {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  return age;
+};
+
+/**
+ * 나이를 나이대 value로 변환
+ * preferredAgeRange: 20-22(1), 23-25(2), 26-28(3), 29-30(4), 31+(5)
+ */
+export const getAgeRangeFromAge = (age: number): number => {
+  if (age >= 20 && age <= 22) return 1;
+  if (age >= 23 && age <= 25) return 2;
+  if (age >= 26 && age <= 28) return 3;
+  if (age >= 29 && age <= 30) return 4;
+  if (age >= 31) return 5;
+  return 1; // 기본값 (20-22)
+};
