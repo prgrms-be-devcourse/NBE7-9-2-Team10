@@ -1,16 +1,15 @@
 'use client';
 
 import ReportList from '@/components/admin/ReportList';
-import AdminProtectedRoute from '@/components/auth/AdminProtectedRoute';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
-import AdminHeader from '@/components/layout/AdminHeader';
+import Layout from '@/components/layout/Layout';
 
 export default function AdminReportsPage() {
   return (
-    <AdminProtectedRoute>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <AdminHeader />
-        <main className="p-4 sm:p-6 lg:p-8">
+    <Layout>
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
           <div className="max-w-6xl mx-auto">
             <header className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">신고 관리</h1>
@@ -29,8 +28,8 @@ export default function AdminReportsPage() {
               </CardContent>
             </Card>
           </div>
-        </main>
-      </div>
-    </AdminProtectedRoute>
+        </div>
+      </ProtectedRoute>
+    </Layout>
   );
 }
