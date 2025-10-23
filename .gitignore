@@ -1,5 +1,6 @@
 HELP.md
-.gradle
+backend/unimate/.gradle
+backend/unimate/out
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
@@ -36,8 +37,26 @@ out/
 ### VS Code ###
 .vscode/
 
-### custom ###
+# === Ignore backend config & local DB ===
+backend/unimate/src/main/resources/application*.yml
 db_dev.mv.db
 db_dev.trace.db
 db_seed.mv.db
 db_seed.trace.db
+
+# === Common build and IDE ===
+.idea/
+.vscode/
+.gradle/
+out/
+build/
+
+# === Frontend ===
+/frontend/next-env.d.ts
+/frontend/.next/
+/frontend/out/
+/frontend/build/
+/frontend/node_modules
+# === System files ===
+.DS_Store
+*.log

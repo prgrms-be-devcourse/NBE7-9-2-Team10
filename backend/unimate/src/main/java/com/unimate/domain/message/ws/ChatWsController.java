@@ -14,6 +14,7 @@ import com.unimate.domain.notification.service.NotificationService;
 import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.UserRepository;
 import com.unimate.global.jwt.CustomUserPrincipal;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -29,6 +30,7 @@ import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
+@Tag(name = "ChatWsController", description = "채팅방 WebSocket API")
 public class ChatWsController {
 
     private final ChatroomService chatroomService;

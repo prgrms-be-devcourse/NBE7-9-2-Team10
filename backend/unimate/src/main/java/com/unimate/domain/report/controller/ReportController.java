@@ -4,6 +4,9 @@ import com.unimate.domain.report.dto.ReportCreateRequest;
 import com.unimate.domain.report.dto.ReportResponse;
 import com.unimate.domain.report.service.ReportService;
 import com.unimate.global.jwt.CustomUserPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,11 +20,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/report")
 @RequiredArgsConstructor
+@Tag(name = "ReportController", description = "신고 API")
+@SecurityRequirement(name = "BearerAuth")
 public class ReportController {
 
     private final ReportService reportService;
 
     @PostMapping
+    @Operation(summary = "신고 생성")
     public ResponseEntity<ReportResponse> create(
             @Valid @RequestBody ReportCreateRequest rq,
             @AuthenticationPrincipal CustomUserPrincipal user

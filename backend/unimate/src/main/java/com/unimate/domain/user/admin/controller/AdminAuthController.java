@@ -9,6 +9,9 @@ import com.unimate.domain.user.admin.service.AdminService;
 import com.unimate.global.auth.dto.AccessTokenResponse;
 import com.unimate.global.auth.dto.MessageResponse;
 import com.unimate.global.util.CookieUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin/auth")
+@Tag(name = "AdminAuthController", description = "관리자 인증인가 API")
 public class AdminAuthController {
 
     private final AdminAuthService adminAuthService;
@@ -32,11 +36,13 @@ public class AdminAuthController {
     private String cookieSameSite;
 
     @PostMapping("/signup")
+    @Operation(summary = "관리자 회원가입")
     public ResponseEntity<AdminSignupResponse> signup(@Valid @RequestBody AdminSignupRequest request) {
         return ResponseEntity.ok(adminAuthService.signup(request));
     }
 
     @PostMapping("/login")
+    @Operation(summary = "관리자 로그인")
     public ResponseEntity<AdminLoginResponse> login(@Valid @RequestBody AdminLoginRequest request) {
         var tokens = adminAuthService.login(request);
 
@@ -54,6 +60,7 @@ public class AdminAuthController {
     }
 
     @PostMapping("/token/refresh")
+    @Operation(summary = "관리자 토큰 재발급")
     public ResponseEntity<AccessTokenResponse> refreshToken(
             @CookieValue(name = "adminRefreshToken", required = false) String refreshToken
     ) {
@@ -62,6 +69,7 @@ public class AdminAuthController {
     }
 
     @PostMapping("/logout")
+    @Operation(summary = "관리자 로그아웃", security = { @SecurityRequirement(name = "BearerAuth") })
     public ResponseEntity<MessageResponse> logout(
             @CookieValue(name = "adminRefreshToken", required = false) String refreshToken
     ) {

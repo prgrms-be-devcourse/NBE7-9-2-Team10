@@ -7,6 +7,9 @@ import com.unimate.domain.report.dto.ReportDetailResponse;
 import com.unimate.domain.report.dto.ReportListResponse;
 import com.unimate.domain.report.service.AdminReportService;
 import com.unimate.global.jwt.CustomUserPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -18,11 +21,14 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/admin/reports")
 @RequiredArgsConstructor
+@Tag(name = "AdminReportController", description = "신고 관리자 API")
+@SecurityRequirement(name = "BearerAuth")
 public class AdminReportController {
 
     private final AdminReportService adminReportService;
 
     @GetMapping
+    @Operation(summary = "신고 조회")
     public ResponseEntity<ReportListResponse> getReports(
             @AuthenticationPrincipal CustomUserPrincipal user,
             @PageableDefault(size = 10, sort = "createdAt") Pageable pageable,
@@ -34,6 +40,7 @@ public class AdminReportController {
     }
 
     @GetMapping("/{reportId}")
+    @Operation(summary = "신고 상세 조회")
     public ResponseEntity<ReportDetailResponse> getReportDetail(
             @AuthenticationPrincipal CustomUserPrincipal user,
             @PathVariable Long reportId) {
@@ -42,6 +49,7 @@ public class AdminReportController {
     }
 
     @PatchMapping("/{reportId}/action")
+    @Operation(summary = "신고 상태 변경")
     public ResponseEntity<AdminReportActionResponse> handleReportAction(
             @AuthenticationPrincipal CustomUserPrincipal user,
             @PathVariable Long reportId,
