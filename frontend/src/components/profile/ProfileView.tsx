@@ -10,7 +10,7 @@ import Button from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import ProfileCard from './ProfileCard';
 import ProfileEmpty from './ProfileEmpty';
-import { User } from '@/types/user';
+import type { User } from '@/types/user';
 
 interface ProfileViewProps {
   onEdit?: () => void;
@@ -64,7 +64,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ onEdit, onCreate }) => {
 
   const handleUserUpdate = (updatedUser: User) => {
     if (updateUser) {
-      updateUser(updatedUser);
+      updateUser(updatedUser as any);
     }
   };
 
@@ -93,7 +93,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ onEdit, onCreate }) => {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                 프로필을 불러올 수 없습니다
               </h3>
               <p className="text-red-600 mb-6">{error}</p>
