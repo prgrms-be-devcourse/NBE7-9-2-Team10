@@ -26,8 +26,8 @@ export const options = {
     { label: '전혀 안 마심', value: 1 },
     { label: '밖에서만', value: 2 },
     { label: '집에서 가끔', value: 3 },
-    { label: '주 1~2회', value: 4 },
-    { label: '집이 주 장소', value: 5 },
+    { label: '집에서 주 3~4회', value: 4 },
+    { label: '집에서 매일', value: 5 },
   ],
   noiseSensitivity: [
     { label: '매우 둔감', value: 1 },
