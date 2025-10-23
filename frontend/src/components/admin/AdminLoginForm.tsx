@@ -12,10 +12,20 @@ const AdminLoginForm = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
+  /** ------------------ 로그인 제출 ------------------ */
   /** ------------------ 로그인 제출 ------------------ */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const newErrors: Record<string, string> = {};
+    if (!email) newErrors.email = '이메일을 입력해주세요.';
+    if (!password) newErrors.password = '비밀번호를 입력해주세요.';
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
+    setErrors({});
 
     const newErrors: Record<string, string> = {};
     if (!email) newErrors.email = '이메일을 입력해주세요.';
@@ -59,6 +69,7 @@ const AdminLoginForm = () => {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* 이메일 */}
+        {/* 이메일 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             관리자 이메일
@@ -71,10 +82,15 @@ const AdminLoginForm = () => {
             className={`w-full border rounded-lg px-3 py-2 placeholder:text-gray-400 ${
               errors.email ? 'border-red-500' : 'border-gray-300'
             } focus:ring-2 focus:ring-red-500`}
+            className={`w-full border rounded-lg px-3 py-2 placeholder:text-gray-400 ${
+              errors.email ? 'border-red-500' : 'border-gray-300'
+            } focus:ring-2 focus:ring-red-500`}
           />
+          {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
           {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
         </div>
 
+        {/* 비밀번호 */}
         {/* 비밀번호 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -88,22 +104,31 @@ const AdminLoginForm = () => {
             className={`w-full border rounded-lg px-3 py-2 placeholder:text-gray-400 ${
               errors.password ? 'border-red-500' : 'border-gray-300'
             } focus:ring-2 focus:ring-red-500`}
+            className={`w-full border rounded-lg px-3 py-2 placeholder:text-gray-400 ${
+              errors.password ? 'border-red-500' : 'border-gray-300'
+            } focus:ring-2 focus:ring-red-500`}
           />
+          {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
           {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
         </div>
 
         {/* 에러 메시지 */}
         {errors.form && <p className="text-red-500 text-sm">{errors.form}</p>}
+        {/* 에러 메시지 */}
+        {errors.form && <p className="text-red-500 text-sm">{errors.form}</p>}
 
+        {/* 로그인 버튼 */}
         {/* 로그인 버튼 */}
         <button
           type="submit"
           disabled={loading}
           className="w-full bg-red-600 text-white py-2 rounded-lg mt-2 hover:bg-red-700 disabled:bg-gray-400"
+          className="w-full bg-red-600 text-white py-2 rounded-lg mt-2 hover:bg-red-700 disabled:bg-gray-400"
         >
           {loading ? '로그인 중...' : '관리자 로그인'}
         </button>
 
+        {/* 회원가입 링크 */}
         {/* 회원가입 링크 */}
         <div className="text-center text-sm text-gray-600 mt-6">
           관리자 계정이 없으신가요?{' '}
