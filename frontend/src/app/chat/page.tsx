@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { User, MoreVertical, Trash2 } from 'lucide-react'
+import { User, MoreVertical, Trash2, MessageCirclePlus } from 'lucide-react'
 import AppHeader from '@/components/layout/AppHeader'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { apiClient } from '@/lib/services/api'
@@ -145,7 +145,16 @@ export default function ChatListPage() {
         <div className="px-4 py-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-[#111827] mb-2">채팅</h1>
+            <div className="flex items-center justify-between mb-2">
+              <h1 className="text-3xl font-bold text-[#111827]">채팅</h1>
+              <button
+                onClick={() => router.push('/matches')}
+                className="flex items-center gap-2 px-4 py-2 bg-[#4F46E5] text-white rounded-xl hover:bg-[#4338CA] transition-colors shadow-sm"
+              >
+                <MessageCirclePlus className="w-5 h-5" />
+                <span className="font-medium">새 메시지</span>
+              </button>
+            </div>
             <p className="text-[#6B7280]">매칭된 룸메이트와 대화를 나눠보세요</p>
           </div>
 
