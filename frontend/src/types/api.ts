@@ -48,6 +48,7 @@ export const API_ENDPOINTS = {
   MATCH_STATUS: '/api/v1/matches/status',
   MATCH_RECOMMENDATIONS: '/api/v1/matches/recommendations',
   MATCH_LIKES: '/api/v1/matches/likes',
+  MATCH_RESULTS: '/api/v1/matches/results',
 
   // 관리자 관련
   ADMIN_REPORTS: '/api/v1/admin/reports',
