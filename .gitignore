@@ -1,5 +1,6 @@
 HELP.md
 backend/unimate/.gradle
+backend/unimate/out
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
@@ -40,6 +41,8 @@ out/
 backend/unimate/src/main/resources/application*.yml
 db_dev.mv.db
 db_dev.trace.db
+db_seed.mv.db
+db_seed.trace.db
 
 # === Common build and IDE ===
 .idea/
