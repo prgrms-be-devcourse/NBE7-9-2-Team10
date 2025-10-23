@@ -55,7 +55,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setIsAuthenticated(false);
         }
       } catch (error) {
-        console.error('Failed to fetch user info:', error);
         AuthService.clearTokens();
         setIsAuthenticated(false);
       } finally {
@@ -87,9 +86,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { startWs } = await import('@/lib/services/wsManager');
       await startWs();
-      console.log('🔌 WebSocket 연결 시작됨 (로그인 후)');
     } catch (error) {
-      console.error('🔌 WebSocket 연결 실패:', error);
+      // WebSocket 연결 실패는 무시
     }
   };
 
@@ -98,9 +96,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { stopWs } = await import('@/lib/services/wsManager');
       await stopWs();
-      console.log('🔌 WebSocket 연결 종료됨 (로그아웃 시)');
     } catch (error) {
-      console.error('🔌 WebSocket 연결 종료 실패:', error);
+      // WebSocket 연결 종료 실패는 무시
     }
     
     await AuthService.logout();
