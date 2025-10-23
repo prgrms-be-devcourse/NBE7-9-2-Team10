@@ -5,6 +5,8 @@ import com.unimate.domain.match.entity.Match;
 import com.unimate.domain.match.service.MatchService;
 import com.unimate.domain.match.service.MatchUtilityService;
 import com.unimate.global.jwt.CustomUserPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/matches")
 @RequiredArgsConstructor
+@Tag(name = "MatchController", description = "매칭 API")
 public class MatchController {
 
     private final MatchService matchService;
@@ -23,6 +26,7 @@ public class MatchController {
      * 룸메이트 추천 목록 조회 (필터 적용)
      */
     @GetMapping("/recommendations")
+    @Operation(summary = "룸메이트 추천 목록 조회")
     public ResponseEntity<MatchRecommendationResponse> getMatchRecommendations(
             @AuthenticationPrincipal CustomUserPrincipal user,
             @Valid MatchRecommendationRequest request
@@ -42,6 +46,7 @@ public class MatchController {
      * 후보 프로필 상세 조회
      */
     @GetMapping("/candidates/{receiverId}")
+    @Operation(summary = "룸메이트 후보 프로필 상세 조회")
     public ResponseEntity<MatchRecommendationDetailResponse> getMatchRecommendationDetail(
             @PathVariable("receiverId") Long receiverId,
             @AuthenticationPrincipal CustomUserPrincipal user
@@ -55,6 +60,7 @@ public class MatchController {
      * 룸메이트 최종 확정/거절
      */
     @PutMapping("/{id}/confirm")
+    @Operation(summary = "룸메이트 최종 확정/거절")
     public ResponseEntity<MatchConfirmResponse> confirmMatch(
             @PathVariable("id") Long id,
             @Valid @RequestBody MatchConfirmRequest request,
@@ -78,6 +84,7 @@ public class MatchController {
      * 사용자의 모든 매칭 상태를 조회 (PENDING, ACCEPTED, REJECTED)
      */
     @GetMapping("/status")
+    @Operation(summary = "룸메이트 매칭 상태 조회")
     public ResponseEntity<MatchStatusResponse> getMatchStatus(
             @AuthenticationPrincipal CustomUserPrincipal user
     ) {
@@ -90,6 +97,7 @@ public class MatchController {
      * 성사된 매칭 결과만 조회 (ACCEPTED 상태)
      */
     @GetMapping("/results")
+    @Operation(summary = "룸메이트 룸메이트 성사 결과 조회")
     public ResponseEntity<MatchResultResponse> getMatchResults(
             @AuthenticationPrincipal CustomUserPrincipal user
     ) {
@@ -101,6 +109,7 @@ public class MatchController {
      * 좋아요 보내기
      */
     @PostMapping("/likes")
+    @Operation(summary = "룸메이트 좋아요 보내기")
     public ResponseEntity<LikeResponse> sendLike(
             @Valid @RequestBody LikeRequest requestDto,
             @AuthenticationPrincipal CustomUserPrincipal user) {
@@ -113,6 +122,7 @@ public class MatchController {
      * 좋아요 취소
      */
     @DeleteMapping("/{receiverId}")
+    @Operation(summary = "룸메이트 좋아요 취소")
     public ResponseEntity<Void> cancelLike(
             @PathVariable Long receiverId,
             @AuthenticationPrincipal CustomUserPrincipal user) {

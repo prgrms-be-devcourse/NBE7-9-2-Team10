@@ -6,6 +6,8 @@ import com.unimate.domain.user.user.service.UserService;
 import com.unimate.global.jwt.CustomUserPrincipal;
 import com.unimate.global.jwt.JwtProvider;
 import com.unimate.global.jwt.JwtToken;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +19,13 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/user")
 @Validated
+@Tag(name = "UserAuthController", description = "유저 정보 API")
 public class UserController {
     private final UserService userService;
     private final JwtProvider jwtProvider;
 
     @GetMapping
+    @Operation(summary = "유저 정보 조회")
     public ResponseEntity<UserInfoResponse> getUserInfo(@AuthenticationPrincipal CustomUserPrincipal userPrincipal) {
         User user = userService.findByEmail(userPrincipal.getEmail());
         return ResponseEntity.ok(
@@ -35,6 +39,7 @@ public class UserController {
     }
 
     @PatchMapping("/name")
+    @Operation(summary = "유저 이름 수정")
     public ResponseEntity<UserUpdateResponse> updateUserName(
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
             @RequestBody UserUpdateNameRequest request
@@ -52,6 +57,7 @@ public class UserController {
 
 
     @PatchMapping("/email")
+    @Operation(summary = "유저 이메일 수정")
     public ResponseEntity<UserUpdateEmailResponse> updateUserEmail(
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
             @Valid @RequestBody UserUpdateEmailRequest request

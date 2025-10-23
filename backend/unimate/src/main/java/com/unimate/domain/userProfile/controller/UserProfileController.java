@@ -4,6 +4,8 @@ import com.unimate.domain.userProfile.dto.ProfileCreateRequest;
 import com.unimate.domain.userProfile.dto.ProfileResponse;
 import com.unimate.domain.userProfile.service.UserProfileService;
 import com.unimate.global.jwt.CustomUserPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,11 +16,13 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/profile")
 @RequiredArgsConstructor
+@Tag(name = "UserProfileController", description = "유저 프로필 API")
 public class UserProfileController {
 
     private final UserProfileService userProfileService;
 
     @PostMapping
+    @Operation(summary = "유저 프로필 생성")
     public ResponseEntity<Object> createUserProfile(
             @Valid @RequestBody ProfileCreateRequest req,
             @AuthenticationPrincipal CustomUserPrincipal user
@@ -29,6 +33,7 @@ public class UserProfileController {
     }
 
     @GetMapping
+    @Operation(summary = "유저 프로필 조회")
     public ResponseEntity<ProfileResponse> getMyProfile(
             @AuthenticationPrincipal CustomUserPrincipal user
     ) {
@@ -37,6 +42,7 @@ public class UserProfileController {
     }
 
     @PutMapping
+    @Operation(summary = "유저 프로필 수정")
     public ResponseEntity<ProfileResponse> updateMyProfile(
             @Valid @RequestBody ProfileCreateRequest req,
             @AuthenticationPrincipal CustomUserPrincipal user

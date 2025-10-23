@@ -4,6 +4,8 @@ import com.unimate.domain.message.dto.MessageSendRequest;
 import com.unimate.domain.message.dto.MessageSendResponse;
 import com.unimate.domain.message.service.MessageService;
 import com.unimate.global.jwt.CustomUserPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/chatrooms/{chatroomId}/messages")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "MessageController", description = "채팅방 메세지 API")
 public class MessageController {
 
     private final MessageService messageService;
@@ -24,6 +27,7 @@ public class MessageController {
      * POST /api/v1/chatrooms/{chatroomId}/messages
      */
     @PostMapping
+    @Operation(summary = "채팅방 메시지 전송")
     public ResponseEntity<MessageSendResponse> send(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @PathVariable Long chatroomId,

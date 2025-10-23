@@ -8,6 +8,8 @@ import com.unimate.domain.user.user.service.UserAuthService;
 import com.unimate.global.auth.dto.AccessTokenResponse;
 import com.unimate.global.auth.dto.MessageResponse;
 import com.unimate.global.util.CookieUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
+@Tag(name = "UserAuthController", description = "유저 인증인가 API")
 public class UserAuthController {
 
     private final UserAuthService userAuthService;
@@ -30,11 +33,13 @@ public class UserAuthController {
     private String cookieSameSite;
 
     @PostMapping("/signup")
+    @Operation(summary = "유저 회원가입")
     public ResponseEntity<UserSignupResponse> signup(@Valid @RequestBody UserSignupRequest request) {
         return ResponseEntity.ok(userAuthService.signup(request));
     }
 
     @PostMapping("/login")
+    @Operation(summary = "유저 로그인")
     public ResponseEntity<UserLoginResponse>
     login(@Valid @RequestBody UserLoginRequest request) {
         var tokens = userAuthService.login(request);
@@ -53,6 +58,7 @@ public class UserAuthController {
     }
 
     @PostMapping("/token/refresh")
+    @Operation(summary = "유저 토큰 재발급")
     public ResponseEntity<AccessTokenResponse> refreshToken(
             @CookieValue(name = "refreshToken", required = false) String refreshToken
     ) {
@@ -61,6 +67,7 @@ public class UserAuthController {
     }
 
     @PostMapping("/logout")
+    @Operation(summary = "유저 로그아웃")
     public ResponseEntity<MessageResponse> logout(
             @CookieValue(name = "refreshToken", required = false) String refreshToken
     ) {

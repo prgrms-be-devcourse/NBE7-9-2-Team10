@@ -4,6 +4,8 @@ import com.unimate.domain.chatroom.dto.*;
 import com.unimate.domain.chatroom.entity.ChatroomStatus;
 import com.unimate.domain.chatroom.service.ChatroomService;
 import com.unimate.global.jwt.CustomUserPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -17,12 +19,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/chatrooms")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "ChatroomController", description = "채팅방 API")
 public class ChatroomController {
 
     private final ChatroomService chatroomService;
 
     /** 방 생성(멱등) */
     @PostMapping
+    @Operation(summary = "채팅방 생성")
     public ResponseEntity<ChatRoomCreateResponse> create(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @Valid @RequestBody ChatRoomCreateRequest req
@@ -33,6 +37,7 @@ public class ChatroomController {
 
     /** 방 상세 */
     @GetMapping("/{chatroomId}")
+    @Operation(summary = "채팅방 상세 조회")
     public ResponseEntity<ChatRoomDetailResponse> detail(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @PathVariable Long chatroomId
@@ -43,6 +48,7 @@ public class ChatroomController {
 
     /** 내 방 목록(커서 페이지네이션) */
     @GetMapping
+    @Operation(summary = "채팅방 목록 조회")
     public ResponseEntity<ChatRoomListResponse> list(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @RequestParam(required = false) String cursor,
@@ -55,6 +61,7 @@ public class ChatroomController {
 
     /** 메시지 히스토리 조회 (보조 REST) */
     @GetMapping("/{chatroomId}/messages")
+    @Operation(summary = "채팅방 메세지 조회")
     public ResponseEntity<ChatHistoryResponse> history(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @PathVariable Long chatroomId,
@@ -70,6 +77,7 @@ public class ChatroomController {
 
     /** 읽음 처리 */
     @PostMapping("/{chatroomId}/read")
+    @Operation(summary = "채팅방 메세지 읽음")
     public ResponseEntity<ChatReadResponse> read(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @PathVariable Long chatroomId,
@@ -83,6 +91,7 @@ public class ChatroomController {
 
     /** 나가기 (응답 바디 있음) */
     @PostMapping("/{chatroomId}/leave")
+    @Operation(summary = "채팅방 나가기")
     public ResponseEntity<ChatRoomLeaveResponse> leave(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @PathVariable Long chatroomId
@@ -93,6 +102,7 @@ public class ChatroomController {
 
     /** 차단 (응답 바디 없음) */
     //@PostMapping("/{chatroomId}/block")
+    //@Operation(summary = "채팅방 상대방 차단")
     //public ResponseEntity<Void> block(
     //        @AuthenticationPrincipal CustomUserPrincipal me,
     //        @PathVariable Long chatroomId
