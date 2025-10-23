@@ -23,7 +23,6 @@ export default function AppHeader() {
     { key: '/matches', label: '매칭', icon: Users },
     { key: '/chat', label: '채팅', icon: MessageCircle },
     { key: '/profile', label: '프로필', icon: User },
-    { key: '/admin/reports', label: '관리자', icon: Shield },
   ]
 
   const handleLogout = async () => {

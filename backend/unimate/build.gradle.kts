@@ -36,10 +36,6 @@ dependencies {
     //WebSocket에서 @AuthenticationPrincipal 등 Security 연동
     implementation("org.springframework.security:spring-security-messaging")
 
-    implementation("org.springframework.boot:spring-boot-starter-cache")
-    implementation("com.github.ben-manes.caffeine:caffeine")
-
-
 
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
