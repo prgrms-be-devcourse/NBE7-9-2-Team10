@@ -8,6 +8,15 @@ export class AuthService {
    * 로그인
    */
   static async login(credentials: LoginRequest): Promise<LoginResponse> {
+    // ✅ 로그인 전에 관리자 토큰 제거
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('adminAccessToken');
+      localStorage.removeItem('adminId');
+      localStorage.removeItem('adminEmail');
+      localStorage.removeItem('adminName');
+      localStorage.removeItem('isAdmin');
+    }
+
     const response = await api.post<ApiResponse<LoginResponse>>(
       API_ENDPOINTS.LOGIN,
       credentials
@@ -82,7 +91,6 @@ export class AuthService {
     return rawData as User;
   }
 
-
   /**
    * 토큰 유효성 확인
    */
@@ -120,6 +128,8 @@ export class AuthService {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('tokenExpiration');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userEmail');
   }
 
   /**
@@ -141,4 +151,3 @@ export class AuthService {
 
 // 기본 export
 export default AuthService;
-

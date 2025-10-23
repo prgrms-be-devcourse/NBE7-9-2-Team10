@@ -1,10 +1,10 @@
 import { api } from '@/lib/services/api';
 import { API_ENDPOINTS } from '@/types/api';
-import { 
-  AdminSignupRequest, 
+import {
+  AdminSignupRequest,
   AdminSignupResponse,
   AdminLoginRequest,
-  AdminLoginResponse 
+  AdminLoginResponse
 } from '@/types/admin';
 
 export class AdminAuthService {
@@ -23,21 +23,33 @@ export class AdminAuthService {
    * 관리자 로그인
    */
   static async login(credentials: AdminLoginRequest): Promise<AdminLoginResponse> {
+    // ✅ 관리자 로그인 전에 일반 사용자 토큰 제거
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('tokenExpiration');
+    }
+
     const response = await api.post<AdminLoginResponse>(
       API_ENDPOINTS.ADMIN_LOGIN,
       credentials
     );
-    
+
     // 관리자 토큰을 별도로 저장
     if (typeof window !== 'undefined') {
       localStorage.setItem('adminAccessToken', response.accessToken);
       localStorage.setItem('adminId', response.adminId.toString());
       localStorage.setItem('adminEmail', response.email);
-      
+
+      if (response.name) {
+        localStorage.setItem('adminName', response.name);
+      }
+
       // 관리자 로그인 상태 플래그
       localStorage.setItem('isAdmin', 'true');
     }
-    
+
     return response;
   }
 
@@ -54,6 +66,7 @@ export class AdminAuthService {
         localStorage.removeItem('adminAccessToken');
         localStorage.removeItem('adminId');
         localStorage.removeItem('adminEmail');
+        localStorage.removeItem('adminName');
         localStorage.removeItem('isAdmin');
       }
     }
@@ -64,10 +77,10 @@ export class AdminAuthService {
    */
   static isAuthenticated(): boolean {
     if (typeof window === 'undefined') return false;
-    
+
     const token = localStorage.getItem('adminAccessToken');
     const isAdmin = localStorage.getItem('isAdmin');
-    
+
     return !!(token && isAdmin === 'true');
   }
 
@@ -76,10 +89,11 @@ export class AdminAuthService {
    */
   static clearTokens(): void {
     if (typeof window === 'undefined') return;
-    
+
     localStorage.removeItem('adminAccessToken');
     localStorage.removeItem('adminId');
     localStorage.removeItem('adminEmail');
+    localStorage.removeItem('adminName');
     localStorage.removeItem('isAdmin');
   }
 }
