@@ -9,6 +9,7 @@ import com.unimate.global.auth.dto.AccessTokenResponse;
 import com.unimate.global.auth.dto.MessageResponse;
 import com.unimate.global.util.CookieUtils;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -67,7 +68,7 @@ public class UserAuthController {
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "유저 로그아웃")
+    @Operation(summary = "유저 로그아웃" , security = { @SecurityRequirement(name = "BearerAuth") })
     public ResponseEntity<MessageResponse> logout(
             @CookieValue(name = "refreshToken", required = false) String refreshToken
     ) {

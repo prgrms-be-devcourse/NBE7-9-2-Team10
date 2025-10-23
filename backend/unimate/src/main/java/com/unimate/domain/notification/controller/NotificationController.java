@@ -3,6 +3,7 @@ package com.unimate.domain.notification.controller;
 import com.unimate.domain.notification.entity.Notification;
 import com.unimate.domain.notification.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "NotificationController", description = "알림 API")
+@SecurityRequirement(name = "BearerAuth")
 public class NotificationController {
 
     private final NotificationService notificationService;

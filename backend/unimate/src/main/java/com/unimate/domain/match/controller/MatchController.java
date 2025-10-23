@@ -6,6 +6,7 @@ import com.unimate.domain.match.service.MatchService;
 import com.unimate.domain.match.service.MatchUtilityService;
 import com.unimate.global.jwt.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/matches")
 @RequiredArgsConstructor
 @Tag(name = "MatchController", description = "매칭 API")
+@SecurityRequirement(name = "BearerAuth")
 public class MatchController {
 
     private final MatchService matchService;

@@ -5,6 +5,7 @@ import com.unimate.domain.message.dto.MessageSendResponse;
 import com.unimate.domain.message.service.MessageService;
 import com.unimate.global.jwt.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "MessageController", description = "채팅방 메세지 API")
+@SecurityRequirement(name = "BearerAuth")
 public class MessageController {
 
     private final MessageService messageService;

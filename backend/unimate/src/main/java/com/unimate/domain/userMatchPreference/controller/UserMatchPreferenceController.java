@@ -7,6 +7,7 @@ import com.unimate.domain.userMatchPreference.service.UserMatchPreferenceService
 import com.unimate.domain.userProfile.service.UserProfileService;
 import com.unimate.global.jwt.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")
 @Tag(name = "UserMatchPreferenceController", description = "유저 매칭 선호도 API")
+@SecurityRequirement(name = "BearerAuth")
 public class UserMatchPreferenceController {
 
     private final UserMatchPreferenceService userMatchPreferenceService;

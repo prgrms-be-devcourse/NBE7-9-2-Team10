@@ -10,6 +10,7 @@ import com.unimate.global.auth.dto.AccessTokenResponse;
 import com.unimate.global.auth.dto.MessageResponse;
 import com.unimate.global.util.CookieUtils;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -68,7 +69,7 @@ public class AdminAuthController {
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "관리자 로그아웃")
+    @Operation(summary = "관리자 로그아웃", security = { @SecurityRequirement(name = "BearerAuth") })
     public ResponseEntity<MessageResponse> logout(
             @CookieValue(name = "adminRefreshToken", required = false) String refreshToken
     ) {

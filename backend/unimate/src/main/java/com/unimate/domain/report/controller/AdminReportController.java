@@ -8,6 +8,7 @@ import com.unimate.domain.report.dto.ReportListResponse;
 import com.unimate.domain.report.service.AdminReportService;
 import com.unimate.global.jwt.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/admin/reports")
 @RequiredArgsConstructor
 @Tag(name = "AdminReportController", description = "신고 관리자 API")
+@SecurityRequirement(name = "BearerAuth")
 public class AdminReportController {
 
     private final AdminReportService adminReportService;

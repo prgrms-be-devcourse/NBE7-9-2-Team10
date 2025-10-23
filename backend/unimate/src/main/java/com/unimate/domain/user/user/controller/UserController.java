@@ -7,6 +7,7 @@ import com.unimate.global.jwt.CustomUserPrincipal;
 import com.unimate.global.jwt.JwtProvider;
 import com.unimate.global.jwt.JwtToken;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/user")
 @Validated
 @Tag(name = "UserAuthController", description = "유저 정보 API")
+@SecurityRequirement(name = "BearerAuth")
 public class UserController {
     private final UserService userService;
     private final JwtProvider jwtProvider;

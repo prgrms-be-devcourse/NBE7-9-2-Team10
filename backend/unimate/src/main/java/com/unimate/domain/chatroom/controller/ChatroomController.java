@@ -5,6 +5,7 @@ import com.unimate.domain.chatroom.entity.ChatroomStatus;
 import com.unimate.domain.chatroom.service.ChatroomService;
 import com.unimate.global.jwt.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "ChatroomController", description = "채팅방 API")
+@SecurityRequirement(name = "BearerAuth")
 public class ChatroomController {
 
     private final ChatroomService chatroomService;
