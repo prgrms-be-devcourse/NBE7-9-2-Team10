@@ -150,6 +150,7 @@ public class MatchService {
                 .filter(p -> p.getMatchingEnabled())
                 .filter(p -> userMatchPreferenceRepository.findByUserId(p.getUserId()).isPresent())
                 .filter(p -> matchFilterService.applyUniversityFilter(p, senderUniversity))
+                .filter(p -> !isAlreadyMatched(senderId, p.getUserId())) // 이미 매칭된 사용자 제외
                 .filter(p -> matchFilterService.applySleepPatternFilter(p, sleepPatternFilter))
                 .filter(p -> matchFilterService.applyAgeRangeFilter(p, ageRangeFilter))
                 .filter(p -> matchFilterService.applyCleaningFrequencyFilter(p, cleaningFrequencyFilter))
@@ -175,6 +176,40 @@ public class MatchService {
                 .filter(p -> matchFilterService.applyCleaningFrequencyFilter(p, cleaningFrequencyFilter)) // 청결도 필터
                 .filter(p -> matchFilterService.hasOverlappingPeriodByRange(p, startDate, endDate)) // 거주 기간
                 .toList();
+    }
+
+    // 캐시된 데이터로 추천 아이템 생성
+    private List<MatchRecommendationResponse.MatchRecommendationItem> buildCachedRecommendations(
+            List<CachedUserProfile> candidates, CachedUserProfile senderProfile) {
+        return candidates.stream()
+                .map(candidate -> buildCachedRecommendationItem(candidate, senderProfile))
+                .sorted(Comparator.comparing(MatchRecommendationResponse.MatchRecommendationItem::getPreferenceScore).reversed())
+                .limit(10)
+                .toList();
+    }
+
+    // 캐시된 데이터로 개별 추천 아이템 생성
+    private MatchRecommendationResponse.MatchRecommendationItem buildCachedRecommendationItem(
+            CachedUserProfile candidate, CachedUserProfile senderProfile) {
+        BigDecimal similarityScore = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderProfile, candidate));
+        return MatchRecommendationResponse.MatchRecommendationItem.builder()
+                .receiverId      (candidate.getUserId())
+                .name            (candidate.getName())
+                .university      (candidate.getUniversity())
+                .studentVerified (candidate.getStudentVerified())
+                .gender          (candidate.getGender())
+                .age             (matchUtilityService.calculateAge(candidate.getBirthDate()))
+                .mbti            (candidate.getMbti())
+                .preferenceScore (similarityScore)
+                .matchType       (null)
+                .matchStatus     (null)
+                // 추가 프로필 정보
+                .sleepTime       (candidate.getSleepTime())
+                .cleaningFrequency(candidate.getCleaningFrequency())
+                .isSmoker        (candidate.getIsSmoker())
+                .startUseDate    (candidate.getStartUseDate() != null ? candidate.getStartUseDate().toString() : null)
+                .endUseDate      (candidate.getEndUseDate() != null ? candidate.getEndUseDate().toString() : null)
+                .build();
     }
 
     /**
@@ -276,6 +311,7 @@ public class MatchService {
 
         return MatchRecommendationDetailResponse.builder()
                 .receiverId(cachedReceiver.getUserId())
+                .email(cachedReceiver.getEmail())  // 신고 기능을 위한 이메일 추가
                 .name(cachedReceiver.getName())
                 .university(cachedReceiver.getUniversity())
                 .studentVerified(cachedReceiver.getStudentVerified())

@@ -39,7 +39,7 @@ public class RandomDataFactory {
     }
 
     public int sleepTime() {
-        return 20 + r.nextInt(6); // 20~25시
+        return 1 + r.nextInt(5); // 1~5 (1: 22시 이전, 2: 22시~00시, 3: 00시~02시, 4: 02시~04시, 5: 04시 이후)
     }
 
     public boolean bool() {
