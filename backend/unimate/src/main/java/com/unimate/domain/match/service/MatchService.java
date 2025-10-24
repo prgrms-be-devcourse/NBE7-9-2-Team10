@@ -223,17 +223,16 @@ public class MatchService {
         UserProfile candidateProfile = convertToUserProfile(candidate);
         BigDecimal similarityScore = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderPreference, candidateProfile));
 
-        // 실제 매칭 상태 조회 (Redis 캐시 버전 - 의도적으로 주석 처리)
-        // Optional<Match> existingMatch = matchRepository.findBySenderIdAndReceiverId(
-        //         senderPreference.getUser().getId(), candidate.getUserId());
+        // 실제 매칭 상태 조회
+        Optional<Match> existingMatch = matchRepository.findBySenderIdAndReceiverId(
+                senderPreference.getUser().getId(), candidate.getUserId());
 
-        // MatchType matchType = existingMatch.map(Match::getMatchType).orElse(MatchType.NONE);
-        // MatchStatus matchStatus = existingMatch.map(Match::getMatchStatus).orElse(MatchStatus.NONE);
+        MatchType matchType = existingMatch.isPresent() ? existingMatch.get().getMatchType() : null;
+        MatchStatus matchStatus = existingMatch.isPresent() ? existingMatch.get().getMatchStatus() : null;
 
-        // if (log.isDebugEnabled()) {
-        //     log.debug("🔍 매칭 상태 조회 (Redis) - senderId: {}, receiverId: {}, matchType: {}, matchStatus: {}",
-        //             senderPreference.getUser().getId(), candidate.getUserId(), matchType, matchStatus);
-        // }
+        // 디버깅 로그
+        log.info("🔍 매칭 상태 조회 - senderId: {}, receiverId: {}, matchType: {}, matchStatus: {}",
+                senderPreference.getUser().getId(), candidate.getUserId(), matchType, matchStatus);
 
         return MatchRecommendationResponse.MatchRecommendationItem.builder()
                 .receiverId      (candidate.getUserId())
@@ -244,8 +243,8 @@ public class MatchService {
                 .age             (matchUtilityService.calculateAge(candidate.getBirthDate()))
                 .mbti            (candidate.getMbti())
                 .preferenceScore (similarityScore)
-                .matchType       (null)
-                .matchStatus     (null)
+                .matchType       (matchType)
+                .matchStatus     (matchStatus)
                 // 추가 프로필 정보
                 .sleepTime       (candidate.getSleepTime())
                 .cleaningFrequency(candidate.getCleaningFrequency())
