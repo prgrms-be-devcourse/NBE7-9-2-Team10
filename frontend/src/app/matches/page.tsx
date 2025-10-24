@@ -55,6 +55,19 @@ export default function MatchesPage() {
   const [filters, setFilters] = useState<MatchFilters>({});
   const router = useRouter();
 
+  const [likedIds, setLikedIds] = useState<Set<number>>(() => {
+    if (typeof window === 'undefined') {
+      return new Set();
+    }
+    try {
+      const item = window.sessionStorage.getItem('likedUsers');
+      return item ? new Set(JSON.parse(item)) : new Set();
+    } catch (error) {
+      console.error('Error reading from sessionStorage', error);
+      return new Set();
+    }
+  });
+
   useEffect(() => {
     const checkProfileStatus = async () => {
       setIsLoading(true);
@@ -92,7 +105,11 @@ export default function MatchesPage() {
           const response = await MatchService.getRecommendations({});
           const rawData = (response as any).data?.data || (response as any).data || response;
 
-          const recommendations = rawData.recommendations || [];
+          const recommendations = (rawData.recommendations || []).map((user: any) => ({
+            ...user,
+            isLiked: likedIds.has(user.receiverId) || (user.matchType === 'LIKE' && user.matchStatus === 'PENDING'),
+          }));
+          
           setUsers(recommendations);
           setFilteredUsers(recommendations);
         } catch (err) {
@@ -107,16 +124,32 @@ export default function MatchesPage() {
   }, [hasPreferences]);
 
   const handleLikeChange = (receiverId: number, isLiked: boolean) => {
-    setUsers(currentUsers =>
-      currentUsers.map(user =>
-        user.receiverId === receiverId ? { ...user, isLiked, matchType: isLiked ? 'LIKE' : undefined, matchStatus: isLiked ? 'PENDING' : undefined } : user
-      )
-    );
-    setFilteredUsers(currentUsers =>
-      currentUsers.map(user =>
-        user.receiverId === receiverId ? { ...user, isLiked, matchType: isLiked ? 'LIKE' : undefined, matchStatus: isLiked ? 'PENDING' : undefined } : user
-      )
-    );
+    setLikedIds(prevIds => {
+      const newIds = new Set(prevIds);
+      if (isLiked) {
+        newIds.add(receiverId);
+      } else {
+        newIds.delete(receiverId);
+      }
+      
+      if (typeof window !== 'undefined') {
+        try {
+          window.sessionStorage.setItem('likedUsers', JSON.stringify(Array.from(newIds)));
+        } catch (error) {
+          console.error('Error writing to sessionStorage', error);
+        }
+      }
+      
+      return newIds;
+    });
+
+    const updateUser = (user: RecommendedUser) => 
+      user.receiverId === receiverId 
+        ? { ...user, isLiked, matchType: isLiked ? 'LIKE' : undefined, matchStatus: isLiked ? 'PENDING' : undefined } 
+        : user;
+
+    setUsers(currentUsers => currentUsers.map(updateUser));
+    setFilteredUsers(currentUsers => currentUsers.map(updateUser));
   };
 
   const handleOpenPreferenceModal = () => setIsPreferenceModalOpen(true);
