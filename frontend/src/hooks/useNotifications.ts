@@ -160,44 +160,57 @@ export function useNotifications() {
           try {
             const subscription = ws.subscribe(path, (msg) => {
               try {
-                const notification = JSON.parse(msg.body)
-                
+                const notification = JSON.parse(msg.body);
+
                 const newNotification: Notification = {
                   id: notification.id?.toString() || Date.now().toString(),
-                  type: notification.type?.toLowerCase() as 'like' | 'chat' | 'match',
+                  type: notification.type?.toLowerCase() as 'like' | 'chat' | 'match' | 'like_canceled',
                   message: notification.message || '새 알림이 도착했습니다',
                   senderName: notification.senderName,
                   senderId: notification.senderId,
                   chatroomId: notification.chatroomId,
                   profileId: notification.profileId,
                   isRead: false,
-                  timestamp: notification.createdAt || new Date().toISOString()
-                }
-                
-                // 중복 알림 방지
+                  timestamp: notification.createdAt || new Date().toISOString(),
+                };
+
                 setNotifications(prev => {
-                  const exists = prev.some(n => n.id === newNotification.id)
-                  if (exists) return prev
-                  return [newNotification, ...prev]
-                })
-                
-                setUnreadCount(prev => prev + 1)
-                
+                  // 중복 알림 방지
+                  const exists = prev.some(n => n.id === newNotification.id);
+                  if (exists) return prev;
+
+                  const senderId = newNotification.senderId;
+                  let filtered = prev;
+
+                  if (newNotification.type === 'like') {
+                    // '좋아요' 알림 수신 시, 동일 발신자의 '좋아요 취소' 알림은 제거
+                    filtered = prev.filter(n => !(n.type === 'like_canceled' && n.senderId === senderId));
+                  } else if (newNotification.type === 'like_canceled') {
+                    // '좋아요 취소' 알림 수신 시, 동일 발신자의 '좋아요' 알림을 제거
+                    filtered = prev.filter(n => !(n.type === 'like' && n.senderId === senderId));
+                  }
+                  
+                  // 새 알림 추가
+                  return [newNotification, ...filtered];
+                });
+
+                setUnreadCount(prev => prev + 1);
+
                 // 브라우저 데스크톱 알림
                 if (typeof window !== 'undefined' && 'Notification' in window && window.Notification && window.Notification.permission === 'granted') {
                   new window.Notification('Unimate', {
                     body: newNotification.message,
-                    icon: '/favicon.ico'
-                  })
+                    icon: '/favicon.ico',
+                  });
                 }
               } catch (e) {
-                console.error('[Notification] Parse error:', e)
+                console.error('[Notification] Parse error:', e);
               }
-            })
-            subscriptions.push(subscription)
+            });
+            subscriptions.push(subscription);
             // 첫 번째 성공한 구독만 유지하고 나머지는 중단
             if (subscriptions.length === 1) {
-              break
+              break;
             }
           } catch (error) {
             // 구독 실패는 무시하고 다음 경로 시도
