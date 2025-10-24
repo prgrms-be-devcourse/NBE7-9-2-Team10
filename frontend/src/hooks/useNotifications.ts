@@ -103,6 +103,27 @@ export function useNotifications() {
     }
   }, [notifications])
 
+  // 모든 알림 삭제
+  const deleteAllNotifications = useCallback(async () => {
+    try {
+      // 백엔드에 모든 알림 삭제 API가 없는 경우를 대비해 개별 삭제로 처리
+      if (notifications.length > 0) {
+        await Promise.all(
+          notifications.map(notification => NotificationService.deleteNotification(notification.id))
+        )
+      }
+      
+      // 로컬 상태 초기화
+      setNotifications([])
+      setUnreadCount(0)
+    } catch (error) {
+      console.error('Failed to delete all notifications:', error)
+      // 에러가 발생해도 로컬 상태는 초기화
+      setNotifications([])
+      setUnreadCount(0)
+    }
+  }, [notifications])
+
   const refreshNotifications = useCallback(() => {
     loadNotifications()
   }, [loadNotifications])
@@ -328,6 +349,7 @@ export function useNotifications() {
     markAsRead,
     deleteNotification,
     markAllAsRead,
+    deleteAllNotifications,
     refreshNotifications,
     addNotification,
     checkWebSocketStatus

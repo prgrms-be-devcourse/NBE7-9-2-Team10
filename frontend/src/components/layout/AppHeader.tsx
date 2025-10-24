@@ -23,7 +23,7 @@ export default function AppHeader() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<MatchRecommendationDetailResponse | null>(null)
   const [isDetailLoading, setIsDetailLoading] = useState(false)
-  const { notifications, unreadCount, markAsRead, deleteNotification, checkWebSocketStatus } = useNotifications()
+  const { notifications, unreadCount, markAsRead, deleteNotification, deleteAllNotifications, checkWebSocketStatus } = useNotifications()
   const { success } = useToast()
   const { isAuthenticated, isLoading, logout } = useAuth()
 
@@ -208,6 +208,7 @@ export default function AppHeader() {
         notifications={notifications}
         onMarkAsRead={markAsRead}
         onDeleteNotification={deleteNotification}
+        onDeleteAllNotifications={deleteAllNotifications}
         onViewProfile={handleViewProfile}
         onViewChat={handleViewChat}
       />

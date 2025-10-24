@@ -30,6 +30,7 @@ export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
   const [partnerName, setPartnerName] = useState('채팅 상대')
   const [partnerInfo, setPartnerInfo] = useState('')
   const [isPartnerDeleted, setIsPartnerDeleted] = useState(false)
+  const [isPartnerLeft, setIsPartnerLeft] = useState(false)
   const [matchInfo, setMatchInfo] = useState<MatchInfo | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
@@ -54,6 +55,10 @@ export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
         setPartnerName(chatroomData.partnerName || '채팅 상대')
         setPartnerInfo(chatroomData.partnerUniversity || '')
         setIsPartnerDeleted(chatroomData.isPartnerDeleted || false)
+        
+        // 상대방이 나간 상태인지 확인
+        const isPartnerLeft = chatroomData.user1Status === 'CLOSED' || chatroomData.user2Status === 'CLOSED'
+        setIsPartnerLeft(isPartnerLeft)
 
         // 매칭 정보 조회
         const currentUserId = typeof window !== 'undefined' ? 
@@ -308,6 +313,8 @@ export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
                 </h2>
                 {isPartnerDeleted ? (
                   <p className="text-sm text-red-400">이 사용자는 탈퇴했습니다</p>
+                ) : isPartnerLeft ? (
+                  <p className="text-sm text-red-500">상대방이 채팅방에서 나갔습니다</p>
                 ) : (
                   partnerInfo && <p className="text-sm text-[#6B7280]">{partnerInfo}</p>
                 )}
@@ -315,7 +322,7 @@ export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
             </div>
 
             {/* 매칭 확정/거절 버튼 */}
-            {matchInfo && !isPartnerDeleted && (
+            {matchInfo && !isPartnerDeleted && !isPartnerLeft && (
               <div className="flex flex-col items-end gap-2">
                 {/* 상대방 응답 상태 표시 */}
                 {matchInfo.partnerResponse === 'ACCEPTED' && (
@@ -433,6 +440,10 @@ export default function ChatRoomView({ chatroomId }: ChatRoomViewProps) {
           {isPartnerDeleted ? (
             <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-xl">
               <p className="text-sm">탈퇴한 사용자와는 메시지를 주고받을 수 없습니다</p>
+            </div>
+          ) : isPartnerLeft ? (
+            <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-xl">
+              <p className="text-sm">상대방이 채팅방에서 나갔습니다</p>
             </div>
           ) : (
             <div className="flex gap-3">
