@@ -5,6 +5,7 @@ import Layout from '@/components/layout/Layout';
 import { ToastProvider } from '@/components/ui/Toast';
 import ErrorBoundary from '@/components/error/ErrorBoundary';
 import { AuthProvider } from '@/contexts/AuthContext';
+import ConditionalLayout from '@/components/layout/ConditionalLayout';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,9 +35,9 @@ export default function RootLayout({
         <ErrorBoundary>
           <ToastProvider>
             <AuthProvider>
-              <Layout showHeader={false}>
+              <ConditionalLayout>
                 {children}
-              </Layout>
+              </ConditionalLayout>
             </AuthProvider>
           </ToastProvider>
         </ErrorBoundary>
