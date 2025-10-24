@@ -1,16 +1,15 @@
 package com.unimate.domain.match.dto;
 
-import java.math.BigDecimal;
-import java.util.List;
-
 import com.unimate.domain.match.entity.MatchStatus;
 import com.unimate.domain.match.entity.MatchType;
 import com.unimate.domain.user.user.entity.Gender;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @AllArgsConstructor

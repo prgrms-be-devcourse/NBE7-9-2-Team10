@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Home, Users, MessageCircle, User, Star, Bell, LogOut, Shield } from 'lucide-react'
+import { Home, Users, MessageCircle, User, Star, Bell, LogOut } from 'lucide-react'
 import { useNotifications } from '@/hooks/useNotifications'
 import NotificationModal from '@/components/notification/NotificationModal'
 import { useToast } from '@/components/ui/Toast'
@@ -138,17 +138,16 @@ export default function AppHeader() {
         </nav>
 
         <div className="flex items-center gap-4">
-          <div className="relative">
+          <div className="flex items-center">
             <Star className="w-5 h-5 text-[#F59E0B]" />
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#F59E0B] text-white text-xs rounded-full flex items-center justify-center">
-              3
-            </div>
           </div>
-          <div className="relative">
+          
+          <div className="relative flex items-center">
             <button
               onClick={() => setIsNotificationOpen(true)}
               className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
               title="알림"
+              className="flex items-center hover:bg-gray-100 rounded-lg transition-colors"
             >
               <Bell className="w-5 h-5 text-[#6B7280]" />
             </button>
@@ -158,9 +157,10 @@ export default function AppHeader() {
               </div>
             )}
           </div>
+          
           <button 
             onClick={handleLogout}
-            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+            className="flex items-center hover:bg-gray-100 rounded-lg transition-colors"
             title="로그아웃"
           >
             <LogOut className="w-5 h-5 text-[#6B7280]" />

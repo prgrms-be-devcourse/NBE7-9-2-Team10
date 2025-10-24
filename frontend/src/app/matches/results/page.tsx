@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Card } from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
-import ProtectedRoute from '../../../components/auth/ProtectedRoute';
-import Layout from '../../../components/layout/Layout';
 import { MatchService } from '../../../lib/services/matchService';
 import { getErrorMessage } from '../../../lib/utils/helpers';
 import type { MatchResultResponse, MatchResultItem } from '../../../types/match';
@@ -30,7 +28,7 @@ export default function MatchResultsPage() {
     }
   }, [toast]);
 
-  // 매칭 결과 조회
+  // 확정된 룸메이트 조회
   const fetchMatchResults = async () => {
     try {
       setIsLoading(true);
@@ -38,7 +36,7 @@ export default function MatchResultsPage() {
       const data = (response as any).data || response;
       const matchResults = data.results || [];
       
-      // 각 매칭 결과에 대한 연락처 정보 가져오기
+      // 각 확정된 룸메이트에 대한 상세 정보 가져오기
       const enrichedResults = await Promise.all(
         matchResults.map(async (result: MatchResultItem) => {
           try {
@@ -56,7 +54,7 @@ export default function MatchResultsPage() {
       
       setResults(enrichedResults);
     } catch (error) {
-      console.error('매칭 결과 조회 실패:', error);
+      console.error('확정된 룸메이트 조회 실패:', error);
       setToast({ message: getErrorMessage(error), type: 'error' });
     } finally {
       setIsLoading(false);
@@ -74,26 +72,20 @@ export default function MatchResultsPage() {
 
   if (isLoading) {
     return (
-      <ProtectedRoute>
-        <Layout showFooter={false}>
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-            <LoadingSpinner />
-          </div>
-        </Layout>
-      </ProtectedRoute>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
     );
   }
 
   return (
-    <ProtectedRoute>
-      <Layout showFooter={false}>
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {/* 헤더 */}
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              성사된 매칭
+              확정된 룸메이트
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
               {results.length}명의 룸메이트와 매칭되었습니다
@@ -104,7 +96,7 @@ export default function MatchResultsPage() {
           </Button>
         </div>
 
-        {/* 매칭 결과 목록 */}
+        {/* 확정된 룸메이트 목록 */}
         {results.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {results.map((result) => {
@@ -244,7 +236,7 @@ export default function MatchResultsPage() {
               </svg>
             </div>
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              아직 성사된 매칭이 없습니다
+              아직 확정된 룸메이트가 없습니다
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-8 text-center max-w-md">
               추천 목록에서 마음에 드는 룸메이트를 찾아<br />
@@ -286,10 +278,8 @@ export default function MatchResultsPage() {
             </div>
           </div>
         )}
-        </div>
-        </div>
-      </Layout>
-    </ProtectedRoute>
+      </div>
+    </div>
   );
 }
 
