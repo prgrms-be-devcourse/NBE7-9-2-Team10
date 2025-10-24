@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
@@ -8,13 +8,14 @@ import NotificationModal from '@/components/notification/NotificationModal'
 import { useToast } from '@/components/ui/Toast'
 import { stopWs } from '@/lib/services/wsManager'
 import { useAuth } from '@/contexts/AuthContext'
+import { NotificationService } from '@/lib/services/notificationService'
 import Link from 'next/link'
 
 export default function AppHeader() {
   const router = useRouter()
   const pathname = usePathname()
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
-  const { notifications, unreadCount, markAsRead, deleteNotification } = useNotifications()
+  const { notifications, unreadCount, markAsRead, deleteNotification, checkWebSocketStatus } = useNotifications()
   const { success } = useToast()
   const { isAuthenticated, isLoading, logout } = useAuth()
 
@@ -33,7 +34,6 @@ export default function AppHeader() {
       // 로그아웃 후 홈화면으로 강제 이동
       window.location.href = '/'
     } catch (error) {
-      console.error('Logout error:', error)
       success('로그아웃되었습니다.', '로그아웃 완료')
       // 에러가 발생해도 홈화면으로 강제 이동
       window.location.href = '/'
@@ -48,6 +48,20 @@ export default function AppHeader() {
   const handleViewChat = (chatroomId: number) => {
     router.push(`/chat/${chatroomId}`)
     setIsNotificationOpen(false)
+  }
+
+  const handleCheckWebSocketStatus = async () => {
+    await checkWebSocketStatus()
+  }
+
+  const handleSendTestNotification = async () => {
+    try {
+      // 현재 알림 목록 새로고침
+      await NotificationService.getNotifications(0, 5)
+      success('알림 목록을 새로고침했습니다. 다른 계정으로 알림을 생성해보세요.', '테스트 안내')
+    } catch (error) {
+      // 테스트 알림 전송 실패는 무시
+    }
   }
 
   if (isLoading) {
@@ -134,6 +148,7 @@ export default function AppHeader() {
             <button
               onClick={() => setIsNotificationOpen(true)}
               className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+              title="알림"
             >
               <Bell className="w-5 h-5 text-[#6B7280]" />
             </button>

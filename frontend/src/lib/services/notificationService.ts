@@ -37,6 +37,14 @@ export class NotificationService {
   static async deleteNotification(notificationId: string): Promise<void> {
     await apiClient.delete(`/api/v1/notifications/${notificationId}`)
   }
+
+  // 테스트 알림 전송 (개발용) - 실제로는 알림 새로고침
+  static async sendTestNotification(): Promise<void> {
+    // 백엔드에 테스트 엔드포인트가 없으므로 알림 목록을 새로고침
+    await apiClient.get('/api/v1/notifications', {
+      params: { page: 0, size: 1 }
+    })
+  }
 }
 
 
