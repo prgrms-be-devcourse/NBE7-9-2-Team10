@@ -3,6 +3,7 @@ package com.unimate.domain.userProfile.service;
 import com.unimate.domain.match.entity.MatchStatus;
 import com.unimate.domain.match.entity.MatchType;
 import com.unimate.domain.match.repository.MatchRepository;
+import com.unimate.domain.match.service.MatchCacheService;
 import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.UserRepository;
 import com.unimate.domain.userProfile.dto.ProfileCreateRequest;
@@ -11,9 +12,12 @@ import com.unimate.domain.userProfile.entity.UserProfile;
 import com.unimate.domain.userProfile.repository.UserProfileRepository;
 import com.unimate.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -22,30 +26,39 @@ public class UserProfileService {
     private final UserProfileRepository userProfileRepository;
     private final UserRepository userRepository;
     private final MatchRepository matchRepository;
+    private final MatchCacheService matchCacheService;
+
+    @Value("${cache.redis.enabled:true}")
+    private boolean redisCacheEnabled;
 
     @Transactional
     public ProfileResponse create(String email, ProfileCreateRequest req){
         User userRef = userRepository.findByEmail(email)
                 .orElseThrow(() -> ServiceException.notFound("이메일에 해당하는 유저를 찾을 수 없습니다."));
         UserProfile profile = UserProfile.builder()
-                .user(userRef)
-                .sleepTime(req.getSleepTime())
-                .isPetAllowed(req.getIsPetAllowed())
-                .isSmoker(req.getIsSmoker())
+                .user             (userRef)
+                .sleepTime        (req.getSleepTime())
+                .isPetAllowed     (req.getIsPetAllowed())
+                .isSmoker         (req.getIsSmoker())
                 .cleaningFrequency(req.getCleaningFrequency())
-                .preferredAgeGap(req.getPreferredAgeGap())
-                .hygieneLevel(req.getHygieneLevel())
-                .isSnoring(req.getIsSnoring())
+                .preferredAgeGap  (req.getPreferredAgeGap())
+                .hygieneLevel     (req.getHygieneLevel())
+                .isSnoring        (req.getIsSnoring())
                 .drinkingFrequency(req.getDrinkingFrequency())
-                .noiseSensitivity(req.getNoiseSensitivity())
-                .guestFrequency(req.getGuestFrequency())
-                .mbti(req.getMbti())
-                .startUseDate(req.getStartUseDate())
-                .endUseDate(req.getEndUseDate())
-                .matchingEnabled(req.getMatchingEnabled())
+                .noiseSensitivity (req.getNoiseSensitivity())
+                .guestFrequency   (req.getGuestFrequency())
+                .mbti             (req.getMbti())
+                .startUseDate     (req.getStartUseDate())
+                .endUseDate       (req.getEndUseDate())
+                .matchingEnabled  (req.getMatchingEnabled())
                 .build();
 
         UserProfile saved = userProfileRepository.save(profile);
+
+        if (redisCacheEnabled) {
+            matchCacheService.evictUserProfileCache(userRef.getId());
+            log.info("✅ 프로필 생성 - 캐시 무효화 (userId: {})", userRef.getId());
+        }
 
         return toResponse(saved);
     }
@@ -63,6 +76,11 @@ public class UserProfileService {
                 .orElseThrow(() -> ServiceException.notFound("사용자 프로필을 찾을 수 없습니다."));
 
         profile.update(req);
+
+        if (redisCacheEnabled) {
+            matchCacheService.evictUserProfileCache(profile.getUser().getId());
+            log.info("✅ 프로필 수정 - 캐시 무효화 (userId: {})", profile.getUser().getId());
+        }
 
         return toResponse(profile);
     }
@@ -99,5 +117,10 @@ public class UserProfileService {
         userProfile.updateMatchingStatus(false);
 
         matchRepository.deleteUnconfirmedMatchesByUserId(userId, MatchType.REQUEST, MatchStatus.ACCEPTED);
+
+        if (redisCacheEnabled) {
+            matchCacheService.evictUserProfileCache(userId);
+            log.info("✅ 매칭 비활성화 - 캐시 무효화 (userId: {})", userId);
+        }
     }
 }

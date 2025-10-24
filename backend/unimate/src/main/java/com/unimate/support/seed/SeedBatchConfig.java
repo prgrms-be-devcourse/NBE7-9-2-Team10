@@ -62,7 +62,7 @@ public class SeedBatchConfig {
     @Bean
     public ItemReader<UserProfileItem> itemReader() {
         List<UserProfileItem> items = new ArrayList<>();
-        for (int i = 1; i <= 10000; i++) {
+        for (int i = 1; i <= 1000; i++) {
             items.add(new UserProfileItem(
                     f.email(i),
                     "test1234",
@@ -126,9 +126,32 @@ public class SeedBatchConfig {
     }
 
     @Bean
+    public ItemWriter<UserProfileItem> matchPreferencesWriter() {
+        return new JdbcBatchItemWriterBuilder<UserProfileItem>()
+                .dataSource(dataSource)
+                .sql(
+                        "INSERT INTO user_match_preference (" +
+                                "  user_id," +
+                                "  sleep_time, is_pet_allowed, is_smoker," +
+                                "  cleaning_frequency, preferred_age_gap, hygiene_level," +
+                                "  is_snoring, drinking_frequency, noise_sensitivity, guest_frequency," +
+                                "  start_use_date, end_use_date" +
+                                ") VALUES (" +
+                                "  (SELECT id FROM users WHERE email = :email)," +
+                                "  :sleepTime, :isPetAllowed, :isSmoker," +
+                                "  :cleaningFrequency, :preferredAgeGap, :hygieneLevel," +
+                                "  :isSnoring, :drinkingFrequency, :noiseSensitivity, :guestFrequency," +
+                                "  :startUseDate, :endUseDate" +
+                                ")"
+                )
+                .beanMapped()
+                .build();
+    }
+
+    @Bean
     public ItemWriter<UserProfileItem> itemWriter() {
         CompositeItemWriter<UserProfileItem> composite = new CompositeItemWriter<>();
-        composite.setDelegates(List.of(usersWriter(), profilesWriter())); // 순서 중요: users → profiles
+        composite.setDelegates(List.of(usersWriter(), profilesWriter(), matchPreferencesWriter())); // 순서 중요: users → profiles → match_preference
         return composite;
     }
 }
