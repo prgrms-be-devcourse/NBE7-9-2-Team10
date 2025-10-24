@@ -5,16 +5,24 @@ import { useRouter, usePathname } from 'next/navigation'
 import { Home, Users, MessageCircle, User, Star, Bell, LogOut, Shield } from 'lucide-react'
 import { useNotifications } from '@/hooks/useNotifications'
 import NotificationModal from '@/components/notification/NotificationModal'
+import MatchDetailModal from '@/components/matches/MatchDetailModal'
 import { useToast } from '@/components/ui/Toast'
 import { stopWs } from '@/lib/services/wsManager'
 import { useAuth } from '@/contexts/AuthContext'
 import { NotificationService } from '@/lib/services/notificationService'
+import { MatchService } from '@/lib/services/matchService'
+import { getErrorMessage } from '@/lib/utils/helpers'
+import type { MatchRecommendationDetailResponse } from '@/types/match'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Link from 'next/link'
 
 export default function AppHeader() {
   const router = useRouter()
   const pathname = usePathname()
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<MatchRecommendationDetailResponse | null>(null)
+  const [isDetailLoading, setIsDetailLoading] = useState(false)
   const { notifications, unreadCount, markAsRead, deleteNotification, checkWebSocketStatus } = useNotifications()
   const { success } = useToast()
   const { isAuthenticated, isLoading, logout } = useAuth()
@@ -40,14 +48,40 @@ export default function AppHeader() {
     }
   }
 
-  const handleViewProfile = (senderId: number) => {
-    router.push(`/profile/${senderId}`)
+  const handleViewProfile = async (senderId: number) => {
+    setIsDetailLoading(true)
+    setIsDetailModalOpen(false)
     setIsNotificationOpen(false)
+    
+    try {
+      const detail = await MatchService.getMatchDetail(senderId)
+      setSelectedUser(detail)
+      setIsDetailLoading(false)
+      setIsDetailModalOpen(true)
+    } catch (err) {
+      console.error('상세 정보 조회 실패:', err)
+      setIsDetailLoading(false)
+      // 에러 발생 시 기존 방식으로 프로필 페이지로 이동
+      router.push(`/profile/${senderId}`)
+    }
   }
 
   const handleViewChat = (chatroomId: number) => {
     router.push(`/chat/${chatroomId}`)
     setIsNotificationOpen(false)
+  }
+
+  const handleCloseDetailModal = () => {
+    setIsDetailModalOpen(false)
+    setSelectedUser(null)
+  }
+
+  const handleLikeFromModal = async (receiverId: number) => {
+    await MatchService.sendLike(receiverId)
+  }
+
+  const handleCancelLikeFromModal = async (receiverId: number) => {
+    await MatchService.cancelLike(receiverId)
   }
 
   const handleCheckWebSocketStatus = async () => {
@@ -176,6 +210,25 @@ export default function AppHeader() {
         onDeleteNotification={deleteNotification}
         onViewProfile={handleViewProfile}
         onViewChat={handleViewChat}
+      />
+
+      {/* 상세 정보 로딩 오버레이 */}
+      {isDetailLoading && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 z-[45] flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl">
+            <LoadingSpinner />
+            <p className="text-gray-600 dark:text-gray-400 mt-4">상세 정보를 불러오는 중...</p>
+          </div>
+        </div>
+      )}
+      
+      <MatchDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={handleCloseDetailModal}
+        match={selectedUser}
+        onLike={handleLikeFromModal}
+        onCancelLike={handleCancelLikeFromModal}
+        isLiked={selectedUser ? (selectedUser.isLiked || (selectedUser.matchType === 'LIKE' && selectedUser.matchStatus === 'PENDING')) : false}
       />
     </header>
   )

@@ -102,6 +102,20 @@ public class ChatroomController {
         return ResponseEntity.ok(res);
     }
 
+    /** 채팅방 퇴장 알림 */
+    //뒤로가기
+    @PostMapping("/{chatroomId}/leave-notification")
+    @Operation(summary = "채팅방 퇴장 알림")
+    public ResponseEntity<Void> leaveNotification(
+            @AuthenticationPrincipal CustomUserPrincipal me,
+            @PathVariable Long chatroomId
+    ) {
+        chatroomService.leaveNotification(me.getUserId(), chatroomId);
+        return ResponseEntity.ok().build();
+    }
+
+
+
     /** 차단 (응답 바디 없음) */
     //@PostMapping("/{chatroomId}/block")
     //@Operation(summary = "채팅방 상대방 차단")
