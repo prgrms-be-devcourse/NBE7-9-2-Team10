@@ -82,7 +82,8 @@ public class MatchService {
             LocalDate endDate
     ) {
         User sender = getUserByEmail(senderEmail);
-        UserProfile senderProfile = getUserProfile(sender.getId());
+        UserMatchPreference senderPreference = userMatchPreferenceRepository.findByUserId(sender.getId())
+                .orElseThrow(() -> ServiceException.notFound("사용자의 매칭 선호도를 찾을 수 없습니다. 먼저 선호도를 등록해주세요."));
 
         List<CachedUserProfile> cachedCandidates = matchCacheService.getAllCandidates();
         log.info("Redis에서 {} 명의 후보 조회", cachedCandidates.size());
@@ -92,9 +93,8 @@ public class MatchService {
                 sleepPatternFilter, ageRangeFilter, cleaningFrequencyFilter, startDate, endDate
         );
 
-        CachedUserProfile cachedSenderProfile = CachedUserProfile.from(senderProfile);
         List<MatchRecommendationResponse.MatchRecommendationItem> recommendations =
-                buildCachedRecommendations(filteredCandidates, cachedSenderProfile);
+                buildCachedRecommendations(filteredCandidates, senderPreference);
 
         return new MatchRecommendationResponse(recommendations);
     }
@@ -109,7 +109,8 @@ public class MatchService {
             LocalDate endDate
     ) {
         User sender = getUserByEmail(senderEmail);
-        UserProfile senderProfile = getUserProfile(sender.getId());
+        UserMatchPreference senderPreference = userMatchPreferenceRepository.findByUserId(sender.getId())
+                .orElseThrow(() -> ServiceException.notFound("사용자의 매칭 선호도를 찾을 수 없습니다. 먼저 선호도를 등록해주세요."));
 
         List<UserProfile> filteredCandidates = filterCandidates(
                 sender, sleepPatternFilter, ageRangeFilter,
@@ -117,7 +118,7 @@ public class MatchService {
         );
 
         List<MatchRecommendationResponse.MatchRecommendationItem> recommendations =
-                buildRecommendations(filteredCandidates, senderProfile);
+                buildRecommendations(filteredCandidates, senderPreference);
         
         return new MatchRecommendationResponse(recommendations);
     }
@@ -130,12 +131,40 @@ public class MatchService {
                 .orElseThrow(() -> ServiceException.notFound("사용자를 찾을 수 없습니다."));
     }
 
+
     /**
-     * 사용자 프로필 조회
+     * CachedUserProfile을 UserProfile로 변환 (기존 유사도 계산 메서드 재사용용)
      */
-    private UserProfile getUserProfile(Long userId) {
-        return userProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> ServiceException.notFound("사용자 프로필을 찾을 수 없습니다."));
+    private UserProfile convertToUserProfile(CachedUserProfile cached) {
+        User user = new User(
+                cached.getName(),
+                cached.getEmail(),
+                "dummy_password", // 유사도 계산에 필요 없음
+                cached.getGender(),
+                cached.getBirthDate(),
+                cached.getUniversity()
+        );
+        if (cached.getStudentVerified()) {
+            user.verifyStudent();
+        }
+        
+        return UserProfile.builder()
+                .user(user)
+                .sleepTime(cached.getSleepTime())
+                .isPetAllowed(cached.getIsPetAllowed())
+                .isSmoker(cached.getIsSmoker())
+                .cleaningFrequency(cached.getCleaningFrequency())
+                .preferredAgeGap(cached.getPreferredAgeGap())
+                .hygieneLevel(cached.getHygieneLevel())
+                .isSnoring(cached.getIsSnoring())
+                .drinkingFrequency(cached.getDrinkingFrequency())
+                .noiseSensitivity(cached.getNoiseSensitivity())
+                .guestFrequency(cached.getGuestFrequency())
+                .mbti(cached.getMbti())
+                .startUseDate(cached.getStartUseDate())
+                .endUseDate(cached.getEndUseDate())
+                .matchingEnabled(cached.getMatchingEnabled())
+                .build();
     }
 
     // 캐시된 후보 필터링
@@ -180,9 +209,9 @@ public class MatchService {
 
     // 캐시된 데이터로 추천 아이템 생성
     private List<MatchRecommendationResponse.MatchRecommendationItem> buildCachedRecommendations(
-            List<CachedUserProfile> candidates, CachedUserProfile senderProfile) {
+            List<CachedUserProfile> candidates, UserMatchPreference senderPreference) {
         return candidates.stream()
-                .map(candidate -> buildCachedRecommendationItem(candidate, senderProfile))
+                .map(candidate -> buildCachedRecommendationItem(candidate, senderPreference))
                 .sorted(Comparator.comparing(MatchRecommendationResponse.MatchRecommendationItem::getPreferenceScore).reversed())
                 .limit(10)
                 .toList();
@@ -190,8 +219,9 @@ public class MatchService {
 
     // 캐시된 데이터로 개별 추천 아이템 생성
     private MatchRecommendationResponse.MatchRecommendationItem buildCachedRecommendationItem(
-            CachedUserProfile candidate, CachedUserProfile senderProfile) {
-        BigDecimal similarityScore = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderProfile, candidate));
+            CachedUserProfile candidate, UserMatchPreference senderPreference) {
+        UserProfile candidateProfile = convertToUserProfile(candidate);
+        BigDecimal similarityScore = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderPreference, candidateProfile));
         return MatchRecommendationResponse.MatchRecommendationItem.builder()
                 .receiverId      (candidate.getUserId())
                 .name            (candidate.getName())
@@ -288,6 +318,9 @@ public class MatchService {
         User sender = userRepository.findByEmail(senderEmail)
                 .orElseThrow(() -> ServiceException.notFound("사용자를 찾을 수 없습니다."));
 
+        UserMatchPreference senderPreference = userMatchPreferenceRepository.findByUserId(sender.getId())
+                .orElseThrow(() -> ServiceException.notFound("사용자의 매칭 선호도를 찾을 수 없습니다. 먼저 선호도를 등록해주세요."));
+
         validateUserMatchPreference(receiverId);
 
         CachedUserProfile cachedReceiver = matchCacheService.getUserProfileById(receiverId);
@@ -295,13 +328,9 @@ public class MatchService {
             throw ServiceException.notFound("상대방 프로필을 찾을 수 없습니다.");
         }
 
-        CachedUserProfile cachedSender = matchCacheService.getUserProfileById(sender.getId());
-        if (cachedSender == null) {
-            throw ServiceException.notFound("사용자 프로필을 찾을 수 없습니다.");
-        }
-
+        UserProfile receiverProfile = convertToUserProfile(cachedReceiver);
         BigDecimal similarityScore = BigDecimal.valueOf(
-            similarityCalculator.calculateSimilarity(cachedSender, cachedReceiver)
+            similarityCalculator.calculateSimilarity(senderPreference, receiverProfile)
         );
 
         Optional<Match> existingMatch = matchRepository.findBySenderIdAndReceiverId(sender.getId(), receiverId);

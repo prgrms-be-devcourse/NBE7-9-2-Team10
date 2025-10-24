@@ -113,14 +113,5 @@ public class SimilarityCalculator {
         return 0; // 범위 밖의 나이는 0점 처리
     }
 
-    private boolean isAgeInRange(int age, int rangeCategory) {
-        return switch (rangeCategory) {
-            case 1 -> age >= 20 && age <= 22;
-            case 2 -> age >= 23 && age <= 25;
-            case 3 -> age >= 26 && age <= 28;
-            case 4 -> age >= 29 && age <= 30;
-            case 5 -> age >= 31;
-            default -> false;
-        };
-    }
+
 }
