@@ -1,8 +1,6 @@
 package com.unimate.domain.userMatchPreference.service;
 
-import com.unimate.domain.match.entity.MatchStatus;
-import com.unimate.domain.match.entity.MatchType;
-import com.unimate.domain.match.repository.MatchRepository;
+import com.unimate.domain.match.service.MatchCacheService;
 import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.UserRepository;
 import com.unimate.domain.userMatchPreference.dto.MatchPreferenceRequest;
@@ -12,11 +10,13 @@ import com.unimate.domain.userMatchPreference.repository.UserMatchPreferenceRepo
 import com.unimate.domain.userProfile.entity.UserProfile;
 import com.unimate.domain.userProfile.repository.UserProfileRepository;
 import com.unimate.global.exception.ServiceException;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserMatchPreferenceService {
@@ -24,6 +24,10 @@ public class UserMatchPreferenceService {
     private final UserMatchPreferenceRepository userMatchPreferenceRepository;
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
+    private final MatchCacheService matchCacheService;
+
+    @Value("${cache.redis.enabled:true}")
+    private boolean redisCacheEnabled;
 
     @Transactional
     public MatchPreferenceResponse updateMyMatchPreferences(Long userId, MatchPreferenceRequest requestDto) {
@@ -51,6 +55,12 @@ public class UserMatchPreferenceService {
 
         // upodatedAt 동기화
         UserMatchPreference  updatedPreference = userMatchPreferenceRepository.saveAndFlush(preference);
+
+        // 캐시 무효화 (새 유저가 매칭 후보에 포함되도록)
+        if (redisCacheEnabled) {
+            matchCacheService.evictAllCandidatesCache();
+            log.info("✅ 매칭 선호도 등록/수정 - 전체 후보자 캐시 무효화 (userId: {})", userId);
+        }
 
         // responseDto로 변환하여 반환
         return MatchPreferenceResponse.fromEntity(updatedPreference);

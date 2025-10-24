@@ -222,6 +222,18 @@ public class MatchService {
             CachedUserProfile candidate, UserMatchPreference senderPreference) {
         UserProfile candidateProfile = convertToUserProfile(candidate);
         BigDecimal similarityScore = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderPreference, candidateProfile));
+        
+        // 실제 매칭 상태 조회
+        Optional<Match> existingMatch = matchRepository.findBySenderIdAndReceiverId(
+                senderPreference.getUser().getId(), candidate.getUserId());
+        
+        MatchType matchType = existingMatch.isPresent() ? existingMatch.get().getMatchType() : null;
+        MatchStatus matchStatus = existingMatch.isPresent() ? existingMatch.get().getMatchStatus() : null;
+        
+        // 디버깅 로그
+        log.info("🔍 매칭 상태 조회 - senderId: {}, receiverId: {}, matchType: {}, matchStatus: {}", 
+                senderPreference.getUser().getId(), candidate.getUserId(), matchType, matchStatus);
+        
         return MatchRecommendationResponse.MatchRecommendationItem.builder()
                 .receiverId      (candidate.getUserId())
                 .name            (candidate.getName())
@@ -231,8 +243,8 @@ public class MatchService {
                 .age             (matchUtilityService.calculateAge(candidate.getBirthDate()))
                 .mbti            (candidate.getMbti())
                 .preferenceScore (similarityScore)
-                .matchType       (null)
-                .matchStatus     (null)
+                .matchType       (matchType)
+                .matchStatus     (matchStatus)
                 // 추가 프로필 정보
                 .sleepTime       (candidate.getSleepTime())
                 .cleaningFrequency(candidate.getCleaningFrequency())
@@ -279,6 +291,18 @@ public class MatchService {
     private MatchRecommendationResponse.MatchRecommendationItem buildRecommendationItem(
             UserProfile candidate, UserMatchPreference senderPreference) {
         BigDecimal similarityScore = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderPreference, candidate));
+        
+        // 실제 매칭 상태 조회
+        Optional<Match> existingMatch = matchRepository.findBySenderIdAndReceiverId(
+                senderPreference.getUser().getId(), candidate.getUser().getId());
+        
+        MatchType matchType = existingMatch.isPresent() ? existingMatch.get().getMatchType() : null;
+        MatchStatus matchStatus = existingMatch.isPresent() ? existingMatch.get().getMatchStatus() : null;
+        
+        // 디버깅 로그
+        log.info("🔍 매칭 상태 조회 (DB) - senderId: {}, receiverId: {}, matchType: {}, matchStatus: {}", 
+                senderPreference.getUser().getId(), candidate.getUser().getId(), matchType, matchStatus);
+        
         return MatchRecommendationResponse.MatchRecommendationItem.builder()
                 .receiverId(candidate.getUser().getId())
                 .name(candidate.getUser().getName())
@@ -288,8 +312,8 @@ public class MatchService {
                 .age(matchUtilityService.calculateAge(candidate.getUser().getBirthDate()))
                 .mbti(candidate.getMbti())
                 .preferenceScore(similarityScore)
-                .matchType(null)
-                .matchStatus(null)
+                .matchType(matchType)
+                .matchStatus(matchStatus)
                 // 추가 프로필 정보
                 .sleepTime(candidate.getSleepTime())
                 .cleaningFrequency(candidate.getCleaningFrequency())
