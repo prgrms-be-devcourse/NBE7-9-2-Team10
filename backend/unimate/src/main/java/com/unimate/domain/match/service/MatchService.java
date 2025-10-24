@@ -222,6 +222,19 @@ public class MatchService {
             CachedUserProfile candidate, UserMatchPreference senderPreference) {
         UserProfile candidateProfile = convertToUserProfile(candidate);
         BigDecimal similarityScore = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderPreference, candidateProfile));
+
+        // 실제 매칭 상태 조회 (Redis 캐시 버전 - 의도적으로 주석 처리)
+        // Optional<Match> existingMatch = matchRepository.findBySenderIdAndReceiverId(
+        //         senderPreference.getUser().getId(), candidate.getUserId());
+
+        // MatchType matchType = existingMatch.map(Match::getMatchType).orElse(MatchType.NONE);
+        // MatchStatus matchStatus = existingMatch.map(Match::getMatchStatus).orElse(MatchStatus.NONE);
+
+        // if (log.isDebugEnabled()) {
+        //     log.debug("🔍 매칭 상태 조회 (Redis) - senderId: {}, receiverId: {}, matchType: {}, matchStatus: {}",
+        //             senderPreference.getUser().getId(), candidate.getUserId(), matchType, matchStatus);
+        // }
+
         return MatchRecommendationResponse.MatchRecommendationItem.builder()
                 .receiverId      (candidate.getUserId())
                 .name            (candidate.getName())
@@ -279,6 +292,19 @@ public class MatchService {
     private MatchRecommendationResponse.MatchRecommendationItem buildRecommendationItem(
             UserProfile candidate, UserMatchPreference senderPreference) {
         BigDecimal similarityScore = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderPreference, candidate));
+
+        // 실제 매칭 상태 조회
+        Optional<Match> existingMatch = matchRepository.findBySenderIdAndReceiverId(
+                senderPreference.getUser().getId(), candidate.getUser().getId());
+
+        MatchType matchType = existingMatch.map(Match::getMatchType).orElse(MatchType.NONE);
+        MatchStatus matchStatus = existingMatch.map(Match::getMatchStatus).orElse(MatchStatus.NONE);
+
+        // if (log.isDebugEnabled()) {
+        //     log.debug("🔍 매칭 상태 조회 (DB) - senderId: {}, receiverId: {}, matchType: {}, matchStatus: {}",
+        //             senderPreference.getUser().getId(), candidate.getUser().getId(), matchType, matchStatus);
+        // }
+
         return MatchRecommendationResponse.MatchRecommendationItem.builder()
                 .receiverId(candidate.getUser().getId())
                 .name(candidate.getUser().getName())
@@ -288,8 +314,8 @@ public class MatchService {
                 .age(matchUtilityService.calculateAge(candidate.getUser().getBirthDate()))
                 .mbti(candidate.getMbti())
                 .preferenceScore(similarityScore)
-                .matchType(null)
-                .matchStatus(null)
+                .matchType(matchType)
+                .matchStatus(matchStatus)
                 // 추가 프로필 정보
                 .sleepTime(candidate.getSleepTime())
                 .cleaningFrequency(candidate.getCleaningFrequency())
@@ -335,8 +361,8 @@ public class MatchService {
 
         Optional<Match> existingMatch = matchRepository.findBySenderIdAndReceiverId(sender.getId(), receiverId);
 
-        MatchType matchType = existingMatch.isPresent() ? existingMatch.get().getMatchType() : null;
-        MatchStatus matchStatus = existingMatch.isPresent() ? existingMatch.get().getMatchStatus() : null;
+        MatchType matchType = existingMatch.map(Match::getMatchType).orElse(MatchType.NONE);
+        MatchStatus matchStatus = existingMatch.map(Match::getMatchStatus).orElse(MatchStatus.NONE);
 
         return MatchRecommendationDetailResponse.builder()
                 .receiverId(cachedReceiver.getUserId())
@@ -387,8 +413,8 @@ public class MatchService {
 
         Optional<Match> existingMatch = matchRepository.findBySenderIdAndReceiverId(sender.getId(), receiverId);
 
-        MatchType matchType = existingMatch.isPresent() ? existingMatch.get().getMatchType() : null;
-        MatchStatus matchStatus = existingMatch.isPresent() ? existingMatch.get().getMatchStatus() : null;
+        MatchType matchType = existingMatch.map(Match::getMatchType).orElse(MatchType.NONE);
+        MatchStatus matchStatus = existingMatch.map(Match::getMatchStatus).orElse(MatchStatus.NONE);
 
         return MatchRecommendationDetailResponse.builder()
                 .receiverId(receiver.getId())

@@ -38,6 +38,7 @@ public class MatchUtilityService {
      */
     public String getStatusMessage(MatchStatus status) {
         return switch (status) {
+            case NONE -> "관계 없음";
             case PENDING -> "매칭 대기 중입니다.";
             case ACCEPTED -> "룸메이트 매칭이 성사되었습니다!";
             case REJECTED -> "매칭이 거절되었습니다.";
