@@ -33,16 +33,9 @@ const UserCard: FC<UserCardProps> = ({ user, onLikeChange, onViewDetail }) => {
         onLikeChange(user.receiverId, false);
         setToast({ message: '좋아요를 취소했습니다.', type: 'success' });
       } else {
-        const response = await MatchService.sendLike(user.receiverId);
+        await MatchService.sendLike(user.receiverId);
         onLikeChange(user.receiverId, true);
-        
-        // 상호 매칭 여부에 따라 다른 메시지 표시
-        if (response.data?.data?.isMutual) {
-          setToast({ message: '매칭이 성사되었습니다! 채팅방으로 이동합니다.', type: 'success' });
-          // TODO: 채팅방으로 이동하는 로직 추가 (예: router.push)
-        } else {
-          setToast({ message: '좋아요를 보냈습니다! 💝', type: 'success' });
-        }
+        setToast({ message: '좋아요를 보냈습니다! 💝', type: 'success' });
       }
     } catch (error) {
       setToast({ message: `오류: ${getErrorMessage(error)}`, type: 'error' });
