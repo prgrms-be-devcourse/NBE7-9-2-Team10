@@ -25,6 +25,4 @@ public class UserSessionService {
         boolean isInChatroom = chatroomId.equals(currentChatroomId);
         return isInChatroom;
     }
-
-
 }
