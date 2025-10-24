@@ -94,13 +94,18 @@ public class MatchUtilityService {
     /**
      * Match를 MatchResultItem으로 변환
      */
-    public MatchResultResponse.MatchResultItem toMatchResultItem(Match match) {
+    public MatchResultResponse.MatchResultItem toMatchResultItem(Match match, Long currentUserId) {
+        // 현재 사용자 기준으로 상대방 정보 설정
+        User partner = match.getSender().getId().equals(currentUserId) 
+            ? match.getReceiver() 
+            : match.getSender();
+            
         return new MatchResultResponse.MatchResultItem(
                 match.getId(),
-                match.getSender().getId(),
-                match.getSender().getName(),
-                match.getReceiver().getId(),
-                match.getReceiver().getName(),
+                currentUserId,
+                match.getSender().getId().equals(currentUserId) ? match.getSender().getName() : partner.getName(),
+                partner.getId(),
+                partner.getName(),
                 match.getMatchType(),
                 match.getMatchStatus(),
                 match.getPreferenceScore(),

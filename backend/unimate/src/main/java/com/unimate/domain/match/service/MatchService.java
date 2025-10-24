@@ -310,7 +310,7 @@ public class MatchService {
         List<MatchResultResponse.MatchResultItem> results = matchRepository.findBySenderIdOrReceiverId(userId)
                 .stream()
                 .filter(match -> match.getMatchStatus() == MatchStatus.ACCEPTED)
-                .map(matchUtilityService::toMatchResultItem)
+                .map(match -> matchUtilityService.toMatchResultItem(match, userId))
                 .toList();
 
         return new MatchResultResponse(results);
