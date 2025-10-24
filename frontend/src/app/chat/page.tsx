@@ -207,7 +207,7 @@ export default function ChatListPage() {
                 상대방도 좋아요를 누르면 채팅방이 생성됩니다!
               </p>
               <button 
-                onClick={() => router.push('/match')}
+                onClick={() => router.push('/matches')}
                 className="text-[#4F46E5] font-medium hover:underline"
               >
                 매칭 페이지로 가기 →
