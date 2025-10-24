@@ -38,6 +38,16 @@ public class Chatroom {
     @Builder.Default
     private ChatroomStatus status = ChatroomStatus.ACTIVE;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user1_status", nullable = false, length = 10)
+    @Builder.Default
+    private ChatroomStatus user1Status = ChatroomStatus.ACTIVE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user2_status", nullable = false, length = 10)
+    @Builder.Default
+    private ChatroomStatus user2Status = ChatroomStatus.ACTIVE;
+
     @Column(name = "last_read_message_id_user1")
     private Long lastReadMessageIdUser1;
 
@@ -88,9 +98,19 @@ public class Chatroom {
         this.blockedAt = LocalDateTime.now();
     }
 
+    public void leave(Long userId) {
+        if (userId.equals(user1Id)) {
+            this.user1Status = ChatroomStatus.CLOSED;
+        } else if (userId.equals(user2Id)) {
+            this.user2Status = ChatroomStatus.CLOSED;
+        }
+    }
+
     // CLOSED 상태의 채팅방을 다시 활성화
     public void reactivate() {
         this.status = ChatroomStatus.ACTIVE;
+        this.user1Status = ChatroomStatus.ACTIVE;
+        this.user2Status = ChatroomStatus.ACTIVE;
         this.blockedBy = null;
         this.blockedAt = null;
     }
@@ -116,6 +136,8 @@ public class Chatroom {
                 .user1Id(user1Id)
                 .user2Id(user2Id)
                 .status(ChatroomStatus.ACTIVE)
+                .user1Status(ChatroomStatus.ACTIVE)
+                .user2Status(ChatroomStatus.ACTIVE)
                 .build();
     }
 

@@ -10,6 +10,7 @@ interface NotificationModalProps {
   notifications: Notification[]
   onMarkAsRead: (id: string) => void
   onDeleteNotification: (id: string) => void
+  onDeleteAllNotifications: () => void
   onViewProfile: (senderId: number) => void
   onViewChat: (chatroomId: number) => void
 }
@@ -20,6 +21,7 @@ export default function NotificationModal({
   notifications,
   onMarkAsRead,
   onDeleteNotification,
+  onDeleteAllNotifications,
   onViewProfile,
   onViewChat
 }: NotificationModalProps) {
@@ -130,6 +132,11 @@ export default function NotificationModal({
     }
   }
 
+  const handleDeleteAll = () => {
+    onDeleteAllNotifications()
+    // 모달은 닫지 않고 열린 상태로 유지
+  }
+
   if (!isOpen) return null
 
   return (
@@ -152,8 +159,15 @@ export default function NotificationModal({
               </p>
             </div>
             <button
-              onClick={onClose}
+              onClick={() => {
+                if (localNotifications.length > 0) {
+                  handleDeleteAll()
+                } else {
+                  onClose()
+                }
+              }}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title={localNotifications.length > 0 ? "모든 알림 삭제" : "닫기"}
             >
               <X className="w-5 h-5 text-gray-500" />
             </button>

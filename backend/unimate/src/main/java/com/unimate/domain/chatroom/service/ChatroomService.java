@@ -71,6 +71,13 @@ public class ChatroomService {
                     // 기존 채팅방이 닫힌 상태면 재활성화
                     if (existingRoom.getStatus() == ChatroomStatus.CLOSED) {
                         existingRoom.reactivate();
+                        return chatroomRepository.save(existingRoom);
+                    }
+                    // 개별 사용자 상태도 체크
+                    if (existingRoom.getUser1Status() == ChatroomStatus.CLOSED ||
+                            existingRoom.getUser2Status() == ChatroomStatus.CLOSED) {
+                        existingRoom.reactivate();
+                        return chatroomRepository.save(existingRoom);
                     }
                     return existingRoom;
                 })
@@ -121,6 +128,8 @@ public class ChatroomService {
                 partnerUniversity,
                 isPartnerDeleted,
                 room.getStatus().name(),
+                room.getUser1Status().name(),
+                room.getUser2Status().name(),
                 ISO.format(room.getCreatedAt()),
                 ISO.format(room.getUpdatedAt()),
                 room.getLastReadMessageIdUser1(),
@@ -261,7 +270,7 @@ public class ChatroomService {
     public ChatRoomLeaveResponse leave(Long me, Long chatroomId) {
         Chatroom room = getRoomOrThrow(chatroomId);
         assertMember(me, room);
-        room.block(me);
+        room.leave(me);
 
         // 매칭 기록 삭제
         Long partnerId = partnerIdOf(me, room);
@@ -301,8 +310,15 @@ public class ChatroomService {
     // WS 전송 전 검증
     public Chatroom validateWritable(Long senderId, Long chatroomId) {
         Chatroom room = getRoomOrThrow(chatroomId); // 404 매핑
-        assertMember(senderId, room);               // 멤버 권한 체크
+        assertMember(senderId, room);
 
+        // 상대방이 나간 상태인지 확인
+        if (senderId.equals(room.getUser1Id()) && room.getUser2Status() == ChatroomStatus.CLOSED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 나간 사용자입니다.");
+        }
+        if (senderId.equals(room.getUser2Id()) && room.getUser1Status() == ChatroomStatus.CLOSED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 나간 사용자입니다.");
+        }
 
         if (room.getStatus() == ChatroomStatus.CLOSED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "닫힌 채팅방입니다.");

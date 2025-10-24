@@ -23,7 +23,8 @@ public class ChatroomRepositoryImpl implements CustomChatroomRepository {
         StringBuilder jpql = new StringBuilder("""
             select c
               from Chatroom c
-             where (c.user1Id = :userId or c.user2Id = :userId)
+                where ((c.user1Id = :userId and c.user1Status = 'ACTIVE') or
+                       (c.user2Id = :userId and c.user2Status = 'ACTIVE'))
         """);
 
         if (status != null) {
