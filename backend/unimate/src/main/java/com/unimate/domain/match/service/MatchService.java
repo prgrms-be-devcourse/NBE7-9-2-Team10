@@ -10,6 +10,7 @@ import com.unimate.domain.notification.entity.NotificationType;
 import com.unimate.domain.notification.service.NotificationService;
 import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.UserRepository;
+import com.unimate.domain.userMatchPreference.entity.UserMatchPreference;
 import com.unimate.domain.userMatchPreference.repository.UserMatchPreferenceRepository;
 import com.unimate.domain.userProfile.entity.UserProfile;
 import com.unimate.domain.userProfile.repository.UserProfileRepository;
@@ -49,13 +50,14 @@ public class MatchService {
             String cleaningFrequencyFilter,
             LocalDate startDate,
             LocalDate endDate
-    ) { 
+    ) {
         User sender = getUserByEmail(senderEmail);
-        UserProfile senderProfile = getUserProfile(sender.getId());
-        
+        UserMatchPreference senderPreference = userMatchPreferenceRepository.findByUserId(sender.getId())
+                .orElseThrow(() -> ServiceException.notFound("사용자의 매칭 선호도를 찾을 수 없습니다. 먼저 선호도를 등록해주세요."));
+
         List<UserProfile> candidates = filterCandidates(sender, sleepPatternFilter, ageRangeFilter, cleaningFrequencyFilter, startDate, endDate);
-        List<MatchRecommendationResponse.MatchRecommendationItem> recommendations = buildRecommendations(candidates, senderProfile);
-        
+        List<MatchRecommendationResponse.MatchRecommendationItem> recommendations = buildRecommendations(candidates, senderPreference);
+
         return new MatchRecommendationResponse(recommendations);
     }
 
@@ -100,16 +102,17 @@ public class MatchService {
     /**
      * 이미 매칭이 성사된 사용자인지 확인
      * REQUEST + ACCEPTED 상태인 경우 제외 (양쪽 모두 확정한 경우)
+     * + REQUEST + PENDING 상태인 경우도 제외 (상호 좋아요로 채팅방이 열린 경우)
      */
     private boolean isAlreadyMatched(Long senderId, Long candidateId) {
-        // matchStatus == ACCEPTED는 오직 양쪽 모두 확정한 경우만
+        // matchStatus == ACCEPTED는 오직 양쪽 모두 확정한 경우만. PENDING도 확인하도록 수정.
         boolean iSentAccepted = matchRepository.findBySenderIdAndReceiverId(senderId, candidateId)
-                .map(match -> match.getMatchType() == MatchType.REQUEST && match.getMatchStatus() == MatchStatus.ACCEPTED)
+                .map(match -> match.getMatchType() == MatchType.REQUEST && (match.getMatchStatus() == MatchStatus.ACCEPTED || match.getMatchStatus() == MatchStatus.PENDING))
                 .orElse(false);
         
-        // 상대방이 나에게 보낸 매칭이 ACCEPTED 상태인지 확인
+        // 상대방이 나에게 보낸 매칭이 ACCEPTED 상태인지 확인. PENDING도 확인하도록 수정.
         boolean theySentAccepted = matchRepository.findBySenderIdAndReceiverId(candidateId, senderId)
-                .map(match -> match.getMatchType() == MatchType.REQUEST && match.getMatchStatus() == MatchStatus.ACCEPTED)
+                .map(match -> match.getMatchType() == MatchType.REQUEST && (match.getMatchStatus() == MatchStatus.ACCEPTED || match.getMatchStatus() == MatchStatus.PENDING))
                 .orElse(false);
         
         return iSentAccepted || theySentAccepted;
@@ -119,9 +122,9 @@ public class MatchService {
      * 추천 아이템 생성
      */
     private List<MatchRecommendationResponse.MatchRecommendationItem> buildRecommendations(
-            List<UserProfile> candidates, UserProfile senderProfile) {
+            List<UserProfile> candidates, UserMatchPreference senderPreference) {
         return candidates.stream()
-                .map(candidate -> buildRecommendationItem(candidate, senderProfile))
+                .map(candidate -> buildRecommendationItem(candidate, senderPreference))
                 .sorted(Comparator.comparing(MatchRecommendationResponse.MatchRecommendationItem::getPreferenceScore).reversed())
                 .limit(10) // 최대 10명으로 제한
                 .toList();
@@ -131,8 +134,8 @@ public class MatchService {
      * 개별 추천 아이템 생성
      */
     private MatchRecommendationResponse.MatchRecommendationItem buildRecommendationItem(
-            UserProfile candidate, UserProfile senderProfile) {
-        BigDecimal similarityScore = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderProfile, candidate));
+            UserProfile candidate, UserMatchPreference senderPreference) {
+        BigDecimal similarityScore = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderPreference, candidate));
         return MatchRecommendationResponse.MatchRecommendationItem.builder()
                 .receiverId(candidate.getUser().getId())
                 .name(candidate.getUser().getName())
@@ -174,10 +177,10 @@ public class MatchService {
         UserProfile receiverProfile = userProfileRepository.findByUserId(receiver.getId())
                 .orElseThrow(() -> ServiceException.notFound("상대방 프로필을 찾을 수 없습니다."));
 
-        UserProfile senderProfile = userProfileRepository.findByUserId(sender.getId())
-                .orElseThrow(() -> ServiceException.notFound("사용자 프로필을 찾을 수 없습니다."));
+        UserMatchPreference senderPreference = userMatchPreferenceRepository.findByUserId(sender.getId())
+                .orElseThrow(() -> ServiceException.notFound("사용자의 매칭 선호도를 찾을 수 없습니다."));
 
-        BigDecimal similarityScore = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderProfile, receiverProfile));
+        BigDecimal similarityScore = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderPreference, receiverProfile));
 
         Optional<Match> existingMatch = matchRepository.findBySenderIdAndReceiverId(sender.getId(), receiverId);
 
@@ -397,12 +400,12 @@ public class MatchService {
             return new LikeResponse(existingMatch.getId(), true);
 
         } else {
-            UserProfile senderProfile = userProfileRepository.findByUserId(senderId)
-                    .orElseThrow(() -> ServiceException.notFound("사용자 프로필을 찾을 수 없습니다."));
+            UserMatchPreference senderPreference = userMatchPreferenceRepository.findByUserId(senderId)
+                    .orElseThrow(() -> ServiceException.notFound("사용자의 매칭 선호도를 찾을 수 없습니다."));
             UserProfile receiverProfile = userProfileRepository.findByUserId(receiverId)
                     .orElseThrow(() -> ServiceException.notFound("상대방 프로필을 찾을 수 없습니다."));
             
-            BigDecimal preferenceScore = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderProfile, receiverProfile));
+            BigDecimal preferenceScore = BigDecimal.valueOf(similarityCalculator.calculateSimilarity(senderPreference, receiverProfile));
             
             // 기존 기록이 없는 경우 (처음 '좋아요')
             Match newLike = Match.builder()
