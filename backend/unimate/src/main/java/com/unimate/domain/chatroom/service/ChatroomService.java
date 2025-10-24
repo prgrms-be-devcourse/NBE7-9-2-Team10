@@ -28,6 +28,7 @@ public class ChatroomService {
     private final ChatroomRepository chatroomRepository;
     private final MessageRepository messageRepository;
     private final com.unimate.domain.user.user.repository.UserRepository userRepository;
+    private final UserSessionService userSessionService;
     private final MatchRepository matchRepository;
 
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -88,6 +89,9 @@ public class ChatroomService {
     public ChatRoomDetailResponse getDetail(Long me, Long chatroomId) {
         Chatroom room = getRoomOrThrow(chatroomId);
         assertMember(me, room);
+
+        // 사용자가 채팅방에 입장했음을 기록
+        userSessionService.enterChatroom(me, chatroomId);
         
         // 상대방 ID 및 정보 조회
         Long partnerId = partnerIdOf(me, room);
@@ -270,6 +274,11 @@ public class ChatroomService {
                 ISO.format(LocalDateTime.now())
         );
     }
+    /** 채팅방 퇴장 알림 (알림용) */
+    public void leaveNotification(Long userId, Long chatroomId) {
+        userSessionService.leaveChatroom(userId, chatroomId);
+    }
+
 
     //차단 (응답 바디 없음) -> 채팅창에서 신고시 차단도 같이 처리되도록할 예정, 아직 사용 안함
     /*

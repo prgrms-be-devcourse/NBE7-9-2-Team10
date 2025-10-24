@@ -1,8 +1,8 @@
 package com.unimate.domain.message.ws;
 
 import com.unimate.domain.chatroom.entity.Chatroom;
-import com.unimate.domain.chatroom.entity.ChatroomStatus;
 import com.unimate.domain.chatroom.service.ChatroomService;
+import com.unimate.domain.chatroom.service.UserSessionService;
 import com.unimate.domain.message.dto.MessageType;
 import com.unimate.domain.message.dto.WsMessagePush;
 import com.unimate.domain.message.dto.WsSendAckResponse;
@@ -25,8 +25,6 @@ import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
@@ -38,6 +36,7 @@ public class ChatWsController {
     private final SimpMessageSendingOperations messagingTemplate;
     private final NotificationService notificationService;
     private final UserRepository userRepository;
+    private final UserSessionService userSessionService;
 
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
@@ -67,12 +66,8 @@ public class ChatWsController {
         final String userNameKey = user.getName();
 
         try {
-            // 권한/방 상태 검증
+            // 권한/방 상태 검증 (이미 CLOSED 상태도 검증함)
             Chatroom room = chatroomService.validateWritable(userId, req.getChatroomId());
-
-            if (room.getStatus() == ChatroomStatus.CLOSED) {
-                throw new IllegalStateException("이미 종료된 채팅방입니다.");
-            }
 
             // 메시지 처리 (멱등성 보장)
             Message msg = messageRepository
@@ -122,8 +117,12 @@ public class ChatWsController {
             messagingTemplate.convertAndSendToUser(userNameKey, "/queue/chat.ack", ack);
 
             // 상대방에게 채팅 알림 전송
-            try {
-                Long partnerId = room.getUser1Id().equals(userId) ? room.getUser2Id() : room.getUser1Id();
+            Long partnerId = room.getUser1Id().equals(userId) ? room.getUser2Id() : room.getUser1Id();
+
+            // 상대방이 현재 채팅방에 있는지 확인
+            boolean isInChatroom = userSessionService.isUserInChatroom(partnerId, room.getId());
+
+            if (!isInChatroom) {
                 User sender = userRepository.findById(userId)
                         .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
 
@@ -135,32 +134,10 @@ public class ChatWsController {
                         userId,
                         room.getId()
                 );
-            } catch (Exception e) {
-                // 알림 생성 실패해도 메시지 전송은 성공
             }
 
         } catch (Exception e) {
-            // 에러 발생 시 클라이언트에게 알림
-            sendErrorToClient(req.getChatroomId(), e.getMessage());
-        }
-    }
 
-    /**
-     * 채팅방 에러를 클라이언트에게 전송
-     */
-    private void sendErrorToClient(Long chatroomId, String errorMessage) {
-        try {
-            Map<String, Object> errorPayload = new HashMap<>();
-            errorPayload.put("message", "메시지 전송 실패");
-            errorPayload.put("error", errorMessage);
-            errorPayload.put("chatroomId", chatroomId);
-
-            String errorDestination = "/sub/chatroom." + chatroomId + ".error";
-            messagingTemplate.convertAndSend(errorDestination, errorPayload);
-        } catch (Exception sendError) {
-            // 에러 전송 실패는 로깅만 수행
-            System.err.println("Failed to send error message: " + sendError.getMessage());
         }
     }
 }
-
