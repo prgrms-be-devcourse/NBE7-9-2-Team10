@@ -8,13 +8,27 @@ import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import ProtectedRoute from '../../../components/auth/ProtectedRoute';
 import Layout from '../../../components/layout/Layout';
 import { MatchService } from '../../../lib/services/matchService';
+import { getErrorMessage } from '../../../lib/utils/helpers';
 import type { MatchResultResponse, MatchResultItem } from '../../../types/match';
+import { User, Calendar, Home, Phone } from 'lucide-react';
+
+interface EnrichedMatchResult extends MatchResultItem {
+  partnerDetails?: any; // 상세 정보
+}
 
 export default function MatchResultsPage() {
   const router = useRouter();
-  const [results, setResults] = useState<MatchResultItem[]>([]);
+  const [results, setResults] = useState<EnrichedMatchResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // 토스트 자동 제거
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   // 매칭 결과 조회
   const fetchMatchResults = async () => {
@@ -22,10 +36,28 @@ export default function MatchResultsPage() {
       setIsLoading(true);
       const response = await MatchService.getMatchResults();
       const data = (response as any).data || response;
-      setResults(data.results || []);
+      const matchResults = data.results || [];
+      
+      // 각 매칭 결과에 대한 연락처 정보 가져오기
+      const enrichedResults = await Promise.all(
+        matchResults.map(async (result: MatchResultItem) => {
+          try {
+            const details = await MatchService.getMatchDetail(result.receiverId);
+            return {
+              ...result,
+              partnerDetails: details
+            };
+          } catch (error) {
+            console.error(`Failed to fetch details for user ${result.receiverId}:`, error);
+            return result;
+          }
+        })
+      );
+      
+      setResults(enrichedResults);
     } catch (error) {
       console.error('매칭 결과 조회 실패:', error);
-      setToast({ message: '매칭 결과를 불러오는데 실패했습니다.', type: 'error' });
+      setToast({ message: getErrorMessage(error), type: 'error' });
     } finally {
       setIsLoading(false);
     }
@@ -115,22 +147,27 @@ export default function MatchResultsPage() {
                 timeDisplay = '최근';
               }
               
+              const details = result.partnerDetails;
+              const university = details?.university;
+              const startDate = details?.startUseDate;
+              const endDate = details?.endUseDate;
+
               return (
-                <Card key={result.id} className="p-6 hover:shadow-lg transition-shadow">
+                <Card key={result.id} className="p-6 hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-purple-200">
                   {/* 상대방 정보 헤더 */}
-                  <div className="flex items-center gap-4 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-                    <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full flex items-center justify-center shadow-md">
-                      <span className="text-white text-xl font-bold">
+                  <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                    <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-white text-3xl font-bold">
                         {partnerName.charAt(0)}
                       </span>
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                         {partnerName}
                       </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full font-medium">
-                          ✓ 확정됨
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full font-semibold">
+                          ✓ 매칭 확정
                         </span>
                         <span className="text-sm text-gray-500 dark:text-gray-400">
                           {timeDisplay}
@@ -139,39 +176,48 @@ export default function MatchResultsPage() {
                     </div>
                   </div>
 
-                  {/* 매칭 정보 */}
-                  <div className="space-y-3 mb-4">
-                    {/* 매칭률 */}
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1.5">
-                          <svg className="w-4 h-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            매칭률
-                          </span>
+                  {/* 실용 정보 */}
+                  <div className="space-y-3 mb-6">
+                    {/* 대학교 */}
+                    {university && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <User className="w-5 h-5 text-purple-500 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">학교</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {university}
+                          </p>
                         </div>
-                        <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
-                          {Math.round((result.preferenceScore || 0) * 100)}%
-                        </span>
                       </div>
-                      <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full transition-all duration-500"
-                          style={{ width: `${Math.round((result.preferenceScore || 0) * 100)}%` }}
-                        />
+                    )}
+
+                    {/* 룸쉐어 기간 */}
+                    {startDate && endDate && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <Home className="w-5 h-5 text-purple-500 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">룸쉐어 기간</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {new Date(startDate).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })} ~ {new Date(endDate).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })}
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* 확정일 */}
                     {isValidDate && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400 pt-2">
-                        확정일: {matchDate.toLocaleDateString('ko-KR', { 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })}
+                      <div className="flex items-center gap-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                        <Calendar className="w-5 h-5 text-purple-500 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">확정일</p>
+                          <p className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+                            {matchDate.toLocaleDateString('ko-KR', { 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -179,7 +225,7 @@ export default function MatchResultsPage() {
                   {/* 액션 버튼 */}
                   <Button
                     onClick={() => router.push(`/chat`)}
-                    className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md"
+                    className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-lg hover:shadow-xl py-4 text-lg font-semibold"
                   >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />

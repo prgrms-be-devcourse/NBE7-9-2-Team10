@@ -55,6 +55,20 @@ public class MatchUtilityService {
             ? match.getReceiver() 
             : match.getSender();
 
+        // 현재 사용자와 상대방의 응답 상태 조회
+        MatchStatus myResponse = match.getUserResponse(currentUserId);
+        MatchStatus partnerResponse;
+        
+        if (match.getSender().getId().equals(currentUserId)) {
+            partnerResponse = match.getReceiverResponse();
+        } else {
+            partnerResponse = match.getSenderResponse();
+        }
+
+        // 상대방의 응답 대기 중 여부 판단
+        boolean waitingForPartner = (myResponse != MatchStatus.PENDING) 
+                                    && (partnerResponse == MatchStatus.PENDING);
+
         return MatchStatusResponse.MatchStatusItem.builder()
                 .id(match.getId())
                 .senderId(match.getSender().getId())
@@ -65,6 +79,9 @@ public class MatchUtilityService {
                 .createdAt(match.getCreatedAt())
                 .confirmedAt(match.getConfirmedAt())
                 .message(message)
+                .myResponse(myResponse)
+                .partnerResponse(partnerResponse)
+                .waitingForPartner(waitingForPartner)
                 .partner(MatchStatusResponse.MatchStatusItem.PartnerInfo.builder()
                         .id(partner.getId())
                         .name(partner.getName())
