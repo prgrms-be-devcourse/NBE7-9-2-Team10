@@ -191,8 +191,6 @@ export default function ChatListPage() {
       const chatroomResponse = await apiClient.get(`/api/v1/chatrooms/${chat.chatroomId}`)
       const chatroomData = chatroomResponse.data
       
-      console.log('채팅방 데이터:', chatroomData)
-      
       // 현재 사용자 ID
       const currentUserId = typeof window !== 'undefined' ? 
         parseInt(localStorage.getItem('userId') || '0') : 0
@@ -200,23 +198,16 @@ export default function ChatListPage() {
       // 상대방 ID 찾기
       const partnerId = chatroomData.user1Id === currentUserId ? chatroomData.user2Id : chatroomData.user1Id
       
-      console.log('현재 사용자 ID:', currentUserId)
-      console.log('상대방 ID:', partnerId)
-      
       // 매칭 상태에서 해당 사용자의 이메일 찾기
       try {
         const matchStatusResponse = await apiClient.get('/api/v1/matches/status')
         const matchStatus = matchStatusResponse.data.matches || []
-        
-        console.log('매칭 상태 데이터:', matchStatus)
         
         // 현재 채팅방과 관련된 매칭 상태 찾기
         const relatedMatch = matchStatus.find((match: any) => 
           (match.senderId === currentUserId && match.receiverId === partnerId) ||
           (match.senderId === partnerId && match.receiverId === currentUserId)
         )
-        
-        console.log('관련 매칭 상태:', relatedMatch)
         
         if (!relatedMatch) {
           alert('매칭 정보를 찾을 수 없어 신고할 수 없습니다.')
@@ -230,8 +221,6 @@ export default function ChatListPage() {
           alert('상대방의 이메일 정보를 찾을 수 없어 신고할 수 없습니다.')
           return
         }
-        
-        console.log('신고할 이메일:', reportedEmail)
         
         await MatchService.reportUser({
           reportedEmail,
