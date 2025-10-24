@@ -299,6 +299,9 @@ public class MatchService {
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> ServiceException.notFound("상대방 사용자를 찾을 수 없습니다."));
 
+        // (다시 좋아요) 만약 '좋아요 취소' 알림이 있었다면 삭제
+        notificationService.deleteNotificationBySender(receiverId, NotificationType.LIKE_CANCELED, senderId);
+
         // 양방향으로 기존 '좋아요' 기록이 있는지 확인
         Optional<Match> existingMatchOpt = matchRepository.findLikeBetweenUsers(senderId, receiverId);
 
@@ -374,8 +377,8 @@ public class MatchService {
                     .build();
             matchRepository.save(newLike);
 
-            // 좋아요 알림 생성
-            try {
+            // (연타 방지) 이미 보낸 '좋아요' 알림이 없다면 새로 생성
+            if (!notificationService.notificationExistsBySender(receiverId, NotificationType.LIKE, senderId)) {
                 notificationService.createNotification(
                         receiverId,
                         NotificationType.LIKE,
@@ -383,8 +386,6 @@ public class MatchService {
                         sender.getName(),
                         senderId
                 );
-            } catch (Exception e) {
-                // 알림 생성 실패해도 좋아요는 진행
             }
 
             return new LikeResponse(newLike.getId(), false); // 아직 상호 매칭(요청)은 아님
@@ -399,8 +400,25 @@ public class MatchService {
         // 매칭 선호도 등록 여부 확인
         validateUserMatchPreference(receiverId);
 
+        User sender = userRepository.findById(senderId)
+                .orElseThrow(() -> ServiceException.notFound("전송하는 사용자를 찾을 수 없습니다."));
+
         Match like = matchRepository.findBySenderIdAndReceiverIdAndMatchType(senderId, receiverId, MatchType.LIKE)
                 .orElseThrow(() -> ServiceException.notFound("취소할 '좋아요' 기록이 존재하지 않습니다."));
+
+        // 기존 '좋아요' 알림 삭제
+        notificationService.deleteNotificationBySender(receiverId, NotificationType.LIKE, senderId);
+
+        // '좋아요 취소' 알림이 없다면 새로 생성
+        if (!notificationService.notificationExistsBySender(receiverId, NotificationType.LIKE_CANCELED, senderId)) {
+            notificationService.createNotification(
+                    receiverId,
+                    NotificationType.LIKE_CANCELED,
+                    sender.getName() + " 님이 좋아요를 취소했습니다.",
+                    sender.getName(),
+                    senderId
+            );
+        }
 
         matchRepository.delete(like);
     }
