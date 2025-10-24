@@ -18,6 +18,7 @@ interface ChatRoom {
   lastMessageTime?: string
   partnerName?: string
   unreadCount?: number
+  isNew?: boolean // NEW 배지 표시 여부
 }
 
 export default function ChatListPage() {
@@ -60,29 +61,44 @@ export default function ChatListPage() {
             // 백엔드에서 이미 partnerName을 보내주므로 별도 조회 불필요
             const partnerName = chat.partnerName || '알 수 없는 사용자'
             
+            // NEW 배지 표시 여부 확인 (localStorage에서 방문 기록 확인)
+            const visitedChatrooms = JSON.parse(localStorage.getItem('visitedChatrooms') || '[]')
+            const isNew = !visitedChatrooms.includes(chat.chatroomId)
+            
             return {
               ...chat,
-              lastMessage: lastMsg ? lastMsg.content : '상호 좋아요로 매칭되었습니다!',
+              lastMessage: lastMsg ? lastMsg.content : '매칭되었습니다! 안녕하세요 👋',
               lastMessageTime: lastMsg ? lastMsg.createdAt : chat.createdAt,
               partnerName: partnerName,
-              unreadCount: unreadCount
+              unreadCount: unreadCount,
+              isNew: isNew
             }
           } catch (error) {
-            console.error(`채팅방 ${chat.chatroomId} 메시지 로드 실패:`, error)
+            // NEW 배지 표시 여부 확인 (localStorage에서 방문 기록 확인)
+            const visitedChatrooms = JSON.parse(localStorage.getItem('visitedChatrooms') || '[]')
+            const isNew = !visitedChatrooms.includes(chat.chatroomId)
+            
             return {
               ...chat,
-              lastMessage: '상호 좋아요로 매칭되었습니다!',
+              lastMessage: '매칭되었습니다! 안녕하세요 👋',
               lastMessageTime: chat.createdAt,
               partnerName: chat.partnerName || '알 수 없는 사용자',
-              unreadCount: 0
+              unreadCount: 0,
+              isNew: isNew
             }
           }
         })
       )
       
-      setChats(chatroomsWithMessages)
+      // 최신 메시지 시간순으로 정렬 (최신이 위로)
+      const sortedChats = chatroomsWithMessages.sort((a, b) => {
+        const timeA = new Date(a.lastMessageTime || a.createdAt).getTime()
+        const timeB = new Date(b.lastMessageTime || b.createdAt).getTime()
+        return timeB - timeA // 내림차순 (최신이 위로)
+      })
+      
+      setChats(sortedChats)
     } catch (error) {
-      console.error('채팅방 목록 조회 실패:', error)
       setChats([])
     } finally {
       setIsLoading(false)
@@ -104,13 +120,43 @@ export default function ChatListPage() {
     return () => window.removeEventListener('focus', handleFocus)
   }, [])
 
-  const handleChatClick = (chatId: number) => {
-    // 채팅방에 들어갈 때 안 읽음 개수를 0으로 업데이트
+  const handleChatClick = async (chatId: number) => {
+    // 채팅방에 들어갈 때 안 읽음 개수를 0으로 업데이트하고 NEW 배지 제거
     setChats(chats.map(chat => 
       chat.chatroomId === chatId 
-        ? { ...chat, unreadCount: 0 }
+        ? { ...chat, unreadCount: 0, isNew: false }
         : chat
     ))
+    
+    // 채팅방 진입 시 읽음 처리
+    try {
+      const messagesResponse = await apiClient.get(
+        `/api/v1/chatrooms/${chatId}/messages`,
+        { params: { limit: 1 } }
+      )
+      const messages = messagesResponse.data.items || []
+      
+      if (messages.length > 0) {
+        const message = messages[0]
+        const latestMessageId = message.messageId || message.id
+        
+        if (latestMessageId) {
+          await apiClient.post(`/api/v1/chatrooms/${chatId}/read`, {
+            lastReadMessageId: latestMessageId
+          })
+        }
+      }
+    } catch (error) {
+      // 읽음 처리 실패는 무시
+    }
+    
+    // 채팅방 방문 기록 저장 (NEW 배지 제거용)
+    const visitedChatrooms = JSON.parse(localStorage.getItem('visitedChatrooms') || '[]')
+    if (!visitedChatrooms.includes(chatId)) {
+      visitedChatrooms.push(chatId)
+      localStorage.setItem('visitedChatrooms', JSON.stringify(visitedChatrooms))
+    }
+    
     router.push(`/chat/${chatId}`)
   }
 
@@ -122,7 +168,6 @@ export default function ChatListPage() {
       setShowDeleteModal(null)
       setShowMenu(null)
     } catch (error) {
-      console.error('채팅방 나가기 실패:', error)
       alert('채팅방 나가기에 실패했습니다. 잠시 후 다시 시도해주세요.')
     }
   }
@@ -134,10 +179,15 @@ export default function ChatListPage() {
         <AppHeader />
 
         {/* Main Content */}
-        <div className="px-4 py-8">
+        <div className="px-4 py-6">
+          {/* Title */}
+          <div className="mb-2">
+            <h1 className="text-2xl font-bold text-[#111827]">채팅</h1>
+          </div>
+          
           {/* Description */}
-          <div className="mb-8">
-            <p className="text-[#6B7280]">매칭된 룸메이트와 대화를 나눠보세요</p>
+          <div className="mb-6">
+            <p className="text-[#6B7280] text-sm">매칭된 룸메이트와 대화를 나눠보세요</p>
           </div>
 
           {/* Loading */}
@@ -164,12 +214,18 @@ export default function ChatListPage() {
               </button>
             </div>
           ) : (
-            <div className="space-y-4">
-              {chats.map((chat) => (
+            <>
+              <div className="space-y-4">
+                {chats.map((chat) => (
                 <div
                   key={chat.chatroomId}
-                  className="bg-white rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer relative"
-                  onClick={() => handleChatClick(chat.chatroomId)}
+                  className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow cursor-pointer relative border border-gray-100"
+                  onClick={() => {
+                    // 메뉴가 열려있으면 채팅방으로 이동하지 않음
+                    if (showMenu !== chat.chatroomId) {
+                      handleChatClick(chat.chatroomId)
+                    }
+                  }}
                 >
                   <div className="flex items-start gap-4">
                     {/* Content */}
@@ -177,13 +233,13 @@ export default function ChatListPage() {
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold text-[#111827]">{chat.partnerName || `사용자 ${chat.partnerId || chat.user1Id || chat.user2Id}`}</h3>
-                          {chat.status === 'ACTIVE' && (
-                            <span className="px-2 py-0.5 bg-[#10B981] text-white text-xs font-bold rounded">
-                              활성
+                          {chat.isNew && (
+                            <span className="bg-[#EF4444] text-white text-xs px-2 py-1 rounded font-semibold">
+                              NEW
                             </span>
                           )}
                         </div>
-                        <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-2">
                           <span className="text-sm text-[#9CA3AF]">
                             {chat.lastMessageTime 
                               ? new Date(chat.lastMessageTime).toLocaleTimeString('ko-KR', { 
@@ -194,14 +250,14 @@ export default function ChatListPage() {
                             }
                           </span>
                           {chat.unreadCount && chat.unreadCount > 0 ? (
-                            <span className="bg-[#EF4444] text-white text-xs px-2 py-1 rounded-full min-w-[20px] text-center font-semibold">
+                            <span className="bg-[#4F46E5] text-white text-xs px-2 py-1 rounded-full min-w-[20px] text-center font-semibold">
                               {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
                             </span>
                           ) : null}
                         </div>
                       </div>
                       <p className="text-[#6B7280] truncate">
-                        {chat.lastMessage || '상호 좋아요로 매칭되었습니다!'}
+                        {chat.lastMessage || '매칭되었습니다! 안녕하세요 👋'}
                       </p>
                     </div>
 
@@ -243,7 +299,8 @@ export default function ChatListPage() {
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+            </>
           )}
 
           {/* Delete Chat Modal */}

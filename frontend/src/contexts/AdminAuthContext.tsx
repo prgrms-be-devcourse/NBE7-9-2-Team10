@@ -6,7 +6,7 @@ import AdminAuthService from "@/lib/services/AdminAuthService";
 interface AdminUser {
   adminId: number;
   email: string;
-  name: string;
+  // name 제거
 }
 
 interface AdminAuthContextType {
@@ -28,18 +28,13 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     const initAdminAuth = async () => {
       try {
         if (AdminAuthService.isAuthenticated()) {
-          // localStorage에서 관리자 정보 직접 가져오기
           const adminId = localStorage.getItem('adminId');
           const email = localStorage.getItem('adminEmail');
-          // 'name'은 login 응답에 없으므로 email을 임시로 사용하거나,
-          // API 응답에 추가해야 합니다. 여기서는 email을 이름으로 가정합니다.
-          const name = localStorage.getItem('adminEmail'); 
 
-          if (adminId && email && name) {
+          if (adminId && email) {
             setAdmin({
               adminId: parseInt(adminId, 10),
               email,
-              name,
             });
             setIsAuthenticated(true);
           } else {
@@ -61,8 +56,15 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const adminInfo = await AdminAuthService.login({ email, password });
-    setAdmin(adminInfo);
+    const loginResponse = await AdminAuthService.login({ email, password });
+    
+    // ✅ name 필드 제거
+    const adminUser: AdminUser = {
+      adminId: loginResponse.adminId,
+      email: loginResponse.email,
+    };
+    
+    setAdmin(adminUser);
     setIsAuthenticated(true);
   };
 

@@ -4,6 +4,7 @@ import com.unimate.domain.chatroom.dto.*;
 import com.unimate.domain.chatroom.entity.Chatroom;
 import com.unimate.domain.chatroom.entity.ChatroomStatus;
 import com.unimate.domain.chatroom.repository.ChatroomRepository;
+import com.unimate.domain.match.repository.MatchRepository;
 import com.unimate.domain.message.entity.Message;
 import com.unimate.domain.message.repository.MessageRepository;
 import com.unimate.global.exception.ServiceException;
@@ -27,6 +28,7 @@ public class ChatroomService {
     private final ChatroomRepository chatroomRepository;
     private final MessageRepository messageRepository;
     private final com.unimate.domain.user.user.repository.UserRepository userRepository;
+    private final MatchRepository matchRepository;
 
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
@@ -64,6 +66,13 @@ public class ChatroomService {
         long b = Math.max(me, partnerId);
 
         Chatroom room = chatroomRepository.findBySmallerUserIdAndLargerUserId(a, b)
+                .map(existingRoom -> {
+                    // 기존 채팅방이 닫힌 상태면 재활성화
+                    if (existingRoom.getStatus() == ChatroomStatus.CLOSED) {
+                        existingRoom.reactivate();
+                    }
+                    return existingRoom;
+                })
                 .orElseGet(() -> chatroomRepository.save(Chatroom.create(me, partnerId)));
 
         return new ChatRoomCreateResponse(
@@ -249,6 +258,12 @@ public class ChatroomService {
         Chatroom room = getRoomOrThrow(chatroomId);
         assertMember(me, room);
         room.block(me);
+
+        // 매칭 기록 삭제
+        Long partnerId = partnerIdOf(me, room);
+        matchRepository.findMatchBetweenUsers(me, partnerId)
+                .ifPresent(matchRepository::delete);
+
         return new ChatRoomLeaveResponse(
                 room.getId(),
                 room.getStatus().name(),

@@ -55,7 +55,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setIsAuthenticated(false);
         }
       } catch (error) {
-        console.error('Failed to fetch user info:', error);
         AuthService.clearTokens();
         setIsAuthenticated(false);
       } finally {
@@ -70,6 +69,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const result = await AuthService.login({ email, password });
     const userInfo = await UserService.getUserInfo();
     
+    // 사용자 ID를 localStorage에 저장 (알림 필터링용)
+    localStorage.setItem('userId', result.userId.toString());
+    
     setUser({
       userId: result.userId,
       email: userInfo.email,
@@ -79,11 +81,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       university: userInfo.university
     });
     setIsAuthenticated(true);
+    
+    // WebSocket 연결 시작 (알림용)
+    try {
+      const { startWs } = await import('@/lib/services/wsManager');
+      await startWs();
+    } catch (error) {
+      // WebSocket 연결 실패는 무시
+    }
   };
 
   const logout = async () => {
+    // WebSocket 연결 종료
+    try {
+      const { stopWs } = await import('@/lib/services/wsManager');
+      await stopWs();
+    } catch (error) {
+      // WebSocket 연결 종료 실패는 무시
+    }
+    
     await AuthService.logout();
     AuthService.clearTokens();
+    localStorage.removeItem('userId'); // 사용자 ID 제거
     setUser(null);
     setIsAuthenticated(false);
   };

@@ -42,10 +42,6 @@ export class AdminAuthService {
       localStorage.setItem('adminId', response.adminId.toString());
       localStorage.setItem('adminEmail', response.email);
 
-      if (response.name) {
-        localStorage.setItem('adminName', response.name);
-      }
-
       // 관리자 로그인 상태 플래그
       localStorage.setItem('isAdmin', 'true');
     }
