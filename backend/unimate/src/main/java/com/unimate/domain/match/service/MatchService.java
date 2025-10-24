@@ -8,6 +8,7 @@ import com.unimate.domain.match.entity.MatchType;
 import com.unimate.domain.match.repository.MatchRepository;
 import com.unimate.domain.notification.entity.NotificationType;
 import com.unimate.domain.notification.service.NotificationService;
+import com.unimate.domain.user.user.entity.Gender;
 import com.unimate.domain.user.user.entity.User;
 import com.unimate.domain.user.user.repository.UserRepository;
 import com.unimate.domain.userMatchPreference.entity.UserMatchPreference;
@@ -16,6 +17,8 @@ import com.unimate.domain.userProfile.entity.UserProfile;
 import com.unimate.domain.userProfile.repository.UserProfileRepository;
 import com.unimate.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +28,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -39,10 +43,12 @@ public class MatchService {
     private final ChatroomService chatroomService;
     private final NotificationService notificationService;
     private final UserMatchPreferenceRepository userMatchPreferenceRepository;
+    private final MatchCacheService matchCacheService;
 
-    /**
-     * 룸메이트 추천 목록 조회 (필터 반영)
-     */
+    @Value("${cache.redis.enabled:true}")
+    private boolean redisCacheEnabled;
+
+    // 룸메이트 추천 목록 조회 (Redis 캐시 또는 DB 직접 조회)
     public MatchRecommendationResponse getMatchRecommendations(
             String senderEmail,
             String sleepPatternFilter,
@@ -51,13 +57,68 @@ public class MatchService {
             LocalDate startDate,
             LocalDate endDate
     ) {
+        if (redisCacheEnabled) {
+            log.debug("🔵 Redis 캐시 모드 - 캐시 활용");
+            return getMatchRecommendationsWithCache(
+                    senderEmail, sleepPatternFilter, ageRangeFilter,
+                    cleaningFrequencyFilter, startDate, endDate
+            );
+        } else {
+            log.debug("🟡 DB 직접 모드 - 기존 로직 사용");
+            return getMatchRecommendationsWithoutCache(
+                    senderEmail, sleepPatternFilter, ageRangeFilter,
+                    cleaningFrequencyFilter, startDate, endDate
+            );
+        }
+    }
+
+    // Redis 캐시 사용 버전
+    private MatchRecommendationResponse getMatchRecommendationsWithCache(
+            String senderEmail,
+            String sleepPatternFilter,
+            String ageRangeFilter,
+            String cleaningFrequencyFilter,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
         User sender = getUserByEmail(senderEmail);
-        UserMatchPreference senderPreference = userMatchPreferenceRepository.findByUserId(sender.getId())
-                .orElseThrow(() -> ServiceException.notFound("사용자의 매칭 선호도를 찾을 수 없습니다. 먼저 선호도를 등록해주세요."));
+        UserProfile senderProfile = getUserProfile(sender.getId());
 
-        List<UserProfile> candidates = filterCandidates(sender, sleepPatternFilter, ageRangeFilter, cleaningFrequencyFilter, startDate, endDate);
-        List<MatchRecommendationResponse.MatchRecommendationItem> recommendations = buildRecommendations(candidates, senderPreference);
+        List<CachedUserProfile> cachedCandidates = matchCacheService.getAllCandidates();
+        log.info("Redis에서 {} 명의 후보 조회", cachedCandidates.size());
 
+        List<CachedUserProfile> filteredCandidates = filterCachedCandidates(
+                cachedCandidates, sender.getId(), sender.getGender(), sender.getUniversity(),
+                sleepPatternFilter, ageRangeFilter, cleaningFrequencyFilter, startDate, endDate
+        );
+
+        CachedUserProfile cachedSenderProfile = CachedUserProfile.from(senderProfile);
+        List<MatchRecommendationResponse.MatchRecommendationItem> recommendations =
+                buildCachedRecommendations(filteredCandidates, cachedSenderProfile);
+
+        return new MatchRecommendationResponse(recommendations);
+    }
+
+    // DB 직접 조회 버전
+    private MatchRecommendationResponse getMatchRecommendationsWithoutCache(
+            String senderEmail,
+            String sleepPatternFilter,
+            String ageRangeFilter,
+            String cleaningFrequencyFilter,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        User sender = getUserByEmail(senderEmail);
+        UserProfile senderProfile = getUserProfile(sender.getId());
+
+        List<UserProfile> filteredCandidates = filterCandidates(
+                sender, sleepPatternFilter, ageRangeFilter,
+                cleaningFrequencyFilter, startDate, endDate
+        );
+
+        List<MatchRecommendationResponse.MatchRecommendationItem> recommendations =
+                buildRecommendations(filteredCandidates, senderProfile);
+        
         return new MatchRecommendationResponse(recommendations);
     }
 
@@ -77,9 +138,26 @@ public class MatchService {
                 .orElseThrow(() -> ServiceException.notFound("사용자 프로필을 찾을 수 없습니다."));
     }
 
-    /**
-     * 추천 후보 필터링
-     */
+    // 캐시된 후보 필터링
+    private List<CachedUserProfile> filterCachedCandidates(
+            List<CachedUserProfile> allCandidates, Long senderId, Gender senderGender, String senderUniversity,
+            String sleepPatternFilter, String ageRangeFilter, String cleaningFrequencyFilter,
+            LocalDate startDate, LocalDate endDate
+    ) {
+        return allCandidates.stream()
+                .filter(p -> !p.getUserId().equals(senderId))
+                .filter(p -> p.getGender().equals(senderGender))
+                .filter(p -> p.getMatchingEnabled())
+                .filter(p -> userMatchPreferenceRepository.findByUserId(p.getUserId()).isPresent())
+                .filter(p -> matchFilterService.applyUniversityFilter(p, senderUniversity))
+                .filter(p -> matchFilterService.applySleepPatternFilter(p, sleepPatternFilter))
+                .filter(p -> matchFilterService.applyAgeRangeFilter(p, ageRangeFilter))
+                .filter(p -> matchFilterService.applyCleaningFrequencyFilter(p, cleaningFrequencyFilter))
+                .filter(p -> matchFilterService.hasOverlappingPeriodByRange(p, startDate, endDate))
+                .toList();
+    }
+
+    // DB 직접 조회 후보 필터링
     private List<UserProfile> filterCandidates(User sender, String sleepPatternFilter, String ageRangeFilter, 
             String cleaningFrequencyFilter, LocalDate startDate, LocalDate endDate) {
         return userProfileRepository.findAll()
@@ -161,10 +239,70 @@ public class MatchService {
             .orElseThrow(() -> ServiceException.notFound("매칭 선호도가 등록되지 않은 사용자입니다."));
     }
 
-    /**
-     * 후보 프로필 상세 조회
-     */
+    // 후보 프로필 상세 조회 (Redis 캐시 또는 DB 직접 조회)
     public MatchRecommendationDetailResponse getMatchRecommendationDetail(String senderEmail, Long receiverId) {
+        if (redisCacheEnabled) {
+            return getMatchRecommendationDetailWithCache(senderEmail, receiverId);
+        } else {
+            return getMatchRecommendationDetailWithoutCache(senderEmail, receiverId);
+        }
+    }
+
+    // Redis 캐시 사용 버전
+    private MatchRecommendationDetailResponse getMatchRecommendationDetailWithCache(String senderEmail, Long receiverId) {
+        User sender = userRepository.findByEmail(senderEmail)
+                .orElseThrow(() -> ServiceException.notFound("사용자를 찾을 수 없습니다."));
+
+        validateUserMatchPreference(receiverId);
+
+        CachedUserProfile cachedReceiver = matchCacheService.getUserProfileById(receiverId);
+        if (cachedReceiver == null) {
+            throw ServiceException.notFound("상대방 프로필을 찾을 수 없습니다.");
+        }
+
+        CachedUserProfile cachedSender = matchCacheService.getUserProfileById(sender.getId());
+        if (cachedSender == null) {
+            throw ServiceException.notFound("사용자 프로필을 찾을 수 없습니다.");
+        }
+
+        BigDecimal similarityScore = BigDecimal.valueOf(
+            similarityCalculator.calculateSimilarity(cachedSender, cachedReceiver)
+        );
+
+        Optional<Match> existingMatch = matchRepository.findBySenderIdAndReceiverId(sender.getId(), receiverId);
+
+        MatchType matchType = existingMatch.isPresent() ? existingMatch.get().getMatchType() : null;
+        MatchStatus matchStatus = existingMatch.isPresent() ? existingMatch.get().getMatchStatus() : null;
+
+        return MatchRecommendationDetailResponse.builder()
+                .receiverId(cachedReceiver.getUserId())
+                .name(cachedReceiver.getName())
+                .university(cachedReceiver.getUniversity())
+                .studentVerified(cachedReceiver.getStudentVerified())
+                .mbti(cachedReceiver.getMbti())
+                .gender(cachedReceiver.getGender())
+                .age(matchUtilityService.calculateAge(cachedReceiver.getBirthDate()))
+                .isSmoker(cachedReceiver.getIsSmoker())
+                .isPetAllowed(cachedReceiver.getIsPetAllowed())
+                .isSnoring(cachedReceiver.getIsSnoring())
+                .sleepTime(cachedReceiver.getSleepTime())
+                .cleaningFrequency(cachedReceiver.getCleaningFrequency())
+                .hygieneLevel(cachedReceiver.getHygieneLevel())
+                .noiseSensitivity(cachedReceiver.getNoiseSensitivity())
+                .drinkingFrequency(cachedReceiver.getDrinkingFrequency())
+                .guestFrequency(cachedReceiver.getGuestFrequency())
+                .preferredAgeGap(cachedReceiver.getPreferredAgeGap())
+                .birthDate(cachedReceiver.getBirthDate())
+                .startUseDate(cachedReceiver.getStartUseDate())
+                .endUseDate(cachedReceiver.getEndUseDate())
+                .preferenceScore(similarityScore)
+                .matchType(matchType)
+                .matchStatus(matchStatus)
+                .build();
+    }
+
+    // DB 직접 조회 버전
+    private MatchRecommendationDetailResponse getMatchRecommendationDetailWithoutCache(String senderEmail, Long receiverId) {
         User sender = userRepository.findByEmail(senderEmail)
                 .orElseThrow(() -> ServiceException.notFound("사용자를 찾을 수 없습니다."));
 

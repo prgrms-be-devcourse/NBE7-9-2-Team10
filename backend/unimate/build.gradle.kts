@@ -38,7 +38,7 @@ dependencies {
 
 
     compileOnly("org.projectlombok:lombok")
-    developmentOnly("org.springframework.boot:spring-boot-devtools")
+    //developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("com.h2database:h2")
     runtimeOnly("com.mysql:mysql-connector-j")
     annotationProcessor("org.projectlombok:lombok")
@@ -57,6 +57,14 @@ dependencies {
     //부하 테스트를 위해 랜덤 시드 생성 의존성
     implementation ("org.springframework.boot:spring-boot-starter-batch")
     implementation ("net.datafaker:datafaker:2.5.2")
+
+    // Redis
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    // Redis 캐시 추상화
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+    // Jackson
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 }
 
 tasks.withType<Test> {
