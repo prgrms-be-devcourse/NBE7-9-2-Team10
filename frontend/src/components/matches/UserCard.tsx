@@ -18,13 +18,6 @@ const UserCard: FC<UserCardProps> = ({ user, onLikeChange, onViewDetail }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  // 거주 기간 데이터 확인용 로그
-  console.log('🏠 사용자 데이터:', user.name, {
-    startUseDate: user.startUseDate,
-    endUseDate: user.endUseDate,
-    전체데이터: user
-  });
-
   const handleLikeClick = async () => {
     setIsLoading(true);
     try {
@@ -45,7 +38,9 @@ const UserCard: FC<UserCardProps> = ({ user, onLikeChange, onViewDetail }) => {
         }
       }
     } catch (error) {
-      setToast({ message: `오류: ${getErrorMessage(error)}`, type: 'error' });
+      // 백엔드 메시지 우선 사용
+      const errorMessage = getErrorMessage(error);
+      setToast({ message: errorMessage, type: 'error' });
     } finally {
       setIsLoading(false);
       setTimeout(() => setToast(null), 3000);

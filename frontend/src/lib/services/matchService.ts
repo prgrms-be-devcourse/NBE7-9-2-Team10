@@ -56,7 +56,7 @@ export class MatchService {
   }
 
   /**
-   * 성사된 매칭 결과를 조회합니다.
+   * 확정된 룸메이트 결과를 조회합니다.
    */
   static async getMatchResults(): Promise<ApiResponse<any>> {
     return api.get<ApiResponse<any>>(API_ENDPOINTS.MATCH_RESULTS);

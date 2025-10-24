@@ -6,8 +6,6 @@ import { MatchStatusCard } from '../../../components/matches/MatchStatusCard';
 import { Card } from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
-import ProtectedRoute from '../../../components/auth/ProtectedRoute';
-import Layout from '../../../components/layout/Layout';
 import { MatchService } from '../../../lib/services/matchService';
 import { getErrorMessage } from '../../../lib/utils/helpers';
 import type { MatchStatusResponse } from '../../../types/match';
@@ -62,45 +60,35 @@ export default function MatchStatusPage() {
 
   if (isLoading) {
     return (
-      <ProtectedRoute>
-        <Layout showFooter={false}>
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-            <LoadingSpinner />
-          </div>
-        </Layout>
-      </ProtectedRoute>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
     );
   }
 
   if (!matchStatus) {
     return (
-      <ProtectedRoute>
-        <Layout showFooter={false}>
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <div className="max-w-7xl mx-auto px-4 py-8">
-              <div className="text-center py-12">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  매칭 상태를 불러올 수 없습니다
-                </h1>
-                <p className="text-gray-500 dark:text-gray-400 mb-6">
-                  잠시 후 다시 시도해주세요.
-                </p>
-                <Button onClick={handleRefresh}>
-                  다시 시도
-                </Button>
-              </div>
-            </div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              매칭 상태를 불러올 수 없습니다
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">
+              잠시 후 다시 시도해주세요.
+            </p>
+            <Button onClick={handleRefresh}>
+              다시 시도
+            </Button>
           </div>
-        </Layout>
-      </ProtectedRoute>
+        </div>
+      </div>
     );
   }
 
   return (
-    <ProtectedRoute>
-      <Layout showFooter={false}>
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -215,10 +203,8 @@ export default function MatchStatusPage() {
             </div>
           </div>
         )}
-        </div>
-        </div>
-      </Layout>
-    </ProtectedRoute>
+      </div>
+    </div>
   );
 }
 

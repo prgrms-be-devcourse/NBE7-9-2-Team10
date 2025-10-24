@@ -6,8 +6,6 @@ import { MatchService } from '@/lib/services/matchService';
 import { getErrorMessage } from '@/lib/utils/helpers';
 import UserCard from '@/components/matches/UserCard';
 import MatchDetailModal from '@/components/matches/MatchDetailModal';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import Layout from '@/components/layout/Layout';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Button from '@/components/ui/Button';
 import MatchPreferenceModal from '@/components/profile/MatchPreferenceModal';
@@ -234,11 +232,10 @@ export default function MatchesPage() {
   };
 
   return (
-    <ProtectedRoute>
-      <Layout showFooter={false}>
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
-          <div className="max-w-6xl mx-auto">
-        {isLoading ? (
+    <>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
+        <div className="max-w-6xl mx-auto">
+          {isLoading ? (
             <LoadingSpinner />
         ) : error ? (
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -364,7 +361,7 @@ export default function MatchesPage() {
                         </p>
                       </div>
                       <Button onClick={handleViewResults} variant="outline">
-                        성사된 매칭 보기
+                        확정된 룸메이트 보기
                       </Button>
                     </div>
 
@@ -405,8 +402,9 @@ export default function MatchesPage() {
         ) : (
             <PreferencePrompt onOpenModal={handleOpenPreferenceModal} />
             )}
-          </div>
+        </div>
       </div>
+      
       <MatchPreferenceModal 
         isOpen={isPreferenceModalOpen} 
         onClose={handleClosePreferenceModal}
@@ -421,25 +419,25 @@ export default function MatchesPage() {
         confirmText="취소하기"
         cancelText="돌아가기"
       />
-        {/* 상세 정보 로딩 오버레이 - 모달보다 먼저 렌더링 */}
-        {isDetailLoading && (
-          <div className="fixed inset-0 backdrop-blur-md bg-white/50 dark:bg-gray-900/50 z-[45] flex items-center justify-center">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl">
-              <LoadingSpinner />
-              <p className="text-gray-600 dark:text-gray-400 mt-4">상세 정보를 불러오는 중...</p>
-            </div>
+      
+      {/* 상세 정보 로딩 오버레이 - 모달보다 먼저 렌더링 */}
+      {isDetailLoading && (
+        <div className="fixed inset-0 backdrop-blur-md bg-white/50 dark:bg-gray-900/50 z-[45] flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl">
+            <LoadingSpinner />
+            <p className="text-gray-600 dark:text-gray-400 mt-4">상세 정보를 불러오는 중...</p>
           </div>
-        )}
-        
+        </div>
+      )}
+      
       <MatchDetailModal
         isOpen={isDetailModalOpen}
         onClose={handleCloseDetailModal}
-          match={selectedUser}
+        match={selectedUser}
         onLike={handleLikeFromModal}
-          onCancelLike={handleCancelLikeFromModal}
-          isLiked={selectedUser ? (selectedUser.isLiked || (selectedUser.matchType === 'LIKE' && selectedUser.matchStatus === 'PENDING')) : false}
+        onCancelLike={handleCancelLikeFromModal}
+        isLiked={selectedUser ? (selectedUser.isLiked || (selectedUser.matchType === 'LIKE' && selectedUser.matchStatus === 'PENDING')) : false}
       />
-      </Layout>
-    </ProtectedRoute>
+    </>
   );
 }
