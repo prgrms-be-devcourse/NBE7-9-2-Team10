@@ -4,7 +4,10 @@ import com.unimate.domain.chatroom.entity.Chatroom;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ChatroomRepository
@@ -16,4 +19,12 @@ public interface ChatroomRepository
 
     // 목록(오프셋 페이징, 최신순) — MVP 용도
     Page<Chatroom> findByUser1IdOrUser2IdOrderByLastMessageAtDesc(Long user1Id, Long user2Id, Pageable pageable);
+
+    // 개별 사용자 상태에 따른 활성 채팅방 조회
+    @Query("SELECT c FROM Chatroom c WHERE " +
+            "(c.user1Id = :userId AND c.user1Status = 'ACTIVE') OR " +
+            "(c.user2Id = :userId AND c.user2Status = 'ACTIVE')")
+    List<Chatroom> findActiveRoomsByUser(@Param("userId") Long userId);
 }
+
+
