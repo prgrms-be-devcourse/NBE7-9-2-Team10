@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { User, MoreVertical, Trash2 } from 'lucide-react'
+import { User, MoreVertical, Trash2, Flag } from 'lucide-react'
 import AppHeader from '@/components/layout/AppHeader'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { apiClient } from '@/lib/services/api'
+import ReportModal from '@/components/matches/ReportModal'
+import { MatchService } from '@/lib/services/matchService'
 
 interface ChatRoom {
   chatroomId: number
@@ -27,6 +29,8 @@ export default function ChatListPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [showMenu, setShowMenu] = useState<number | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState<number | null>(null)
+  const [showReportModal, setShowReportModal] = useState<{ chatId: number; partnerName: string } | null>(null)
+  const [isReporting, setIsReporting] = useState(false)
 
   // 채팅방 목록 조회 함수
   const fetchChatrooms = async () => {
@@ -172,6 +176,85 @@ export default function ChatListPage() {
     }
   }
 
+  const handleReportUser = async (category: string, content: string) => {
+    if (!showReportModal) return
+    
+    setIsReporting(true)
+    try {
+      const chat = chats.find(c => c.chatroomId === showReportModal.chatId)
+      if (!chat) {
+        alert('채팅방 정보를 찾을 수 없습니다.')
+        return
+      }
+      
+      // 채팅방 상세 정보에서 상대방 이메일 가져오기
+      const chatroomResponse = await apiClient.get(`/api/v1/chatrooms/${chat.chatroomId}`)
+      const chatroomData = chatroomResponse.data
+      
+      console.log('채팅방 데이터:', chatroomData)
+      
+      // 현재 사용자 ID
+      const currentUserId = typeof window !== 'undefined' ? 
+        parseInt(localStorage.getItem('userId') || '0') : 0
+      
+      // 상대방 ID 찾기
+      const partnerId = chatroomData.user1Id === currentUserId ? chatroomData.user2Id : chatroomData.user1Id
+      
+      console.log('현재 사용자 ID:', currentUserId)
+      console.log('상대방 ID:', partnerId)
+      
+      // 매칭 상태에서 해당 사용자의 이메일 찾기
+      try {
+        const matchStatusResponse = await apiClient.get('/api/v1/matches/status')
+        const matchStatus = matchStatusResponse.data.matches || []
+        
+        console.log('매칭 상태 데이터:', matchStatus)
+        
+        // 현재 채팅방과 관련된 매칭 상태 찾기
+        const relatedMatch = matchStatus.find((match: any) => 
+          (match.senderId === currentUserId && match.receiverId === partnerId) ||
+          (match.senderId === partnerId && match.receiverId === currentUserId)
+        )
+        
+        console.log('관련 매칭 상태:', relatedMatch)
+        
+        if (!relatedMatch) {
+          alert('매칭 정보를 찾을 수 없어 신고할 수 없습니다.')
+          return
+        }
+        
+        // 상대방의 이메일 찾기 (partner 필드에서)
+        const reportedEmail = relatedMatch.partner?.email
+        
+        if (!reportedEmail) {
+          alert('상대방의 이메일 정보를 찾을 수 없어 신고할 수 없습니다.')
+          return
+        }
+        
+        console.log('신고할 이메일:', reportedEmail)
+        
+        await MatchService.reportUser({
+          reportedEmail,
+          category,
+          content
+        })
+      } catch (matchError) {
+        console.error('매칭 상태 조회 실패:', matchError)
+        alert('매칭 정보를 조회할 수 없어 신고할 수 없습니다.')
+        return
+      }
+      
+      alert('신고가 접수되었습니다. 검토 후 조치하겠습니다.')
+      setShowReportModal(null)
+    } catch (error: any) {
+      console.error('신고 실패:', error)
+      const errorMessage = error.response?.data?.message || error.message || '신고 접수에 실패했습니다.'
+      alert(errorMessage)
+    } finally {
+      setIsReporting(false)
+    }
+  }
+
 
   return (
     <ProtectedRoute>
@@ -284,6 +367,17 @@ export default function ChatListPage() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
+                                setShowReportModal({ chatId: chat.chatroomId, partnerName: chat.partnerName })
+                                setShowMenu(null)
+                              }}
+                              className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-[#FEF3C7] transition-colors"
+                            >
+                              <Flag className="w-4 h-4 text-[#F59E0B]" />
+                              <span className="text-sm text-[#F59E0B]">신고하기</span>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
                                 setShowDeleteModal(chat.chatroomId)
                                 setShowMenu(null)
                               }}
@@ -339,6 +433,17 @@ export default function ChatListPage() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Report Modal */}
+          {showReportModal && (
+            <ReportModal
+              isOpen={true}
+              onClose={() => setShowReportModal(null)}
+              onSubmit={handleReportUser}
+              reportedUserName={showReportModal.partnerName}
+              isSubmitting={isReporting}
+            />
           )}
         </div>
       </div>
