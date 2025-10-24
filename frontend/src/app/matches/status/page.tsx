@@ -9,6 +9,7 @@ import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import ProtectedRoute from '../../../components/auth/ProtectedRoute';
 import Layout from '../../../components/layout/Layout';
 import { MatchService } from '../../../lib/services/matchService';
+import { getErrorMessage } from '../../../lib/utils/helpers';
 import type { MatchStatusResponse } from '../../../types/match';
 
 export default function MatchStatusPage() {
@@ -16,6 +17,14 @@ export default function MatchStatusPage() {
   const [matchStatus, setMatchStatus] = useState<MatchStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // 토스트 자동 제거
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   // 매칭 상태 조회
   const fetchMatchStatus = async () => {
@@ -26,7 +35,7 @@ export default function MatchStatusPage() {
       setMatchStatus(data);
     } catch (error) {
       console.error('매칭 상태 조회 실패:', error);
-      setToast({ message: '매칭 상태를 불러오는데 실패했습니다.', type: 'error' });
+      setToast({ message: getErrorMessage(error), type: 'error' });
     } finally {
       setIsLoading(false);
     }

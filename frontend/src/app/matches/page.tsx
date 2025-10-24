@@ -21,6 +21,8 @@ interface MatchFilters {
   sleepPattern?: string;
   cleaningFrequency?: string;
   ageRange?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 const PreferencePrompt = ({ onOpenModal }: { onOpenModal: () => void }) => (
@@ -66,9 +68,12 @@ export default function MatchesPage() {
           setHasPreferences(false);
         }
       } catch (err) {
-        if ((err as any).status === 404) {
+        const apiError = err as any;
+        // 404는 프로필이 없는 정상적인 케이스
+        if (apiError?.response?.status === 404 || apiError?.status === 404) {
           setHasPreferences(false);
         } else {
+          // 백엔드 에러 메시지 우선 사용
           setError(getErrorMessage(err));
         }
       } finally {
@@ -88,7 +93,6 @@ export default function MatchesPage() {
           const rawData = (response as any).data?.data || (response as any).data || response;
 
           const recommendations = rawData.recommendations || [];
-          console.log('✅ 추천 목록:', recommendations);
           setUsers(recommendations);
           setFilteredUsers(recommendations);
         } catch (err) {
@@ -140,9 +144,19 @@ export default function MatchesPage() {
   const handleApplyFilters = async (newFilters: MatchFilters) => {
     setIsLoading(true);
     try {
-      const response = await MatchService.getRecommendations(newFilters);
+      // 빈 문자열을 undefined로 변환 (백엔드 validation 통과를 위해)
+      const cleanedFilters = {
+        sleepPattern: newFilters.sleepPattern || undefined,
+        ageRange: newFilters.ageRange || undefined,
+        cleaningFrequency: newFilters.cleaningFrequency || undefined,
+        // startDate: newFilters.startDate || undefined,
+        // endDate: newFilters.endDate || undefined,
+      };
+      
+      const response = await MatchService.getRecommendations(cleanedFilters);
       const rawData = (response as any).data?.data || (response as any).data || response;
       const recommendations = rawData.recommendations || [];
+      
       setUsers(recommendations);
       setFilteredUsers(recommendations);
     } catch (err) {
@@ -182,31 +196,41 @@ export default function MatchesPage() {
   };
 
   const handleLikeFromModal = async (receiverId: number) => {
-    await MatchService.sendLike(receiverId);
-    setUsers(currentUsers =>
-      currentUsers.map(user =>
-        user.receiverId === receiverId ? { ...user, isLiked: true, matchType: 'LIKE', matchStatus: 'PENDING' } : user
-      )
-    );
-    setFilteredUsers(currentUsers =>
-      currentUsers.map(user =>
-        user.receiverId === receiverId ? { ...user, isLiked: true, matchType: 'LIKE', matchStatus: 'PENDING' } : user
-      )
-    );
+    try {
+      await MatchService.sendLike(receiverId);
+      setUsers(currentUsers =>
+        currentUsers.map(user =>
+          user.receiverId === receiverId ? { ...user, isLiked: true, matchType: 'LIKE', matchStatus: 'PENDING' } : user
+        )
+      );
+      setFilteredUsers(currentUsers =>
+        currentUsers.map(user =>
+          user.receiverId === receiverId ? { ...user, isLiked: true, matchType: 'LIKE', matchStatus: 'PENDING' } : user
+        )
+      );
+    } catch (err) {
+      console.error('좋아요 전송 실패:', err);
+      throw err; // MatchDetailModal에서 처리하도록 에러 전달
+    }
   };
 
   const handleCancelLikeFromModal = async (receiverId: number) => {
-    await MatchService.cancelLike(receiverId);
-    setUsers(currentUsers =>
-      currentUsers.map(user =>
-        user.receiverId === receiverId ? { ...user, isLiked: false, matchType: undefined, matchStatus: undefined } : user
-      )
-    );
-    setFilteredUsers(currentUsers =>
-      currentUsers.map(user =>
-        user.receiverId === receiverId ? { ...user, isLiked: false, matchType: undefined, matchStatus: undefined } : user
-      )
-    );
+    try {
+      await MatchService.cancelLike(receiverId);
+      setUsers(currentUsers =>
+        currentUsers.map(user =>
+          user.receiverId === receiverId ? { ...user, isLiked: false, matchType: undefined, matchStatus: undefined } : user
+        )
+      );
+      setFilteredUsers(currentUsers =>
+        currentUsers.map(user =>
+          user.receiverId === receiverId ? { ...user, isLiked: false, matchType: undefined, matchStatus: undefined } : user
+        )
+      );
+    } catch (err) {
+      console.error('좋아요 취소 실패:', err);
+      throw err; // MatchDetailModal에서 처리하도록 에러 전달
+    }
   };
 
   return (
@@ -217,8 +241,15 @@ export default function MatchesPage() {
         {isLoading ? (
             <LoadingSpinner />
         ) : error ? (
-              <div className="bg-red-50 border border-red-200 rounded-md p-4 text-center">
-              <p className="text-red-600">{error}</p>
+          <div className="flex flex-col items-center justify-center min-h-[60vh]">
+            <div className="bg-red-50 dark:bg-red-900/20 rounded-full p-6 mb-6">
+              <svg className="w-16 h-16 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">오류가 발생했습니다</h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
+            <Button onClick={() => window.location.reload()}>다시 시도</Button>
           </div>
         ) : hasPreferences ? (
               <>
@@ -392,7 +423,7 @@ export default function MatchesPage() {
       />
         {/* 상세 정보 로딩 오버레이 - 모달보다 먼저 렌더링 */}
         {isDetailLoading && (
-          <div className="fixed inset-0 backdrop-blur-sm bg-black/30 z-[45] flex items-center justify-center">
+          <div className="fixed inset-0 backdrop-blur-md bg-white/50 dark:bg-gray-900/50 z-[45] flex items-center justify-center">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl">
               <LoadingSpinner />
               <p className="text-gray-600 dark:text-gray-400 mt-4">상세 정보를 불러오는 중...</p>

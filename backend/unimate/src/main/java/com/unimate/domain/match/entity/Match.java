@@ -1,14 +1,28 @@
 package com.unimate.domain.match.entity;
 
-import com.unimate.domain.user.user.entity.User;
-import com.unimate.global.entity.BaseEntity;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.DecimalMin;
-import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import com.unimate.domain.user.user.entity.User;
+import com.unimate.global.entity.BaseEntity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 // TODO: 후기(Review) 연동 시 재매칭 기능을 허용하기 위해
@@ -46,6 +60,15 @@ public class Match extends BaseEntity {
     @Column(name = "match_status", length = 10, nullable = false)
     private MatchStatus matchStatus = MatchStatus.PENDING;
 
+    // 양방향 응답 추적 (sender와 receiver 각각의 응답 상태)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sender_response", length = 10, nullable = false)
+    private MatchStatus senderResponse = MatchStatus.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "receiver_response", length = 10, nullable = false)
+    private MatchStatus receiverResponse = MatchStatus.PENDING;
+
     @DecimalMin(value = "0.0")
     @DecimalMax(value = "1.0")
     @Column(name = "preference_score", precision = 3, scale = 2, nullable = false)
@@ -81,6 +104,74 @@ public class Match extends BaseEntity {
 
     public void setConfirmedAt(LocalDateTime confirmedAt) {
         this.confirmedAt = confirmedAt;
+    }
+
+    /**
+     * 사용자의 응답 처리 및 최종 상태 결정
+     * @param userId 응답하는 사용자 ID
+     * @param response 사용자의 응답 (ACCEPTED or REJECTED)
+     */
+    public void processUserResponse(Long userId, MatchStatus response) {
+        if (response != MatchStatus.ACCEPTED && response != MatchStatus.REJECTED) {
+            throw new IllegalArgumentException("응답은 ACCEPTED 또는 REJECTED만 가능합니다.");
+        }
+
+        // 사용자가 sender인지 receiver인지 판단하여 해당 응답 저장
+        if (this.sender.getId().equals(userId)) {
+            this.senderResponse = response;
+        } else if (this.receiver.getId().equals(userId)) {
+            this.receiverResponse = response;
+        } else {
+            throw new IllegalArgumentException("매칭 참여자가 아닙니다.");
+        }
+
+        // 최종 상태 결정 로직
+        updateFinalStatus();
+    }
+
+    /**
+     * 양쪽 응답을 기반으로 최종 매칭 상태 결정
+     * - 둘 다 ACCEPTED → 최종 ACCEPTED
+     * - 한쪽이라도 REJECTED → 최종 REJECTED
+     * - 한쪽이라도 PENDING → 최종 PENDING 유지
+     */
+    private void updateFinalStatus() {
+        if (senderResponse == MatchStatus.REJECTED || receiverResponse == MatchStatus.REJECTED) {
+            // 한쪽이라도 거절하면 매칭 거절
+            this.matchStatus = MatchStatus.REJECTED;
+            this.confirmedAt = LocalDateTime.now();
+        } else if (senderResponse == MatchStatus.ACCEPTED && receiverResponse == MatchStatus.ACCEPTED) {
+            // 둘 다 수락하면 매칭 확정
+            this.matchStatus = MatchStatus.ACCEPTED;
+            this.confirmedAt = LocalDateTime.now();
+        } else {
+            // 아직 한쪽이 응답하지 않았으면 PENDING 유지
+            this.matchStatus = MatchStatus.PENDING;
+        }
+    }
+
+    /**
+     * 특정 사용자가 이미 응답했는지 확인
+     */
+    public boolean hasUserResponded(Long userId) {
+        if (this.sender.getId().equals(userId)) {
+            return this.senderResponse != MatchStatus.PENDING;
+        } else if (this.receiver.getId().equals(userId)) {
+            return this.receiverResponse != MatchStatus.PENDING;
+        }
+        return false;
+    }
+
+    /**
+     * 특정 사용자의 응답 상태 조회
+     */
+    public MatchStatus getUserResponse(Long userId) {
+        if (this.sender.getId().equals(userId)) {
+            return this.senderResponse;
+        } else if (this.receiver.getId().equals(userId)) {
+            return this.receiverResponse;
+        }
+        return MatchStatus.PENDING;
     }
 
     // 재매칭 회차 설정 메서드

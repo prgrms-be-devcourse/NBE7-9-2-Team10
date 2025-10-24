@@ -34,6 +34,11 @@ public class MatchStatusResponse {
         private LocalDateTime confirmedAt;
         private String message; // 상태별 메시지
 
+        // 양방향 응답 추적 필드
+        private MatchStatus myResponse;          // 현재 사용자의 응답 상태
+        private MatchStatus partnerResponse;     // 상대방의 응답 상태
+        private boolean waitingForPartner;       // 상대방의 응답 대기 중 여부
+
         private PartnerInfo partner;  // 상대방 정보
 
         @Getter

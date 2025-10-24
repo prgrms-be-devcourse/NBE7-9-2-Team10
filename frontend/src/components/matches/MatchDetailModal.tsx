@@ -3,6 +3,9 @@
 import { FC, useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
+import ReportModal from './ReportModal';
+import { MatchService } from '../../lib/services/matchService';
+import { getErrorMessage } from '../../lib/utils/helpers';
 import type { MatchRecommendationDetailResponse } from '../../types/match';
 
 interface MatchDetailModalProps {
@@ -18,6 +21,8 @@ const MatchDetailModal: FC<MatchDetailModalProps> = ({ isOpen, onClose, match, o
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
   const [isLiking, setIsLiking] = useState(false);
   const [currentLikeState, setCurrentLikeState] = useState(isLiked);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isReportSubmitting, setIsReportSubmitting] = useState(false);
 
   // 토스트 자동 제거
   useEffect(() => {
@@ -31,6 +36,31 @@ const MatchDetailModal: FC<MatchDetailModalProps> = ({ isOpen, onClose, match, o
   useEffect(() => {
     setCurrentLikeState(isLiked);
   }, [isLiked]);
+
+  // 신고하기 핸들러
+  const handleReportSubmit = async (category: string, content: string) => {
+    if (!match || !match.email) {
+      setToast({ message: '신고할 사용자 정보를 찾을 수 없습니다.', type: 'error' });
+      return;
+    }
+    
+    setIsReportSubmitting(true);
+    try {
+      await MatchService.reportUser({
+        reportedEmail: match.email,
+        category,
+        content,
+      });
+      
+      setIsReportModalOpen(false);
+      setToast({ message: '신고가 접수되었습니다. 검토 후 조치하겠습니다.', type: 'success' });
+    } catch (error) {
+      console.error('신고 실패:', error);
+      setToast({ message: getErrorMessage(error), type: 'error' });
+    } finally {
+      setIsReportSubmitting(false);
+    }
+  };
 
   if (!match) return null;
 
@@ -55,8 +85,9 @@ const MatchDetailModal: FC<MatchDetailModalProps> = ({ isOpen, onClose, match, o
         }
       }
     } catch (error) {
-      const errorMessage = currentLikeState ? '좋아요 취소에 실패했습니다.' : '좋아요 전송에 실패했습니다.';
-      setToast({ message: errorMessage, type: 'error' });
+      // 백엔드 메시지 우선 사용
+      const backendMessage = getErrorMessage(error);
+      setToast({ message: backendMessage, type: 'error' });
     } finally {
       setIsLiking(false);
     }
@@ -286,7 +317,7 @@ const MatchDetailModal: FC<MatchDetailModalProps> = ({ isOpen, onClose, match, o
           )}
           
           <button
-            onClick={() => setToast({ message: '신고 기능은 준비 중입니다.', type: 'info' })}
+            onClick={() => setIsReportModalOpen(true)}
             className="px-6 py-3 border border-[#E5E7EB] text-[#6B7280] rounded-lg hover:bg-[#F9FAFB] transition-colors flex items-center gap-2"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
@@ -299,6 +330,15 @@ const MatchDetailModal: FC<MatchDetailModalProps> = ({ isOpen, onClose, match, o
         </div>
       </div>
     </Modal>
+    
+    {/* 신고 모달 */}
+    <ReportModal
+      isOpen={isReportModalOpen}
+      onClose={() => setIsReportModalOpen(false)}
+      onSubmit={handleReportSubmit}
+      reportedUserName={match?.name || ''}
+      isSubmitting={isReportSubmitting}
+    />
     </>
   );
 };

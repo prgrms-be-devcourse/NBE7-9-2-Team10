@@ -88,6 +88,13 @@ public class Chatroom {
         this.blockedAt = LocalDateTime.now();
     }
 
+    // CLOSED 상태의 채팅방을 다시 활성화
+    public void reactivate() {
+        this.status = ChatroomStatus.ACTIVE;
+        this.blockedBy = null;
+        this.blockedAt = null;
+    }
+
     public void updateLastRead(Long userId, Long messageId) {
         if (userId.equals(user1Id)) {
             this.lastReadMessageIdUser1 = messageId;

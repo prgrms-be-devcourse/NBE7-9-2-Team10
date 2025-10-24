@@ -28,6 +28,10 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     // 양방향으로 두 사용자 간의 'LIKE' 기록을 찾는 메서드
         @Query("SELECT m FROM Match m WHERE m.matchType = 'LIKE' AND ((m.sender.id = :user1Id AND m.receiver.id = :user2Id) OR (m.sender.id = :user2Id AND m.receiver.id = :user1Id))")
         Optional<Match> findLikeBetweenUsers(@Param("user1Id") Long user1Id, @Param("user2Id") Long user2Id);
+
+        // 양방향으로 두 사용자 간의 매칭 기록을 찾는 메서드
+        @Query("SELECT m FROM Match m WHERE (m.sender.id = :user1Id AND m.receiver.id = :user2Id) OR (m.sender.id = :user2Id AND m.receiver.id = :user1Id)")
+        Optional<Match> findMatchBetweenUsers(@Param("user1Id") Long user1Id, @Param("user2Id") Long user2Id);
     
         // 매칭 취소 시 쓰레기 row 삭제
         @Modifying

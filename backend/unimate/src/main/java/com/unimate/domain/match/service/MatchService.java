@@ -49,7 +49,7 @@ public class MatchService {
             String cleaningFrequencyFilter,
             LocalDate startDate,
             LocalDate endDate
-    ) {
+    ) { 
         User sender = getUserByEmail(senderEmail);
         UserProfile senderProfile = getUserProfile(sender.getId());
         
@@ -88,12 +88,31 @@ public class MatchService {
                 .filter(p -> p.getMatchingEnabled()) // 매칭 활성화
                 .filter(p -> userMatchPreferenceRepository.findByUserId(p.getUser().getId()).isPresent()) // 매칭 선호도 등록된 사용자만
                 .filter(p -> matchFilterService.applyUniversityFilter(p, sender.getUniversity())) // 대학 필터 (같은 대학교만)
+                .filter(p -> !isAlreadyMatched(sender.getId(), p.getUser().getId())) // 이미 매칭된 사용자 제외
                 // 사용자 선택 필터들
                 .filter(p -> matchFilterService.applySleepPatternFilter(p, sleepPatternFilter)) // 수면 패턴 필터
                 .filter(p -> matchFilterService.applyAgeRangeFilter(p, ageRangeFilter)) // 나이대 필터
                 .filter(p -> matchFilterService.applyCleaningFrequencyFilter(p, cleaningFrequencyFilter)) // 청결도 필터
                 .filter(p -> matchFilterService.hasOverlappingPeriodByRange(p, startDate, endDate)) // 거주 기간
                 .toList();
+    }
+
+    /**
+     * 이미 매칭이 성사된 사용자인지 확인
+     * REQUEST + ACCEPTED 상태인 경우 제외 (양쪽 모두 확정한 경우)
+     */
+    private boolean isAlreadyMatched(Long senderId, Long candidateId) {
+        // matchStatus == ACCEPTED는 오직 양쪽 모두 확정한 경우만
+        boolean iSentAccepted = matchRepository.findBySenderIdAndReceiverId(senderId, candidateId)
+                .map(match -> match.getMatchType() == MatchType.REQUEST && match.getMatchStatus() == MatchStatus.ACCEPTED)
+                .orElse(false);
+        
+        // 상대방이 나에게 보낸 매칭이 ACCEPTED 상태인지 확인
+        boolean theySentAccepted = matchRepository.findBySenderIdAndReceiverId(candidateId, senderId)
+                .map(match -> match.getMatchType() == MatchType.REQUEST && match.getMatchStatus() == MatchStatus.ACCEPTED)
+                .orElse(false);
+        
+        return iSentAccepted || theySentAccepted;
     }
 
     /**
@@ -125,6 +144,12 @@ public class MatchService {
                 .preferenceScore(similarityScore)
                 .matchType(null)
                 .matchStatus(null)
+                // 추가 프로필 정보
+                .sleepTime(candidate.getSleepTime())
+                .cleaningFrequency(candidate.getCleaningFrequency())
+                .isSmoker(candidate.getIsSmoker())
+                .startUseDate(candidate.getStartUseDate() != null ? candidate.getStartUseDate().toString() : null)
+                .endUseDate(candidate.getEndUseDate() != null ? candidate.getEndUseDate().toString() : null)
                 .build();
     }
 
@@ -161,6 +186,7 @@ public class MatchService {
 
         return MatchRecommendationDetailResponse.builder()
                 .receiverId(receiver.getId())
+                .email(receiver.getEmail())  // 신고 기능을 위한 이메일 추가
                 .name(receiver.getName())
                 .university(receiver.getUniversity())
                 .studentVerified(receiver.getStudentVerified())
@@ -188,6 +214,8 @@ public class MatchService {
 
     /**
      * 룸메이트 최종 확정
+     * 양방향 응답 추적: 각 사용자의 응답을 개별적으로 기록하고, 
+     * 양쪽 모두 확정해야만 최종 매칭 성사
      */
     @Transactional
     public Match confirmMatch(Long matchId, Long userId) {
@@ -199,11 +227,15 @@ public class MatchService {
         validateUserMatchPreference(match.getReceiver().getId());
 
         validateMatchParticipant(match, userId);
-        validateMatchStatusTransition(match);
         validateAndHandleMatchTypeTransition(match);
 
-        match.setMatchStatus(MatchStatus.ACCEPTED);
-        match.setConfirmedAt(java.time.LocalDateTime.now());
+        // 이미 응답했는지 확인 (중복 응답 방지)
+        if (match.hasUserResponded(userId)) {
+            throw ServiceException.conflict("이미 응답을 완료했습니다.");
+        }
+
+        // 사용자의 확정 응답 처리 (Match 엔티티 내부에서 최종 상태 자동 결정)
+        match.processUserResponse(userId, MatchStatus.ACCEPTED);
 
         // TODO: 향후 후기 시스템과 연계된 재매칭 기능 구현 시 rematch_round 활용
 
@@ -214,6 +246,7 @@ public class MatchService {
 
     /**
      * 룸메이트 최종 거절
+     * 양방향 응답 추적: 한 명이라도 거절하면 매칭 실패 처리
      */
     @Transactional
     public Match rejectMatch(Long matchId, Long userId) {
@@ -225,11 +258,15 @@ public class MatchService {
         validateUserMatchPreference(match.getReceiver().getId());
 
         validateMatchParticipant(match, userId);
-        validateMatchStatusTransition(match);
         validateAndHandleMatchTypeTransition(match);
 
-        match.setMatchStatus(MatchStatus.REJECTED);
-        match.setConfirmedAt(java.time.LocalDateTime.now()); // 거절 시점 기록
+        // 이미 응답했는지 확인 (중복 응답 방지)
+        if (match.hasUserResponded(userId)) {
+            throw ServiceException.conflict("이미 응답을 완료했습니다.");
+        }
+
+        // 사용자의 거절 응답 처리 (Match 엔티티 내부에서 최종 상태 자동 결정)
+        match.processUserResponse(userId, MatchStatus.REJECTED);
 
         // TODO: 향후 후기 시스템과 연계된 재매칭 기능 구현 시 rematch_round 활용
 
@@ -298,6 +335,9 @@ public class MatchService {
                 .orElseThrow(() -> ServiceException.notFound("전송하는 사용자를 찾을 수 없습니다."));
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> ServiceException.notFound("상대방 사용자를 찾을 수 없습니다."));
+
+        // (다시 좋아요) 만약 '좋아요 취소' 알림이 있었다면 삭제
+        notificationService.deleteNotificationBySender(receiverId, NotificationType.LIKE_CANCELED, senderId);
 
         // 양방향으로 기존 '좋아요' 기록이 있는지 확인
         Optional<Match> existingMatchOpt = matchRepository.findLikeBetweenUsers(senderId, receiverId);
@@ -374,8 +414,8 @@ public class MatchService {
                     .build();
             matchRepository.save(newLike);
 
-            // 좋아요 알림 생성
-            try {
+            // (연타 방지) 이미 보낸 '좋아요' 알림이 없다면 새로 생성
+            if (!notificationService.notificationExistsBySender(receiverId, NotificationType.LIKE, senderId)) {
                 notificationService.createNotification(
                         receiverId,
                         NotificationType.LIKE,
@@ -383,8 +423,6 @@ public class MatchService {
                         sender.getName(),
                         senderId
                 );
-            } catch (Exception e) {
-                // 알림 생성 실패해도 좋아요는 진행
             }
 
             return new LikeResponse(newLike.getId(), false); // 아직 상호 매칭(요청)은 아님
@@ -399,8 +437,25 @@ public class MatchService {
         // 매칭 선호도 등록 여부 확인
         validateUserMatchPreference(receiverId);
 
+        User sender = userRepository.findById(senderId)
+                .orElseThrow(() -> ServiceException.notFound("전송하는 사용자를 찾을 수 없습니다."));
+
         Match like = matchRepository.findBySenderIdAndReceiverIdAndMatchType(senderId, receiverId, MatchType.LIKE)
                 .orElseThrow(() -> ServiceException.notFound("취소할 '좋아요' 기록이 존재하지 않습니다."));
+
+        // 기존 '좋아요' 알림 삭제
+        notificationService.deleteNotificationBySender(receiverId, NotificationType.LIKE, senderId);
+
+        // '좋아요 취소' 알림이 없다면 새로 생성
+        if (!notificationService.notificationExistsBySender(receiverId, NotificationType.LIKE_CANCELED, senderId)) {
+            notificationService.createNotification(
+                    receiverId,
+                    NotificationType.LIKE_CANCELED,
+                    sender.getName() + " 님이 좋아요를 취소했습니다.",
+                    sender.getName(),
+                    senderId
+            );
+        }
 
         matchRepository.delete(like);
     }
@@ -411,15 +466,6 @@ public class MatchService {
     private void validateMatchParticipant(Match match, Long userId) {
         if (!match.getSender().getId().equals(userId) && !match.getReceiver().getId().equals(userId)) {
             throw ServiceException.forbidden("룸메이트 확정 권한이 없습니다.");
-        }
-    }
-
-    /**
-     * 매칭 상태 전이 검증
-     */
-    private void validateMatchStatusTransition(Match match) {
-        if (match.getMatchStatus() != MatchStatus.PENDING) {
-            throw ServiceException.conflict("이미 처리된 매칭입니다.");
         }
     }
 
