@@ -55,20 +55,12 @@ export default function MatchesPage() {
   const [filters, setFilters] = useState<MatchFilters>({});
   const router = useRouter();
 
-  const [likedIds, setLikedIds] = useState<Set<number>>(() => {
-    if (typeof window === 'undefined') {
-      return new Set();
-    }
-    try {
-      const item = window.sessionStorage.getItem('likedUsers');
-      return item ? new Set(JSON.parse(item)) : new Set();
-    } catch (error) {
-      console.error('Error reading from sessionStorage', error);
-      return new Set();
-    }
-  });
+  const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
+    // 사용자 변경 시 좋아요 상태 초기화
+    setLikedIds(new Set());
+    
     const checkProfileStatus = async () => {
       setIsLoading(true);
       try {
@@ -107,7 +99,8 @@ export default function MatchesPage() {
 
           const recommendations = (rawData.recommendations || []).map((user: any) => ({
             ...user,
-            isLiked: likedIds.has(user.receiverId) || (user.matchType === 'LIKE' && user.matchStatus === 'PENDING'),
+            // 서버 상태 우선, 없으면 로컬 상태 사용
+            isLiked: (user.matchType === 'LIKE' && user.matchStatus === 'PENDING') || likedIds.has(user.receiverId),
           }));
           
           setUsers(recommendations);
@@ -131,15 +124,6 @@ export default function MatchesPage() {
       } else {
         newIds.delete(receiverId);
       }
-      
-      if (typeof window !== 'undefined') {
-        try {
-          window.sessionStorage.setItem('likedUsers', JSON.stringify(Array.from(newIds)));
-        } catch (error) {
-          console.error('Error writing to sessionStorage', error);
-        }
-      }
-      
       return newIds;
     });
 
