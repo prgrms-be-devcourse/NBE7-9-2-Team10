@@ -227,8 +227,8 @@ public class MatchService {
         Optional<Match> existingMatch = matchRepository.findBySenderIdAndReceiverId(
                 senderPreference.getUser().getId(), candidate.getUserId());
 
-        MatchType matchType = existingMatch.isPresent() ? existingMatch.get().getMatchType() : null;
-        MatchStatus matchStatus = existingMatch.isPresent() ? existingMatch.get().getMatchStatus() : null;
+        MatchType matchType = existingMatch.map(Match::getMatchType).orElse(MatchType.NONE);
+        MatchStatus matchStatus = existingMatch.map(Match::getMatchStatus).orElse(MatchStatus.NONE);
 
         // 디버깅 로그
         log.info("🔍 매칭 상태 조회 - senderId: {}, receiverId: {}, matchType: {}, matchStatus: {}",
